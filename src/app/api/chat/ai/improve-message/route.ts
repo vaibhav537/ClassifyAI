@@ -109,8 +109,6 @@ ${text}
       improved,
     });
   } catch (error) {
-    console.error("Improve message error:", error);
-
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 },
