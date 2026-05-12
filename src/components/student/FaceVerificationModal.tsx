@@ -68,10 +68,12 @@ export default function FaceVerificationModal({
         throw new Error("No face found in your profile picture.");
       if (!liveDetection)
         throw new Error(
-          "No face detected in camera. Ensure good lighting and try again."
+          "No face detected in camera. Ensure good lighting and try again.",
         );
 
-      const faceMatcher = new faceapi.FaceMatcher(referenceDetection.descriptor);
+      const faceMatcher = new faceapi.FaceMatcher(
+        referenceDetection.descriptor,
+      );
       const bestMatch = faceMatcher.findBestMatch(liveDetection.descriptor);
 
       if (bestMatch.distance <= 0.5) {
@@ -89,7 +91,6 @@ export default function FaceVerificationModal({
       setIsLoading(false);
     }
   }, [isModelsLoaded, isVerified, avatarUrl, onSuccess]);
-
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex justify-center items-center z-50 p-4">
       <div className="bg-gradient-to-br from-[#06141b]/90 to-[#1b3b4c]/90 border border-cyan-400/20 p-8 rounded-2xl shadow-2xl w-full max-w-lg text-center transition-all duration-300">

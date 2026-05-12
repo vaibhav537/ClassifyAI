@@ -270,7 +270,11 @@ exports.Prisma.SessionScalarFieldEnum = {
   id: 'id',
   sessionToken: 'sessionToken',
   userId: 'userId',
-  expiresAt: 'expiresAt'
+  expiresAt: 'expiresAt',
+  faceVerified: 'faceVerified',
+  faceVerifieAt: 'faceVerifieAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.EventScalarFieldEnum = {

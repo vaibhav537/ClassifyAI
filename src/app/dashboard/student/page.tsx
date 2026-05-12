@@ -62,7 +62,6 @@ export default function StudentDashboard() {
         if (!detailsRes.ok) throw new Error("Failed to fetch user details");
 
         setStudentDetails(detailsData);
-
         if (!detailsData.avatarUrl) {
           setIsFirstLogin(true);
         }
@@ -112,7 +111,7 @@ export default function StudentDashboard() {
     fetchTodayAttendance();
     fetchPremiumStatus();
     fetchStudentData();
-    setNeedsFaceVerification(false); //false for development
+    setNeedsFaceVerification(true); //!false for development
   }, []);
 
   const handleAvatarSuccess = (newAvatarUrl: string) => {
@@ -123,7 +122,6 @@ export default function StudentDashboard() {
   const handleFaceVerificationSuccess = () => {
     setNeedsFaceVerification(false);
   };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">

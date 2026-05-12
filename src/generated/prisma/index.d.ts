@@ -19906,6 +19906,10 @@ export namespace Prisma {
     sessionToken: string | null
     userId: string | null
     expiresAt: Date | null
+    faceVerified: boolean | null
+    faceVerifieAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
   }
 
   export type SessionMaxAggregateOutputType = {
@@ -19913,6 +19917,10 @@ export namespace Prisma {
     sessionToken: string | null
     userId: string | null
     expiresAt: Date | null
+    faceVerified: boolean | null
+    faceVerifieAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
   }
 
   export type SessionCountAggregateOutputType = {
@@ -19920,6 +19928,10 @@ export namespace Prisma {
     sessionToken: number
     userId: number
     expiresAt: number
+    faceVerified: number
+    faceVerifieAt: number
+    createdAt: number
+    updatedAt: number
     _all: number
   }
 
@@ -19929,6 +19941,10 @@ export namespace Prisma {
     sessionToken?: true
     userId?: true
     expiresAt?: true
+    faceVerified?: true
+    faceVerifieAt?: true
+    createdAt?: true
+    updatedAt?: true
   }
 
   export type SessionMaxAggregateInputType = {
@@ -19936,6 +19952,10 @@ export namespace Prisma {
     sessionToken?: true
     userId?: true
     expiresAt?: true
+    faceVerified?: true
+    faceVerifieAt?: true
+    createdAt?: true
+    updatedAt?: true
   }
 
   export type SessionCountAggregateInputType = {
@@ -19943,6 +19963,10 @@ export namespace Prisma {
     sessionToken?: true
     userId?: true
     expiresAt?: true
+    faceVerified?: true
+    faceVerifieAt?: true
+    createdAt?: true
+    updatedAt?: true
     _all?: true
   }
 
@@ -20023,6 +20047,10 @@ export namespace Prisma {
     sessionToken: string
     userId: string
     expiresAt: Date
+    faceVerified: boolean
+    faceVerifieAt: Date | null
+    createdAt: Date
+    updatedAt: Date
     _count: SessionCountAggregateOutputType | null
     _min: SessionMinAggregateOutputType | null
     _max: SessionMaxAggregateOutputType | null
@@ -20047,6 +20075,10 @@ export namespace Prisma {
     sessionToken?: boolean
     userId?: boolean
     expiresAt?: boolean
+    faceVerified?: boolean
+    faceVerifieAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["session"]>
 
@@ -20055,6 +20087,10 @@ export namespace Prisma {
     sessionToken?: boolean
     userId?: boolean
     expiresAt?: boolean
+    faceVerified?: boolean
+    faceVerifieAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["session"]>
 
@@ -20063,6 +20099,10 @@ export namespace Prisma {
     sessionToken?: boolean
     userId?: boolean
     expiresAt?: boolean
+    faceVerified?: boolean
+    faceVerifieAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["session"]>
 
@@ -20071,9 +20111,13 @@ export namespace Prisma {
     sessionToken?: boolean
     userId?: boolean
     expiresAt?: boolean
+    faceVerified?: boolean
+    faceVerifieAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
   }
 
-  export type SessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sessionToken" | "userId" | "expiresAt", ExtArgs["result"]["session"]>
+  export type SessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sessionToken" | "userId" | "expiresAt" | "faceVerified" | "faceVerifieAt" | "createdAt" | "updatedAt", ExtArgs["result"]["session"]>
   export type SessionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -20094,6 +20138,10 @@ export namespace Prisma {
       sessionToken: string
       userId: string
       expiresAt: Date
+      faceVerified: boolean
+      faceVerifieAt: Date | null
+      createdAt: Date
+      updatedAt: Date
     }, ExtArgs["result"]["session"]>
     composites: {}
   }
@@ -20522,6 +20570,10 @@ export namespace Prisma {
     readonly sessionToken: FieldRef<"Session", 'String'>
     readonly userId: FieldRef<"Session", 'String'>
     readonly expiresAt: FieldRef<"Session", 'DateTime'>
+    readonly faceVerified: FieldRef<"Session", 'Boolean'>
+    readonly faceVerifieAt: FieldRef<"Session", 'DateTime'>
+    readonly createdAt: FieldRef<"Session", 'DateTime'>
+    readonly updatedAt: FieldRef<"Session", 'DateTime'>
   }
     
 
@@ -41838,7 +41890,11 @@ export namespace Prisma {
     id: 'id',
     sessionToken: 'sessionToken',
     userId: 'userId',
-    expiresAt: 'expiresAt'
+    expiresAt: 'expiresAt',
+    faceVerified: 'faceVerified',
+    faceVerifieAt: 'faceVerifieAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
   };
 
   export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
@@ -43488,6 +43544,10 @@ export namespace Prisma {
     sessionToken?: StringFilter<"Session"> | string
     userId?: StringFilter<"Session"> | string
     expiresAt?: DateTimeFilter<"Session"> | Date | string
+    faceVerified?: BoolFilter<"Session"> | boolean
+    faceVerifieAt?: DateTimeNullableFilter<"Session"> | Date | string | null
+    createdAt?: DateTimeFilter<"Session"> | Date | string
+    updatedAt?: DateTimeFilter<"Session"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
   }
 
@@ -43496,6 +43556,10 @@ export namespace Prisma {
     sessionToken?: SortOrder
     userId?: SortOrder
     expiresAt?: SortOrder
+    faceVerified?: SortOrder
+    faceVerifieAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
   }
 
@@ -43507,6 +43571,10 @@ export namespace Prisma {
     NOT?: SessionWhereInput | SessionWhereInput[]
     userId?: StringFilter<"Session"> | string
     expiresAt?: DateTimeFilter<"Session"> | Date | string
+    faceVerified?: BoolFilter<"Session"> | boolean
+    faceVerifieAt?: DateTimeNullableFilter<"Session"> | Date | string | null
+    createdAt?: DateTimeFilter<"Session"> | Date | string
+    updatedAt?: DateTimeFilter<"Session"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
   }, "id" | "sessionToken">
 
@@ -43515,6 +43583,10 @@ export namespace Prisma {
     sessionToken?: SortOrder
     userId?: SortOrder
     expiresAt?: SortOrder
+    faceVerified?: SortOrder
+    faceVerifieAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
     _count?: SessionCountOrderByAggregateInput
     _max?: SessionMaxOrderByAggregateInput
     _min?: SessionMinOrderByAggregateInput
@@ -43528,6 +43600,10 @@ export namespace Prisma {
     sessionToken?: StringWithAggregatesFilter<"Session"> | string
     userId?: StringWithAggregatesFilter<"Session"> | string
     expiresAt?: DateTimeWithAggregatesFilter<"Session"> | Date | string
+    faceVerified?: BoolWithAggregatesFilter<"Session"> | boolean
+    faceVerifieAt?: DateTimeNullableWithAggregatesFilter<"Session"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Session"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Session"> | Date | string
   }
 
   export type EventWhereInput = {
@@ -46112,6 +46188,10 @@ export namespace Prisma {
     id?: string
     sessionToken: string
     expiresAt: Date | string
+    faceVerified?: boolean
+    faceVerifieAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
     user: UserCreateNestedOneWithoutSessionsInput
   }
 
@@ -46120,12 +46200,20 @@ export namespace Prisma {
     sessionToken: string
     userId: string
     expiresAt: Date | string
+    faceVerified?: boolean
+    faceVerifieAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type SessionUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     sessionToken?: StringFieldUpdateOperationsInput | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    faceVerified?: BoolFieldUpdateOperationsInput | boolean
+    faceVerifieAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutSessionsNestedInput
   }
 
@@ -46134,6 +46222,10 @@ export namespace Prisma {
     sessionToken?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    faceVerified?: BoolFieldUpdateOperationsInput | boolean
+    faceVerifieAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type SessionCreateManyInput = {
@@ -46141,12 +46233,20 @@ export namespace Prisma {
     sessionToken: string
     userId: string
     expiresAt: Date | string
+    faceVerified?: boolean
+    faceVerifieAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type SessionUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     sessionToken?: StringFieldUpdateOperationsInput | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    faceVerified?: BoolFieldUpdateOperationsInput | boolean
+    faceVerifieAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type SessionUncheckedUpdateManyInput = {
@@ -46154,6 +46254,10 @@ export namespace Prisma {
     sessionToken?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    faceVerified?: BoolFieldUpdateOperationsInput | boolean
+    faceVerifieAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type EventCreateInput = {
@@ -48803,6 +48907,10 @@ export namespace Prisma {
     sessionToken?: SortOrder
     userId?: SortOrder
     expiresAt?: SortOrder
+    faceVerified?: SortOrder
+    faceVerifieAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type SessionMaxOrderByAggregateInput = {
@@ -48810,6 +48918,10 @@ export namespace Prisma {
     sessionToken?: SortOrder
     userId?: SortOrder
     expiresAt?: SortOrder
+    faceVerified?: SortOrder
+    faceVerifieAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type SessionMinOrderByAggregateInput = {
@@ -48817,6 +48929,10 @@ export namespace Prisma {
     sessionToken?: SortOrder
     userId?: SortOrder
     expiresAt?: SortOrder
+    faceVerified?: SortOrder
+    faceVerifieAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type EventCountOrderByAggregateInput = {
@@ -54023,12 +54139,20 @@ export namespace Prisma {
     id?: string
     sessionToken: string
     expiresAt: Date | string
+    faceVerified?: boolean
+    faceVerifieAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type SessionUncheckedCreateWithoutUserInput = {
     id?: string
     sessionToken: string
     expiresAt: Date | string
+    faceVerified?: boolean
+    faceVerifieAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type SessionCreateOrConnectWithoutUserInput = {
@@ -54516,6 +54640,10 @@ export namespace Prisma {
     sessionToken?: StringFilter<"Session"> | string
     userId?: StringFilter<"Session"> | string
     expiresAt?: DateTimeFilter<"Session"> | Date | string
+    faceVerified?: BoolFilter<"Session"> | boolean
+    faceVerifieAt?: DateTimeNullableFilter<"Session"> | Date | string | null
+    createdAt?: DateTimeFilter<"Session"> | Date | string
+    updatedAt?: DateTimeFilter<"Session"> | Date | string
   }
 
   export type AnnouncementUpsertWithWhereUniqueWithoutAssistantInput = {
@@ -63295,6 +63423,10 @@ export namespace Prisma {
     id?: string
     sessionToken: string
     expiresAt: Date | string
+    faceVerified?: boolean
+    faceVerifieAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type AnnouncementCreateManyAssistantInput = {
@@ -63504,18 +63636,30 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     sessionToken?: StringFieldUpdateOperationsInput | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    faceVerified?: BoolFieldUpdateOperationsInput | boolean
+    faceVerifieAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type SessionUncheckedUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     sessionToken?: StringFieldUpdateOperationsInput | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    faceVerified?: BoolFieldUpdateOperationsInput | boolean
+    faceVerifieAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type SessionUncheckedUpdateManyWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     sessionToken?: StringFieldUpdateOperationsInput | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    faceVerified?: BoolFieldUpdateOperationsInput | boolean
+    faceVerifieAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type AnnouncementUpdateWithoutAssistantInput = {
