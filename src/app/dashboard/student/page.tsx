@@ -21,7 +21,6 @@ import NotificationBell from "@/components/student/NotificationBell";
 import {
   faBookOpen,
   faBullhorn,
-  faFile,
   faMessage,
 } from "@fortawesome/free-solid-svg-icons";
 import NotificationHandler from "@/components/ui/NotificationHandler";
@@ -30,7 +29,7 @@ import SideButtons from "@/components/student/SideButtons";
 export default function StudentDashboard() {
   const [todayAttendance, setTodayAttendance] = useState<Attendance[]>([]);
   const [stats, setStats] = useState<any>(null);
-  const [needsFaceVerification, setNeedsFaceVerification] = useState(true);
+  const [needsFaceVerification, setNeedsFaceVerification] = useState(false);
   const [isFirstLogin, setIsFirstLogin] = useState(false);
   const [studentDetails, setStudentDetails] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -38,9 +37,20 @@ export default function StudentDashboard() {
     useState<PremiumStatusResponse | null>(null);
   const router = useRouter();
 
-  const logout = () => {
-    localStorage.removeItem("studentId"); // Use the correct key for student
-    localStorage.removeItem("lastCampusSlug"); // Also clear the campus slug
+  const logout = async () => {
+    try {
+      await fetch("/api/logout", {
+        method: "POST",
+      });
+    } catch (error) {
+      console.error("Logout API failed:", error);
+    }
+    localStorage.removeItem("studentId");
+    localStorage.removeItem("teacherId");
+    localStorage.removeItem("adminId");
+    localStorage.removeItem("assistantId");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("lastCampusSlug");
     router.push("/auth/login");
   };
 
@@ -64,7 +74,20 @@ export default function StudentDashboard() {
         setStudentDetails(detailsData);
         if (!detailsData.avatarUrl) {
           setIsFirstLogin(true);
+          setNeedsFaceVerification(false);
+          return;
         }
+        setIsFirstLogin(false);
+        const sessionRes = await fetch("/api/auth/session");
+        const sessionData = await sessionRes.json();
+        if (!sessionRes.ok) {
+          showErrorMessage(
+            sessionData.error || "Session expired. Please login again.",
+          );
+          router.push("/auth/login");
+          return;
+        }
+        setNeedsFaceVerification(!sessionData.session?.faceVerified);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {
@@ -111,7 +134,7 @@ export default function StudentDashboard() {
     fetchTodayAttendance();
     fetchPremiumStatus();
     fetchStudentData();
-    setNeedsFaceVerification(true); //!false for development
+    //setNeedsFaceVerification(true); //!false for development
   }, []);
 
   const handleAvatarSuccess = (newAvatarUrl: string) => {
@@ -119,8 +142,20 @@ export default function StudentDashboard() {
     setIsFirstLogin(false);
     setNeedsFaceVerification(true);
   };
-  const handleFaceVerificationSuccess = () => {
-    setNeedsFaceVerification(false);
+  const handleFaceVerificationSuccess = async () => {
+    try {
+      const res = await fetch("/api/auth/face-verified", {
+        method: "PATCH",
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to save face verification");
+      }
+      setNeedsFaceVerification(false);
+    } catch (error: any) {
+      console.error("Failed to save face verification: ", error);
+      showErrorMessage(error.message || "Face verification can not be saved");
+    }
   };
   if (loading) {
     return (

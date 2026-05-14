@@ -15,24 +15,41 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
     if (user.username !== name) {
-      return NextResponse.json({ message: "Invalid username" }, { status: 401 });
+      return NextResponse.json(
+        { message: "Invalid username" },
+        { status: 401 },
+      );
     }
-    const session = randomBytes(32).toString("hex");
+
+    //*  Clean expired sessions of this user
+    await prisma.session.deleteMany({
+      where: { userId: user.id, expiresAt: { lt: new Date() } },
+    });
+
+    const sessionToken = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await prisma.session.create({
-      data: { sessionToken: session, userId: user.id, expiresAt },
-    })
-    ;(await cookies()).set("session-token",session,{
+      data: {
+        sessionToken,
+        userId: user.id,
+        expiresAt,
+        faceVerifieAt: null,
+        faceVerified: false,
+      },
+    });
+
+    const cookieStore = await cookies();
+    cookieStore.set("session-token", sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       expires: expiresAt,
       sameSite: "strict",
-      path:"/"
-    })
+      path: "/",
+    });
     await logActivity(
       user.id,
       user.name,
-      `${user.name} (${user.role}) logged in to the ClassifyAI.`
+      `${user.name} (${user.role}) logged in to the ClassifyAI.`,
     );
     return NextResponse.json({ user }, { status: 200 });
   } catch (err) {

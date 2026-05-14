@@ -1,52 +1,57 @@
-import { PrismaClient, Role } from "../src/generated/prisma";
-import bcrypt from "bcrypt";
-
-const prisma = new PrismaClient();
+// prisma/seedPremiumPlans.js
+import { prisma } from "../src/lib/prisma.js"; // adjust path if needed
 
 async function main() {
-  const adminEmail = "admin@classifyai.com";
-  const adminUsername = "classifyadmin";
-  const adminPassword = "ClassifyAI@123";
-
-  const passwordHash = await bcrypt.hash(adminPassword, 10);
-
-  const admin = await prisma.user.upsert({
-    where: {
-      email: adminEmail,
+  const plans = [
+    {
+      name: "STARTER",
+      price: 0,
+      features: [
+        "Basic access",
+        "View your attendance",
+        "View timetable",
+      ],
     },
-    update: {
-      name: "Classify AI Main Admin",
-      username: adminUsername,
-      role: Role.ADMIN,
-      passwordHash,
+    {
+      name: "PRO",
+      price: 499,
+      features: [
+        "Everything in STARTER",
+        "AI Study Plan",
+        "Advanced analytics",
+      ],
     },
-    create: {
-      name: "Classify AI Main Admin",
-      email: adminEmail,
-      username: adminUsername,
-      passwordHash,
-      role: Role.ADMIN,
+    {
+      name: "ULTIMATE",
+      price: 999,
+      features: [
+        "Everything in PRO",
+        "Google Calendar Sync",
+        "Priority support",
+      ],
     },
-  });
+  ];
 
-  console.log("✅ Main admin created/updated successfully:");
-  console.log({
-    id: admin.id,
-    name: admin.name,
-    email: admin.email,
-    username: admin.username,
-    role: admin.role,
-  });
-
-  console.log("\n🔐 Login Credentials:");
-  console.log(`Email: ${adminEmail}`);
-  console.log(`Username: ${adminUsername}`);
-  console.log(`Password: ${adminPassword}`);
+  for (const plan of plans) {
+    await prisma.planConfig.upsert({
+      where: { name: plan.name },
+      update: {
+        price: plan.price,
+        features: plan.features,
+      },
+      create: {
+        name: plan.name,
+        price: plan.price,
+        features: plan.features,
+      },
+    });
+    console.log(`Plan ${plan.name} added/updated`);
+  }
 }
 
 main()
-  .catch((error) => {
-    console.error("❌ Seed failed:", error);
+  .catch((e) => {
+    console.error(e);
     process.exit(1);
   })
   .finally(async () => {

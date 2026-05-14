@@ -327,7 +327,7 @@ const LinkCards = ({
                   className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded mb-2`}
                   disabled={loading}
                 />
-                <input
+               {forRole === "teacher" && <input
                   type="text"
                   placeholder="Department (e.g., EEE)"
                   value={formData.department}
@@ -338,52 +338,53 @@ const LinkCards = ({
                     })
                   }
                   className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded`}
-                />
-
-                <select
-                  value={formData.designation}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      designation: e.target.value,
-                    })
-                  }
-                  className={`${tektur.className} w-full ring appearance-none mt-2 text-black/60 ring-orange-400 outline-none p-2 rounded`}
-                >
-                  <option value="" className="bg-orange-800/80">
-                    Select Designation
-                  </option>
-                  <option
-                    value="PROFESSOR"
-                    className="text-black bg-orange-800/80"
+                />}
+                {forRole === "teacher" && modalOpen === "add" && (
+                  <select
+                    value={formData.designation}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        designation: e.target.value,
+                      })
+                    }
+                    className={`${tektur.className} w-full ring appearance-none mt-2 text-black/60 ring-orange-400 outline-none p-2 rounded`}
                   >
-                    Professor
-                  </option>
-                  <option
-                    value="ASSOCIATE_PROFESSOR"
-                    className="text-black bg-orange-800/80"
-                  >
-                    Associate Professor
-                  </option>
-                  <option
-                    value="ASSISTANT_PROFESSOR"
-                    className="text-black bg-orange-800/80"
-                  >
-                    Assistant Professor
-                  </option>
-                  <option
-                    value="LECTURER"
-                    className="text-black bg-orange-800/80"
-                  >
-                    Lecturer
-                  </option>
-                  <option
-                    value="HOD"
-                    className="text-black bg-orange-800/80 rounded-b-4xl"
-                  >
-                    HOD
-                  </option>
-                </select>
+                    <option value="" className="bg-orange-800/80">
+                      Select Designation
+                    </option>
+                    <option
+                      value="PROFESSOR"
+                      className="text-black bg-orange-800/80"
+                    >
+                      Professor
+                    </option>
+                    <option
+                      value="ASSOCIATE_PROFESSOR"
+                      className="text-black bg-orange-800/80"
+                    >
+                      Associate Professor
+                    </option>
+                    <option
+                      value="ASSISTANT_PROFESSOR"
+                      className="text-black bg-orange-800/80"
+                    >
+                      Assistant Professor
+                    </option>
+                    <option
+                      value="LECTURER"
+                      className="text-black bg-orange-800/80"
+                    >
+                      Lecturer
+                    </option>
+                    <option
+                      value="HOD"
+                      className="text-black bg-orange-800/80 rounded-b-4xl"
+                    >
+                      HOD
+                    </option>
+                  </select>
+                )}
                 {formData.designation === "HOD" && (
                   <div className="mt-3 flex items-center gap-4">
                     <p className="text-sm mb-2">Does HOD teach subjects?</p>
@@ -430,7 +431,7 @@ const LinkCards = ({
                       disabled={loading}
                     />
                     <input
-                      type="number"
+                      type="text"
                       placeholder="Semester (e.g. Semester 1)"
                       value={formData.semester}
                       autoComplete="off"

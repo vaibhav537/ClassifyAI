@@ -36,6 +36,7 @@ export default function SuperAdminDashboardPage() {
           <button
             onClick={() => {
               localStorage.removeItem("adminId");
+              localStorage.clear();
               window.location.href = "/auth/login";
             }}
           className="bg-red-500/20 border cursor-pointer border-red-500/30 hover:bg-red-600/30 text-red-300 px-5 py-2 rounded-lg backdrop-blur-md transition"
