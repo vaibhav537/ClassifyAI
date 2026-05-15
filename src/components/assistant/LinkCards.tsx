@@ -178,7 +178,7 @@ const LinkCards = ({
             : undefined,
         assignedSubjects:
           forRole === "teacher" &&
-          (formData.designation === "HOD" || hodTeaches)
+          (formData.designation !== "HOD" || hodTeaches)
             ? assignedSubjects
             : [],
         adminID: assistantId,
@@ -226,7 +226,7 @@ const LinkCards = ({
     setEmailVerified(false);
     setCurrentSubject({ name: "", code: "", description: "" });
     setAssignedSubjects([]);
-    setHodTeaches(false);
+    setHodTeaches(true);
   };
 
   useEffect(() => {

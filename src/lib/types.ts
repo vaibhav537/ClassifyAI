@@ -411,3 +411,18 @@ export interface NewConversationDialogProps {
   campusId: string;
   onCreated: (conversationId: string) => void;
 }
+
+export type LogoProps = {
+  width?: number;
+  height?: number;
+  className?: string;
+  imageClassName?: string;
+};
+
+export interface AttendanceRecord {
+  id: string;
+  studentId: string;
+  subject: string;
+  status: string;
+  date: string;
+}

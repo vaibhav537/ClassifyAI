@@ -1,6 +1,7 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Sparkles } from "lucide-react";
 import { EventItem } from "@/lib/types";
 import { eventTypeColors } from "@/lib/helper";
 
@@ -10,16 +11,19 @@ const AppCalendar = () => {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [dayEvents, setDayEvents] = useState<EventItem[]>([]);
   const [showAllEvents, setShowAllEvents] = useState(false);
+
   const today = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
 
   useEffect(() => {
     const campusId = localStorage.getItem("CampusID");
+
     const fetchEvents = async () => {
       try {
         const res = await fetch(`/api/assistant/event?campusId=${campusId}`);
         const data = await res.json();
+
         if (data.success) {
           setEvents(data.events);
         }
@@ -27,17 +31,27 @@ const AppCalendar = () => {
         console.log("Failed to fetch events", error);
       }
     };
+
     fetchEvents();
   }, []);
 
   const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  // Calendar calculations
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
   const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
   const firstDayWeekday = firstDayOfMonth.getDay();
@@ -45,16 +59,25 @@ const AppCalendar = () => {
 
   const prevMonth = new Date(currentYear, currentMonth - 1, 0);
   const daysInPrevMonth = prevMonth.getDate();
+
   const prevMonthDays = [];
-  for (let i = firstDayWeekday - 1; i >= 0; i--) prevMonthDays.push(daysInPrevMonth - i);
+  for (let i = firstDayWeekday - 1; i >= 0; i--) {
+    prevMonthDays.push(daysInPrevMonth - i);
+  }
 
   const currentMonthDays = [];
-  for (let day = 1; day <= daysInMonth; day++) currentMonthDays.push(day);
+  for (let day = 1; day <= daysInMonth; day++) {
+    currentMonthDays.push(day);
+  }
 
   const totalCells = 42;
-  const remainingCells = totalCells - prevMonthDays.length - currentMonthDays.length;
+  const remainingCells =
+    totalCells - prevMonthDays.length - currentMonthDays.length;
+
   const nextMonthDays = [];
-  for (let day = 1; day <= remainingCells; day++) nextMonthDays.push(day);
+  for (let day = 1; day <= remainingCells; day++) {
+    nextMonthDays.push(day);
+  }
 
   const navigateMonth = (direction: number) => {
     const newDate = new Date(currentDate);
@@ -73,48 +96,42 @@ const AppCalendar = () => {
     selectedDate.getMonth() === currentMonth &&
     selectedDate.getFullYear() === currentYear;
 
-  // Format date as YYYY-MM-DD in UTC
   const formatDate = (date: string | Date) => {
     const d = new Date(date);
     return d.toISOString().split("T")[0];
   };
 
-  // Priority order for event types (most public/well-known first)
   const eventTypePriority: { [key: string]: number } = {
-    'public': 1,
-    'holiday': 2,
-    'festival': 3,
-    'national': 4,
-    'religious': 5,
-    'cultural': 6,
-    'sports': 7,
-    'business': 8,
-    'personal': 9,
-    'private': 10
+    public: 1,
+    holiday: 2,
+    festival: 3,
+    national: 4,
+    religious: 5,
+    cultural: 6,
+    sports: 7,
+    business: 8,
+    personal: 9,
+    private: 10,
   };
 
-  // Get events for a specific day
   const getEventsForDay = (day: number) => {
     const dateStr = formatDate(new Date(currentYear, currentMonth, day));
     return events.filter((e) => formatDate(e.date) === dateStr);
   };
 
-  // Get the highest priority event for a day
   const getPriorityEventForDay = (day: number) => {
     const dayEvents = getEventsForDay(day);
     if (dayEvents.length === 0) return null;
-    
-    // Sort events by priority (lower number = higher priority)
+
     const sortedEvents = dayEvents.sort((a, b) => {
       const priorityA = eventTypePriority[a.type.toLowerCase()] || 999;
       const priorityB = eventTypePriority[b.type.toLowerCase()] || 999;
       return priorityA - priorityB;
     });
-    
+
     return sortedEvents[0];
   };
 
-  // Get primary event type for calendar day styling
   const getEventTypeForDay = (day: number) => {
     const priorityEvent = getPriorityEventForDay(day);
     return priorityEvent?.type || null;
@@ -124,6 +141,7 @@ const AppCalendar = () => {
     if (type === "current" && day !== undefined) {
       const clickedDate = new Date(currentYear, currentMonth, day);
       setSelectedDate(clickedDate);
+
       const priorityEvent = getPriorityEventForDay(day);
       setDayEvents(priorityEvent ? [priorityEvent] : []);
       setShowAllEvents(false);
@@ -135,139 +153,182 @@ const AppCalendar = () => {
     setSelectedDate(new Date());
   };
 
-  // Render single priority event in header
   const renderEventDisplay = () => {
     if (!selectedDate || dayEvents.length === 0) return null;
 
-    const event = dayEvents[0]; // Only one event now
-    
+    const event = dayEvents[0];
+
     return (
-      <div className="px-1">
-        <div className="bg-yellow-500/10 items-center flex justify-evenly border border-yellow-300/20 text-center text-yellow-100 px-1 rounded-lg">
-          <h4 className="font-bold text-sm w-[7rem] truncate" title={event.title}>{event.title}</h4>
-          <p className="text-[10px] italic w-[5rem] truncate text-yellow-200">
+      <div className="rounded-2xl border border-amber-300/20 bg-amber-400/10 px-4 py-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-extrabold text-amber-100">
+              {event.title}
+            </p>
+            <p className="mt-1 truncate text-xs leading-5 text-amber-100/70">
+              {event.description}
+            </p>
+          </div>
+
+          <span className="shrink-0 rounded-full border border-amber-300/20 bg-amber-300/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.14em] text-amber-100">
             {event.type}
-          </p>
-          <p className="text-xs opacity-90 w-[5rem] truncate" title={event.description}>{event.description}</p>
+          </span>
         </div>
       </div>
     );
   };
 
-  // Simple day content without event count badge
   const renderDayContent = (day: number) => {
     return <span>{day}</span>;
   };
 
   return (
-    <div className="w-100 sm:w-[33rem] md:w-[40rem] 2xl:w-[28rem] 2xl:h-[22rem] lg:w-[24rem] lg:ml-0 sm:h-[20rem] sm:ml-10 h-80 bg-gradient-to-tl from-white/20 to-black/20 rounded-4xl shadow-2xl border border-gray-100  overflow-hidden transition-all duration-300">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600/40 to-purple-600/40 text-white px-6 pt-3 pb-1">
-        <div className="flex items-center justify-between ">
-          <button
-            onClick={() => navigateMonth(-1)}
-            className="p-2 hover:bg-white/20 rounded-lg transition-colors duration-200"
-          >
-            <ChevronLeft size={15} />
-          </button>
+    <div className="relative h-full min-h-[360px] w-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#14141B]/90 shadow-2xl shadow-black/35 backdrop-blur-2xl">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/12 via-transparent to-cyan-400/6" />
+      <div className="pointer-events-none absolute -left-20 -top-20 h-52 w-52 rounded-full bg-violet-500/10 blur-3xl" />
 
-          <h2 className="text-md pb-2.5 font-semibold">
-            {months[currentMonth]} {currentYear}
-          </h2>
+      <div className="relative z-10 flex h-full flex-col">
+        <div className="border-b border-white/10 px-5 py-4">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => navigateMonth(-1)}
+              className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] text-slate-300 transition hover:border-violet-300/35 hover:bg-violet-500/15 hover:text-white"
+              aria-label="Previous month"
+            >
+              <ChevronLeft size={18} />
+            </button>
 
-          <button
-            onClick={() => navigateMonth(1)}
-            className="p-2 hover:bg-white/20 rounded-lg transition-colors duration-200"
-          >
-            <ChevronRight size={15} />
-          </button>
-        </div>
-
-        {/* Selected date display */}
-        {selectedDate ? (
-          dayEvents.length > 0 ? (
-            renderEventDisplay()
-          ) : (
-            <div className="bg-gray-50/5 border text-xs border-cyan-200 rounded-lg px-2 gap-0.5 py-[0.7px] flex justify-center items-center text-center w-70 mx-auto mb-[0.1rem]">
-              <p className=" text-gray-100">Selected Date: </p>
-              <p className="font-semibold text-gray-100">
-                {selectedDate.toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+            <div className="text-center">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
+                Campus Calendar
               </p>
+              <h2 className="mt-1 text-lg font-extrabold tracking-tight text-white">
+                {months[currentMonth]} {currentYear}
+              </h2>
             </div>
-          )
-        ) : (
-          <button
-            onClick={goToToday}
-            className="flex items-center w-50 mx-auto text-center justify-center gap-2 text-sm bg-white/20 px-3 py-[0.1rem] rounded-full hover:bg-white/30 transition-colors duration-200"
-          >
-            <Calendar size={14} />
-            Today
-          </button>
-        )}
-      </div>
 
-      {/* Calendar Grid */}
-      <div className="px-2 overflow-clip 2xl:mt-3">
-        <div className="grid grid-cols-7 md:place-items-center gap-1 ">
-          {daysOfWeek.map((day) => (
-            <div key={day} className="text-center 2xl:text-sm text-xs font-medium text-cyan-200 py-2">
-              {day}
-            </div>
-          ))}
+            <button
+              type="button"
+              onClick={() => navigateMonth(1)}
+              className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] text-slate-300 transition hover:border-violet-300/35 hover:bg-violet-500/15 hover:text-white"
+              aria-label="Next month"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+
+          {selectedDate ? (
+            dayEvents.length > 0 ? (
+              renderEventDisplay()
+            ) : (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-center">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                  Selected Date
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-200">
+                  {selectedDate.toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+            )
+          ) : (
+            <button
+              type="button"
+              onClick={goToToday}
+              className="mx-auto flex items-center justify-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-4 py-2 text-sm font-bold text-violet-100 transition hover:border-violet-300/40 hover:bg-violet-500/20"
+            >
+              <Calendar size={15} />
+              Today
+            </button>
+          )}
         </div>
 
-        <div className="grid grid-cols-7 md:place-items-center gap-1">
-          {/* Previous month days */}
-          {prevMonthDays.map((day, index) => (
-            <button
-              key={`prev-${index}`}
-              className="h-8 w-8 2xl:text-base text-gray-300 text-sm hover:bg-gray-50 hover:text-gray-800 rounded-lg transition-colors duration-150"
-              disabled
-            >
-              {day}
-            </button>
-          ))}
-
-          {/* Current month days */}
-          {currentMonthDays.map((day) => {
-            const isEventDayType = getEventTypeForDay(day);
-            let eventClass = "";
-            if (isEventDayType && eventTypeColors[isEventDayType]) {
-              eventClass = eventTypeColors[isEventDayType];
-            }
-
-            return (
-              <button
-                key={`current-${day}`}
-                onClick={() => handleDateClick(day, "current")}
-                className={`h-8 w-8 2xl:text-base text-sm rounded-lg transition-all duration-200 transform hover:scale-105 relative ${
-                  isToday(day)
-                    ? "bg-blue-500 text-white font-semibold shadow-md"
-                    : isSelected(day)
-                    ? "bg-purple-500 text-white font-medium shadow-md"
-                    : eventClass || "text-cyan-200 hover:bg-blue-50 hover:text-blue-600"
-                }`}
+        <div className="flex-1 px-5 py-4">
+          <div className="grid grid-cols-7 gap-1">
+            {daysOfWeek.map((day) => (
+              <div
+                key={day}
+                className="py-2 text-center text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500"
               >
-                {renderDayContent(day)}
-              </button>
-            );
-          })}
+                {day}
+              </div>
+            ))}
+          </div>
 
-          {/* Next month days */}
-          {nextMonthDays.map((day, index) => (
-            <button
-              key={`next-${index}`}
-              className="h-8 w-8 2xl:text-base text-gray-300 text-sm hover:bg-gray-50 hover:text-gray-800 rounded-lg transition-colors duration-150"
-              disabled
-            >
-              {day}
-            </button>
-          ))}
+          <div className="mt-1 grid grid-cols-7 gap-1">
+            {prevMonthDays.map((day, index) => (
+              <button
+                key={`prev-${index}`}
+                type="button"
+                className="flex aspect-square items-center justify-center rounded-2xl text-sm font-semibold text-slate-700"
+                disabled
+              >
+                {day}
+              </button>
+            ))}
+
+            {currentMonthDays.map((day) => {
+              const isEventDayType = getEventTypeForDay(day);
+              let eventClass = "";
+
+              if (isEventDayType && eventTypeColors[isEventDayType]) {
+                eventClass = eventTypeColors[isEventDayType];
+              }
+
+              const selected = isSelected(day);
+              const todayDate = isToday(day);
+              const hasEvent = Boolean(isEventDayType);
+
+              return (
+                <button
+                  key={`current-${day}`}
+                  type="button"
+                  onClick={() => handleDateClick(day, "current")}
+                  className={`relative flex aspect-square items-center justify-center rounded-2xl text-sm font-bold transition duration-200 hover:-translate-y-0.5 ${
+                    todayDate
+                      ? "bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-violet-950/40"
+                      : selected
+                        ? "border border-violet-300/40 bg-violet-500/20 text-violet-100"
+                        : hasEvent
+                          ? eventClass
+                          : "text-slate-300 hover:bg-white/[0.07] hover:text-white"
+                  }`}
+                >
+                  {renderDayContent(day)}
+
+                  {hasEvent && !todayDate && (
+                    <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-current opacity-80" />
+                  )}
+                </button>
+              );
+            })}
+
+            {nextMonthDays.map((day, index) => (
+              <button
+                key={`next-${index}`}
+                type="button"
+                className="flex aspect-square items-center justify-center rounded-2xl text-sm font-semibold text-slate-700"
+                disabled
+              >
+                {day}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 border-t border-white/10 px-5 py-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+            <Sparkles className="h-3.5 w-3.5 text-violet-300" />
+            Click a date to view events
+          </div>
+
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-bold text-slate-400">
+            {events.length} Events
+          </span>
         </div>
       </div>
     </div>

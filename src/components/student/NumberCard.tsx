@@ -1,14 +1,29 @@
 "use client";
-import { NumberCardsProps } from '@/lib/types';
-import React from 'react'
 
-const NumberCard:React.FC<NumberCardsProps> = (props) => {
+import { NumberCardsProps } from "@/lib/types";
+import React from "react";
+
+const NumberCard: React.FC<NumberCardsProps> = ({ title, value }) => {
   return (
-    <div className='flex mt-4 lg:w-40 lg:-ml-5 lg:h-20 2xl:w-60 sm:w-60 2xl:h-40 2xl:my-0 sm:h-40 flex-col items-center justify-center bg-gradient-to-tl from-white/20 to-black/20 border border-cyan-300 w-[12rem] rounded-4xl'  >
-         <h1 className='text-2xl sm:text-4xl text-center lg:text-lg 2xl:text-4xl text-cyan-300'>{props.value}</h1>
-         <p className='text-base sm:text-lg text-center lg:text-sm 2xl:text-2xl text-cyan-100 '>{props.title}</p>
-      </div>
-  )
-}
+    <div className="relative flex min-h-[130px] w-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#14141B]/90 p-5 shadow-2xl shadow-black/30 backdrop-blur-2xl transition duration-300 hover:-translate-y-0.5 hover:border-violet-300/35 hover:bg-[#1B1B24]/90">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/14 via-transparent to-cyan-400/8" />
+      <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-violet-400/15 blur-2xl" />
 
-export default NumberCard
+      <div className="relative z-10 flex w-full flex-col justify-between">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+          {title}
+        </p>
+
+        <div className="mt-4">
+          <h1 className="text-4xl font-extrabold tracking-tight text-white 2xl:text-5xl">
+            {value}
+          </h1>
+
+          <div className="mt-3 h-1.5 w-16 rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-400 to-cyan-300" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default NumberCard;

@@ -71,7 +71,6 @@ export async function POST(req: NextRequest) {
 
     // ==================== ADD USER ====================
     if (data.mode === "add") {
-
       //* Why will admin will be associated to a campus, admin is an independent user. ===> Fixed
       if (!campusId) {
         return NextResponse.json(
@@ -119,7 +118,9 @@ export async function POST(req: NextRequest) {
       }
 
       // ==================== CREATE USER ====================
-      const username= await transformUsername(data.role === "STUDENT" ? "STD": "TCH")
+      const username = await transformUsername(
+        data.role === "STUDENT" ? "STD" : "TCH",
+      );
       const newUser = await prisma.user.create({
         data: {
           name: data.name,
@@ -156,58 +157,71 @@ export async function POST(req: NextRequest) {
         });
 
         // ✅ Correct subject logic
-        const shouldAssignSubjects =
-          data.role === "TEACHER" &&
-          (data.designation !== "HOD" ||
-            (data.designation === "HOD" && data.assignedSubjects?.length));
+        const assignedSubjects = data.assignedSubjects ?? [];
+        const shouldAssignSubjects = assignedSubjects.length > 0;
 
-        if (
-          shouldAssignSubjects &&
-          data.assignedSubjects &&
-          data.assignedSubjects.length > 0 &&
-          data.semester &&
-          data.section
-        ) {
-          const semesterRecord = await prisma.semester.findFirst({
+        if (shouldAssignSubjects && data.semester && data.section) {
+          let semesterRecord = await prisma.semester.findFirst({
             where: { name: data.semester, campusId },
           });
 
-          const sectionRecord = await prisma.section.findFirst({
+          if (!semesterRecord) {
+            semesterRecord = await prisma.semester.create({
+              data: {
+                name: data.semester,
+                number: Number(data.semester.match(/\d+/)?.[0] || 0),
+                campusId,
+              },
+            });
+          }
+
+          let sectionRecord = await prisma.section.findFirst({
             where: { name: data.section, campusId },
           });
 
-          if (semesterRecord && sectionRecord) {
-            const subjectIds = await Promise.all(
-              data.assignedSubjects.map(async (subject) => {
-                const existingSubject = await prisma.subject.findFirst({
-                  where: { name: subject.name, campusId },
-                });
-
-                if (existingSubject) return existingSubject.id;
-
-                const newSubject = await prisma.subject.create({
-                  data: {
-                    name: subject.name,
-                    code: subject.code,
-                    description: subject.description,
-                    campusId,
-                  },
-                });
-
-                return newSubject.id;
-              }),
-            );
-
-            await prisma.teacherSubject.createMany({
-              data: subjectIds.map((subjectId) => ({
-                teacherId: teacherProfile.id,
-                subjectId,
-                semesterId: semesterRecord.id,
-                sectionId: sectionRecord.id,
-              })),
-              skipDuplicates: true,
+          if (!sectionRecord) {
+            sectionRecord = await prisma.section.create({
+              data: {
+                name: data.section,
+                campusId,
+              },
             });
           }
+          const subjectIds = await Promise.all(
+            assignedSubjects.map(async (subject) => {
+              const existingSubject = await prisma.subject.findFirst({
+                where: {
+                  OR: [
+                    { name: subject.name, campusId },
+                    ...(subject.code ? [{ code: subject.code, campusId }] : []),
+                  ],
+                },
+              });
+
+              if (existingSubject) return existingSubject.id;
+
+              const newSubject = await prisma.subject.create({
+                data: {
+                  name: subject.name,
+                  code: subject.code,
+                  description: subject.description,
+                  campusId,
+                },
+              });
+
+              return newSubject.id;
+            }),
+          );
+
+          await prisma.teacherSubject.createMany({
+            data: subjectIds.map((subjectId) => ({
+              teacherId: teacherProfile.id,
+              subjectId,
+              semesterId: semesterRecord.id,
+              sectionId: sectionRecord.id,
+            })),
+            skipDuplicates: true,
+          });
         }
       }
 

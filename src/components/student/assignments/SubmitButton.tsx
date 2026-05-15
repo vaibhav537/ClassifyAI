@@ -2,12 +2,16 @@ const SubmitButton = ({ hasSubmitted, onClick }: any) => {
   if (hasSubmitted) return null;
 
   return (
-    <div className="mt-8 flex justify-end">
+    <div className="flex justify-end">
       <button
+        type="button"
         onClick={onClick}
-        className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all transform hover:scale-105"
+        className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-6 py-4 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 transition duration-300 hover:-translate-y-0.5 hover:shadow-violet-800/30 active:scale-[0.98] sm:w-auto"
       >
         Prepare Submission
+        <span className="transition duration-300 group-hover:translate-x-1">
+          →
+        </span>
       </button>
     </div>
   );

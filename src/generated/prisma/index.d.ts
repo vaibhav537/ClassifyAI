@@ -42759,11 +42759,11 @@ export namespace Prisma {
 
   export type SemesterWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    name?: string
     name_campusId?: SemesterNameCampusIdCompoundUniqueInput
     AND?: SemesterWhereInput | SemesterWhereInput[]
     OR?: SemesterWhereInput[]
     NOT?: SemesterWhereInput | SemesterWhereInput[]
+    name?: StringFilter<"Semester"> | string
     number?: IntNullableFilter<"Semester"> | number | null
     createdAt?: DateTimeFilter<"Semester"> | Date | string
     campusId?: StringFilter<"Semester"> | string
@@ -42773,7 +42773,7 @@ export namespace Prisma {
     students?: StudentListRelationFilter
     TimetableEntry?: TimetableEntryListRelationFilter
     Conversation?: ConversationListRelationFilter
-  }, "id" | "name" | "name_campusId">
+  }, "id" | "name_campusId">
 
   export type SemesterOrderByWithAggregationInput = {
     id?: SortOrder
@@ -42830,11 +42830,11 @@ export namespace Prisma {
 
   export type SectionWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    name?: string
     name_campusId?: SectionNameCampusIdCompoundUniqueInput
     AND?: SectionWhereInput | SectionWhereInput[]
     OR?: SectionWhereInput[]
     NOT?: SectionWhereInput | SectionWhereInput[]
+    name?: StringFilter<"Section"> | string
     createdAt?: DateTimeFilter<"Section"> | Date | string
     campusId?: StringFilter<"Section"> | string
     campus?: XOR<CampusScalarRelationFilter, CampusWhereInput>
@@ -42843,7 +42843,7 @@ export namespace Prisma {
     students?: StudentListRelationFilter
     TimetableEntry?: TimetableEntryListRelationFilter
     Conversation?: ConversationListRelationFilter
-  }, "id" | "name" | "name_campusId">
+  }, "id" | "name_campusId">
 
   export type SectionOrderByWithAggregationInput = {
     id?: SortOrder

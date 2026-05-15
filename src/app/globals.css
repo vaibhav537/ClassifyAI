@@ -1,21 +1,134 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #08080c;
+  --foreground: #f8fafc;
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-serif: var(--font-lora);
+  --app-bg: #08080c;
+  --app-bg-soft: #101014;
+  --app-surface: #14141b;
+  --app-surface-elevated: #1b1b24;
+  --app-card: #181820;
+
+  --app-primary: #7c3aed;
+  --app-primary-hover: #6d28d9;
+  --app-accent: #c084fc;
+  --app-brand-cyan: #22d3ee;
+
+  --app-success: #22c55e;
+  --app-warning: #f59e0b;
+  --app-danger: #ef4444;
+
+  --app-text-primary: #f8fafc;
+  --app-text-secondary: #d1d5db;
+  --app-text-muted: #9ca3af;
+
+  --app-border: rgba(255, 255, 255, 0.1);
+  --app-border-strong: rgba(255, 255, 255, 0.18);
+
+  --font-sans: var(--font-inter);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+
   user-select: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
+
+html {
+  min-height: 100%;
+  background: var(--app-bg);
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: var(--app-bg);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+textarea,
+select {
+  user-select: text;
+}
+
+::selection {
+  background: rgba(124, 58, 237, 0.35);
+  color: #ffffff;
+}
+
+/* ----------------------------- */
+/* App Background Utilities */
+/* ----------------------------- */
+
+.app-shell-bg {
+  background:
+    radial-gradient(circle at top left, rgba(124, 58, 237, 0.18), transparent 34%),
+    radial-gradient(circle at top right, rgba(192, 132, 252, 0.12), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.08), transparent 28%),
+    #08080c;
+}
+
+.app-card {
+  border: 1px solid var(--app-border);
+  background: rgba(20, 20, 27, 0.82);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(18px);
+}
+
+.app-card-hover {
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    background-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.app-card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(192, 132, 252, 0.32);
+  background: rgba(27, 27, 36, 0.92);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+}
+
+.text-brand-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #c084fc 48%, #22d3ee 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.brand-glow {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 20px 70px rgba(124, 58, 237, 0.28);
+}
+
+/* ----------------------------- */
+/* Old Blob Animations Preserved */
+/* ----------------------------- */
 
 @keyframes blob1 {
   0% {
@@ -65,32 +178,21 @@
   animation: blob3 10s infinite ease-in-out;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-}
-
-h1,
-h2,
-h3 {
-  font-family: var(--font-serif);
-}
-
-code,
-pre {
-  font-family: var(--font-mono);
-}
+/* ----------------------------- */
+/* Chat Glow Updated */
+/* ----------------------------- */
 
 @keyframes shadowGlow {
   0%,
   100% {
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3),
-      0 0 20px rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 0 22px rgba(124, 58, 237, 0.28);
   }
   50% {
-    box-shadow: 0 0 18px rgba(0, 255, 255, 0.4),
-      0 0 30px rgba(255, 255, 255, 0.15);
+    box-shadow:
+      0 0 0 1px rgba(192, 132, 252, 0.18),
+      0 0 34px rgba(192, 132, 252, 0.34);
   }
 }
 
@@ -99,8 +201,13 @@ pre {
   will-change: box-shadow;
 }
 
+/* ----------------------------- */
+/* Scrollbar */
+/* ----------------------------- */
+
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
@@ -108,17 +215,30 @@ pre {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(34, 211, 238, 0.3);
+  background-color: rgba(192, 132, 252, 0.32);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(34, 211, 238, 0.6);
+  background-color: rgba(192, 132, 252, 0.58);
 }
 
 ::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+.scrollbar-hide {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ----------------------------- */
+/* Animated Text Gradient */
+/* ----------------------------- */
 
 @keyframes gradientMove {
   0% {
@@ -133,30 +253,43 @@ pre {
 }
 
 .animated-gradient {
-  background-image: linear-gradient(-45deg, #0ff, #0af, #00f, #0af, #0ff);
+  background-image: linear-gradient(
+    -45deg,
+    #ffffff,
+    #c084fc,
+    #7c3aed,
+    #22d3ee,
+    #ffffff
+  );
   background-size: 300% 300%;
   animation: gradientMove 6s ease infinite;
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
 }
+
+/* ----------------------------- */
+/* QR Scanner Styling */
+/* ----------------------------- */
 
 #reader {
   border: none !important;
 }
 
 #reader .html5-qrcode-scanner {
-  border: none !important;
-  border-radius: 1rem;
-  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--app-border) !important;
+  border-radius: 1.25rem;
+  background: rgba(20, 20, 27, 0.76);
   padding: 1rem;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(16px);
   color: white;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
 }
 
 #reader .html5-qrcode-scanner > .row:first-child {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: cyan;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #c084fc;
   text-align: center;
 }
 
@@ -167,33 +300,39 @@ pre {
 }
 
 #reader video {
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   object-fit: cover;
   max-height: 400px;
 }
 
-#html5-qrcode-select-camera {
-  background-color: rgba(6, 182, 212, 0.2);
-  color: #06b6d4;
-  border: 1px solid #06b6d4;
-  padding: 0.5rem 1rem;
+#html5-qrcode-select-camera,
+#html5-qrcode-button-camera-stop,
+#html5-qrcode-button-camera-start {
+  background-color: rgba(124, 58, 237, 0.16);
+  color: #f8fafc;
+  border: 1px solid rgba(192, 132, 252, 0.34);
+  padding: 0.55rem 1rem;
   margin: 0.25rem;
-  border-radius: 0.375rem;
+  border-radius: 0.85rem;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
+  transition:
+    background-color 0.2s ease-in-out,
+    border-color 0.2s ease-in-out,
+    transform 0.2s ease-in-out;
   outline: none;
 }
 
-#html5-qrcode-button-camera-stop {
-  background-color: rgba(6, 182, 212, 0.2);
-  color: #06b6d4;
-  border: 1px solid #06b6d4;
-  padding: 0.5rem 1rem;
-  margin: 0.25rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-  outline: none;
+#html5-qrcode-select-camera:hover,
+#html5-qrcode-button-camera-start:hover {
+  background-color: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.45);
+  transform: translateY(-1px);
+}
+
+#html5-qrcode-button-camera-stop:hover {
+  background-color: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.45);
+  transform: translateY(-1px);
 }
 
 #reader__scan_region {
@@ -206,41 +345,24 @@ pre {
   width: 10rem;
 }
 
-#html5-qrcode-button-camera-stop:hover {
-  background-color: rgba(255, 43, 43, 0.4);
-  color: #000;
-  border: 1px solid #8ae5f5;
-}
-
-#html5-qrcode-button-camera-start {
-  background-color: rgba(6, 182, 212, 0.2);
-  color: #06b6d4;
-  border: 1px solid #06b6d4;
-  padding: 0.5rem 1rem;
-  margin: 0.25rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-  outline: none;
-}
-
-#html5-qrcode-button-camera-start:hover {
-  background-color: rgba(36, 255, 91, 0.589);
-  color: #000;
-  border: 1px solid #8ae5f5;
-}
-
 #html5-qrcode-anchor-scan-type-change {
   margin-top: 12px;
-  font-size: x-large;
-  color: #06b6d4;
-  font-weight: 600;
+  font-size: 1rem;
+  color: #c084fc;
+  font-weight: 700;
   cursor: pointer;
   transition: color 0.2s ease-in-out;
-
   text-decoration: none !important;
   border: none;
 }
+
+#html5-qrcode-anchor-scan-type-change:hover {
+  color: #22d3ee;
+}
+
+/* ----------------------------- */
+/* Form Fixes */
+/* ----------------------------- */
 
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
@@ -249,27 +371,17 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 input[type="number"] {
-  -moz-appearance: textfield; /* Firefox */
+  -moz-appearance: textfield;
   appearance: textfield;
 }
 
-.special-shadow {
-  box-shadow: 
-    rgba(0, 255, 242, 0) 2px 0px 4px,
-    rgb(0, 217, 255) 7px 0px 13px -3px,
-    rgba(0, 225, 255, 0.308) -3px 0px 0px inset;
-}
-
-.scrollbar-hide {
-  scrollbar-width: none !important; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
-}
-
 .input-style {
-  @apply w-full bg-white/10 border border-white/20 p-3 rounded-xl text-gray-200 
-  placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition;
+  @apply w-full rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition focus:border-violet-400/60 focus:ring-4 focus:ring-violet-500/15;
+}
+
+.special-shadow {
+  box-shadow:
+    rgba(124, 58, 237, 0.14) 2px 0px 10px,
+    rgba(192, 132, 252, 0.28) 7px 0px 18px -6px,
+    rgba(34, 211, 238, 0.18) -3px 0px 0px inset;
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Lora } from "next/font/google";
+import { Inter } from "next/font/google";
+// @ts-ignore: global CSS import without explicit type declarations
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import ClientNavBlocker from "@/components/apps/ClientNavBlocker";
@@ -10,15 +11,15 @@ import RootBackground from "@/components/apps/RootBackground";
 import AppVersionCard from "@/components/apps/AppVersionCard";
 import NotificationPortal from "@/components/ui/NotificationPortal";
 
-const lora = Lora({
-  variable: "--font-lora",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
-  title: "ClassifyAI",
-  description: "Smart Attendance & Exam Tracker App",
+  title: "Classify AI",
+  description: "Smart Attendance, Exams, Study Planning and AI Learning Platform",
 };
 
 export default function RootLayout({
@@ -27,28 +28,62 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={lora.variable}>
+    <html lang="en" className={inter.variable}>
       <head>
-        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
       </head>
-      <body
-        className={` scrollbar-hide sm:overflow-x-hidden sm:overflow-y-auto md:overflow-x-hidden md:overflow-y-auto  lg:overflow-hidden font-lora antialiased relative min-h-screen`}
-      >
+
+      <body className="scrollbar-hide min-h-screen overflow-x-hidden bg-[#08080C] font-sans text-slate-100 antialiased selection:bg-violet-500/30 selection:text-white">
         <NotificationPortal />
-        <RootBackground />
+        {/* <RootBackground /> */}
         <ClientNavBlocker />
         <RazorpayScriptLoader />
         <RouteLoader />
         <NetworkListener />
-        <Toaster position="bottom-center" reverseOrder={false} />
 
-        <div className="relative z-10">{children}</div>
+        <Toaster
+          position="bottom-center"
+          reverseOrder={false}
+          toastOptions={{
+            duration: 3500,
+            style: {
+              background: "#14141B",
+              color: "#F8FAFC",
+              border: "1px solid rgba(255,255,255,0.10)",
+              borderRadius: "16px",
+              boxShadow: "0 24px 80px rgba(0,0,0,0.45)",
+              fontSize: "14px",
+              fontWeight: 500,
+            },
+            success: {
+              iconTheme: {
+                primary: "#22C55E",
+                secondary: "#FFFFFF",
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: "#EF4444",
+                secondary: "#FFFFFF",
+              },
+            },
+          }}
+        />
 
-        <div className="absolute bottom-4 right-4 text-xs  text-gray-400">
-          <p className="uppercase">© 2025 ClassifyAI</p>
-          <AppVersionCard />
+        <main className="relative z-10 min-h-screen overflow-x-hidden">
+          {children}
+        </main>
+
+        <div className="pointer-events-none fixed bottom-4 right-4 z-20 hidden text-right text-[10px] font-semibold uppercase tracking-[0.24em] text-white/35 sm:block">
+          <p>© 2025 Classify AI</p>
+
+          <div className="pointer-events-auto mt-2">
+            <AppVersionCard />
+          </div>
         </div>
       </body>
     </html>
   );
 }
+
+

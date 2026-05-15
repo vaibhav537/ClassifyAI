@@ -93,7 +93,7 @@ model Student {
 
 model Semester {
   id        String   @id @default(cuid())
-  name      String   @unique
+  name      String
   number    Int?
   createdAt DateTime @default(now())
   campusId  String
@@ -110,7 +110,7 @@ model Semester {
 
 model Section {
   id        String   @id @default(cuid())
-  name      String   @unique
+  name      String
   createdAt DateTime @default(now())
   campusId  String
   campus    Campus   @relation(fields: [campusId], references: [id])
