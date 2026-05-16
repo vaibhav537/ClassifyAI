@@ -283,7 +283,6 @@ export const teacherNavLinks = [
     icon: Megaphone,
   },
   { label: "Resources", href: "/dashboard/teacher/resources", icon: Upload },
-  { label: "Logout", href: "/dashboard/teacher/logout", icon: LogOut },
 ];
 
 // --- NEWLY IMPLEMENTED FUNCTION ---

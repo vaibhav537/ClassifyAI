@@ -127,7 +127,7 @@ export default function NotificationBell() {
     .slice(0, 3);
 
   return (
-    <div className="relative">
+    <div className="relative z-[9999]">
       <motion.button
         type="button"
         onClick={handleToggle}
@@ -151,7 +151,7 @@ export default function NotificationBell() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="absolute right-0 z-50 mt-3 w-[min(calc(100vw-2rem),24rem)] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#14141B]/95 shadow-2xl shadow-black/45 backdrop-blur-2xl 2xl:-right-8"
+            className="absolute right-0 z-[9999] mt-3 w-[min(calc(100vw-2rem),24rem)] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#14141B]/95 shadow-2xl shadow-black/45 backdrop-blur-2xl 2xl:-right-8"
           >
             <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
               <div>

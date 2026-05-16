@@ -124,7 +124,7 @@ export default function StudentDashboard() {
       } catch (error) {
         console.log("Error fetching today's attendance:", error);
       } finally {
-          setLoading(false);
+        setLoading(false);
       }
     };
 
@@ -212,7 +212,7 @@ export default function StudentDashboard() {
         <div className="pointer-events-none absolute bottom-10 right-10 h-80 w-80 rounded-full bg-cyan-400/5 blur-3xl" />
 
         <div className="relative z-10 mx-auto flex max-w-[1800px] flex-col gap-5">
-          <header className="overflow-visible rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-3 shadow-2xl shadow-black/30 backdrop-blur-2xl sm:p-4">
+          <header className="relative z-[200] overflow-visible rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-3 shadow-2xl shadow-black/30 backdrop-blur-2xl sm:p-4">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center">
                 <div className="flex shrink-0 items-center justify-center rounded-[1.5rem] border border-white/10 bg-white/[0.045] px-4 py-3 shadow-xl shadow-black/20">
@@ -279,7 +279,7 @@ export default function StudentDashboard() {
             </div>
           </header>
 
-          <div className="grid gap-5 xl:grid-cols-[320px_minmax(360px,430px)_1fr] 2xl:grid-cols-[360px_minmax(420px,500px)_1fr]">
+          <div className="relative z-0 grid gap-5 xl:grid-cols-[320px_minmax(360px,430px)_1fr] 2xl:grid-cols-[360px_minmax(420px,500px)_1fr]">
             <aside className="space-y-5">
               <Link
                 href="/attendance/scan"

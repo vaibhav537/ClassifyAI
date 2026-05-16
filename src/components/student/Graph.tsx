@@ -58,7 +58,7 @@ const BarGraph: React.FC = () => {
     selectedBar !== null ? attendanceData[selectedBar] : undefined;
 
   return (
-    <div className="relative h-full min-h-[360px] w-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#14141B]/90 shadow-2xl shadow-black/35 backdrop-blur-2xl">
+    <div className="relative z-0 h-full min-h-[360px] w-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#14141B]/90 shadow-2xl shadow-black/35 backdrop-blur-2xl">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/12 via-transparent to-cyan-400/6" />
       <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-violet-500/10 blur-3xl" />
 
