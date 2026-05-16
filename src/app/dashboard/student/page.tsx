@@ -124,7 +124,7 @@ export default function StudentDashboard() {
       } catch (error) {
         console.log("Error fetching today's attendance:", error);
       } finally {
-        setLoading(false);
+          setLoading(false);
       }
     };
 
@@ -184,14 +184,7 @@ export default function StudentDashboard() {
   };
 
   if (loading) {
-    return (
-      <div className="relative grid min-h-screen place-items-center overflow-hidden bg-[#08080C]">
-        <div className="pointer-events-none absolute inset-0 app-shell-bg" />
-        <div className="relative z-10">
-          <DashboardLoader />
-        </div>
-      </div>
-    );
+    return <DashboardLoader />;
   }
 
   return (

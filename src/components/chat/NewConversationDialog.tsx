@@ -2,7 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Search, Users, User, Lock } from "lucide-react";
+import {
+  Check,
+  Loader2,
+  Lock,
+  MessageCircle,
+  Search,
+  ShieldCheck,
+  User,
+  Users,
+  X,
+} from "lucide-react";
 import useSWR from "swr";
 import { mutate } from "swr";
 import { NewConversationDialogProps } from "@/lib/types";
@@ -30,7 +40,9 @@ export default function NewConversationDialog({
 
   const usersUrl =
     campusId && userId
-      ? `/api/users?campusId=${campusId}&requesterId=${userId}&forGroup=${mode === "GROUP"}${isTeacherOnly ? "&teacherOnly=true" : ""}`
+      ? `/api/users?campusId=${campusId}&requesterId=${userId}&forGroup=${
+          mode === "GROUP"
+        }${isTeacherOnly ? "&teacherOnly=true" : ""}`
       : null;
 
   const { data: users } = useSWR(usersUrl, fetcher);
@@ -44,6 +56,7 @@ export default function NewConversationDialog({
       setSelectedIds([id]);
       return;
     }
+
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
@@ -54,6 +67,7 @@ export default function NewConversationDialog({
     if (mode === "GROUP" && !groupName.trim()) return;
 
     setIsCreating(true);
+
     try {
       const res = await fetch("/api/chat/conversations", {
         method: "POST",
@@ -69,10 +83,12 @@ export default function NewConversationDialog({
       });
 
       const data = await res.json();
+
       if (!res.ok) {
         console.error("Create conversation error: ", data.error);
         return;
       }
+
       mutate(`/api/chat/conversations?userId=${userId}`);
       onCreated(data.id);
       handleClose();
@@ -100,189 +116,254 @@ export default function NewConversationDialog({
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
-        animate={{ opacity: 1, backdropFilter: "blur(6px)" }}
+        animate={{ opacity: 1, backdropFilter: "blur(10px)" }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 z-[9999] grid place-items-center bg-black/80 p-4"
         onClick={handleClose}
       >
         <motion.div
-          initial={{ scale: 0.9, y: 40, opacity: 0 }}
+          initial={{ scale: 0.95, y: 24, opacity: 0 }}
           animate={{ scale: 1, y: 0, opacity: 1 }}
-          exit={{ scale: 0.9, y: 20, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 120, damping: 18 }}
-          className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl w-full max-w-md text-white p-6"
+          exit={{ scale: 0.95, y: 18, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 140, damping: 20 }}
+          className="relative max-h-[90vh] w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/95 text-white shadow-2xl shadow-black/60 backdrop-blur-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Glow */}
-          <div className="absolute -top-10 -left-10 w-40 h-40 bg-purple-600/20 blur-3xl rounded-full" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/16 via-fuchsia-500/8 to-cyan-400/6" />
+          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-violet-500/15 blur-3xl" />
 
-          {/* Header */}
-          <div className="flex items-center justify-between mb-5 relative">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">
-              New Conversation
-            </h2>
+          <div className="relative z-10 flex max-h-[90vh] flex-col">
+            <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-5">
+              <div className="min-w-0">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-violet-200">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  Secure Chat
+                </div>
 
-            <motion.button
-              whileHover={{ scale: 1.15 }}
-              whileTap={{ scale: 0.85 }}
-              onClick={handleClose}
-              className="p-1.5 hover:bg-white/10 rounded-full transition"
-            >
-              <X size={18} className="text-gray-400" />
-            </motion.button>
-          </div>
+                <h2 className="text-2xl font-extrabold tracking-tight text-white">
+                  New Conversation
+                </h2>
 
-          {/* Mode toggle (pill style) */}
-          <div className="relative flex bg-white/5 p-1 rounded-xl mb-5 border border-white/10">
-            <motion.div
-              layout
-              className={`absolute top-1 bottom-1 w-1/2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500`}
-              style={{
-                left: mode === "DIRECT" ? "4px" : "50%",
-              }}
-            />
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  Start a direct message or create a campus group.
+                </p>
+              </div>
 
-            {(["DIRECT", "GROUP"] as const).map((m) => {
-              if (m === "GROUP" && !canCreateGroup) return null;
-              const isActive = mode === m;
-              return (
-                <button
-                  key={m}
-                  onClick={() => {
-                    setMode(m);
-                    setSelectedIds([]);
-                  }}
-                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium ${isActive ? "bg-indigo-500 text-white" : "bg-white/5 text-gray-400 hover:bg-white/10"}`}
-                >
-                  {m === "DIRECT" ? <User size={15} /> : <Users size={15} />}
-                  {m === "DIRECT" ? "Direct" : "Group"}
-                </button>
-              );
-            })}
-          </div>
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.92 }}
+                onClick={handleClose}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-red-300/20 bg-red-500/10 text-red-200 transition hover:bg-red-500/20"
+              >
+                <X size={18} />
+              </motion.button>
+            </div>
 
-          {/* Group name */}
-          <AnimatePresence>
-            {mode === "GROUP" && (
-              <>
-                <motion.input
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  type="text"
-                  placeholder="Group name"
-                  value={groupName}
-                  onChange={(e) => setGroupName(e.target.value)}
-                  className="w-full bg-neutral-900/70 border border-white/10 p-3 rounded-xl text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            <div className="overflow-y-auto px-5 py-5">
+              <div className="relative mb-5 grid rounded-[1.5rem] border border-white/10 bg-[#08080C]/45 p-1.5">
+                <div
+                  className={`absolute bottom-1.5 top-1.5 rounded-2xl bg-violet-500/20 ring-1 ring-violet-300/30 transition-all duration-300 ${
+                    mode === "DIRECT"
+                      ? "left-1.5 right-[calc(50%+0.1875rem)]"
+                      : "left-[calc(50%+0.1875rem)] right-1.5"
+                  }`}
                 />
-                {canCreateTeacherOnly && (
+
+                <div className="relative z-10 grid grid-cols-2 gap-1">
                   <button
+                    type="button"
                     onClick={() => {
-                      setIsTeacherOnly((prev) => !prev);
+                      setMode("DIRECT");
                       setSelectedIds([]);
                     }}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition border ${
-                      isTeacherOnly
-                        ? "bg-violet-500/20 border-violet-500/40 text-violet-300"
-                        : " border-white/10 text-gray-400"
+                    className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold transition ${
+                      mode === "DIRECT"
+                        ? "text-violet-100"
+                        : "text-slate-500 hover:text-white"
                     }`}
                   >
-                    <Lock size={15} />
-                    {isTeacherOnly
-                      ? "Teacher-Only Group (locked)"
-                      : "Make Teacher-Only Group"}
+                    <User size={16} />
+                    Direct
                   </button>
-                )}
-              </>
-            )}
-          </AnimatePresence>
 
-          {/* Search */}
-          <div className="relative mb-3">
-            <Search
-              size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-            />
-            <input
-              type="text"
-              placeholder="Search people..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-neutral-900/70 border border-white/10 pl-9 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
+                  {canCreateGroup ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode("GROUP");
+                        setSelectedIds([]);
+                      }}
+                      className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold transition ${
+                        mode === "GROUP"
+                          ? "text-violet-100"
+                          : "text-slate-500 hover:text-white"
+                      }`}
+                    >
+                      <Users size={16} />
+                      Group
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      className="flex cursor-not-allowed items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold text-slate-700"
+                    >
+                      <Users size={16} />
+                      Group
+                    </button>
+                  )}
+                </div>
+              </div>
 
-          {/* Users */}
-          <ul className="max-h-56 overflow-y-auto scrollbar-hide space-y-1 mb-5">
-            {filtered?.map((user: any, i: number) => {
-              const isSelected = selectedIds.includes(user.id);
-
-              return (
-                <motion.li
-                  key={user.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.02 }}
-                >
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => toggleSelect(user.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition ${
-                      isSelected
-                        ? "bg-indigo-500/20 border border-indigo-500/40"
-                        : "hover:bg-white/5"
-                    }`}
+              <AnimatePresence>
+                {mode === "GROUP" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="mb-5 space-y-3"
                   >
-                    <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                      <User size={15} className="text-indigo-400" />
-                    </div>
+                    <input
+                      type="text"
+                      placeholder="Group name"
+                      value={groupName}
+                      onChange={(e) => setGroupName(e.target.value)}
+                      className="w-full rounded-2xl border border-white/10 bg-white/[0.055] px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                    />
 
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-medium truncate">
-                        {user.name}
+                    {canCreateTeacherOnly && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsTeacherOnly((prev) => !prev);
+                          setSelectedIds([]);
+                        }}
+                        className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-bold transition ${
+                          isTeacherOnly
+                            ? "border-violet-300/35 bg-violet-500/15 text-violet-100"
+                            : "border-white/10 bg-white/[0.04] text-slate-400 hover:border-violet-300/25 hover:bg-white/[0.06] hover:text-white"
+                        }`}
+                      >
+                        <Lock size={16} />
+                        {isTeacherOnly
+                          ? "Teacher-Only Group Enabled"
+                          : "Make Teacher-Only Group"}
+                      </button>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="relative mb-4">
+                <Search
+                  size={16}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Search people..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-2xl border border-white/10 bg-white/[0.055] px-4 py-3 pl-11 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                />
+              </div>
+
+              <ul className="mb-5 max-h-60 space-y-2 overflow-y-auto scrollbar-hide">
+                {filtered?.map((user: any, i: number) => {
+                  const isSelected = selectedIds.includes(user.id);
+
+                  return (
+                    <motion.li
+                      key={user.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.02 }}
+                    >
+                      <motion.button
+                        type="button"
+                        whileHover={{ y: -1 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => toggleSelect(user.id)}
+                        className={`group flex w-full items-center gap-3 rounded-[1.25rem] border px-3 py-3 text-left transition duration-300 ${
+                          isSelected
+                            ? "border-violet-300/35 bg-violet-500/15"
+                            : "border-white/10 bg-white/[0.04] hover:border-violet-300/25 hover:bg-white/[0.06]"
+                        }`}
+                      >
+                        <div
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border ${
+                            isSelected
+                              ? "border-violet-300/30 bg-violet-500/20"
+                              : "border-white/10 bg-[#08080C]/45"
+                          }`}
+                        >
+                          <User size={16} className="text-violet-200" />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-extrabold text-white">
+                            {user.name}
+                          </p>
+
+                          <p className="mt-0.5 truncate text-xs font-medium uppercase tracking-[0.12em] text-slate-600">
+                            {user.role}
+                          </p>
+                        </div>
+
+                        <AnimatePresence>
+                          {isSelected && (
+                            <motion.span
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              exit={{ scale: 0 }}
+                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-violet-100 ring-1 ring-violet-300/30"
+                            >
+                              <Check size={14} />
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+                      </motion.button>
+                    </motion.li>
+                  );
+                })}
+
+                {filtered?.length === 0 && (
+                  <li className="grid min-h-32 place-items-center rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.03] p-5 text-center">
+                    <div>
+                      <MessageCircle className="mx-auto h-7 w-7 text-slate-600" />
+                      <p className="mt-3 text-sm font-bold text-slate-400">
+                        No users found
                       </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {user.role}
-                      </p>
                     </div>
+                  </li>
+                )}
+              </ul>
+            </div>
 
-                    <AnimatePresence>
-                      {isSelected && (
-                        <motion.span
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          exit={{ scale: 0 }}
-                          className="w-2 h-2 rounded-full bg-indigo-400"
-                        />
-                      )}
-                    </AnimatePresence>
-                  </motion.button>
-                </motion.li>
-              );
-            })}
-
-            {filtered?.length === 0 && (
-              <p className="text-center text-sm text-gray-500 py-4">
-                No users found
-              </p>
-            )}
-          </ul>
-
-          {/* Create */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={handleCreate}
-            disabled={
-              isCreating ||
-              selectedIds.length === 0 ||
-              (mode === "GROUP" && !groupName.trim())
-            }
-            className="w-full py-2.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-600 font-semibold rounded-xl transition disabled:opacity-40"
-          >
-            {isCreating ? "Creating..." : "Start Conversation"}
-          </motion.button>
+            <div className="border-t border-white/10 px-5 py-5">
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleCreate}
+                disabled={
+                  isCreating ||
+                  selectedIds.length === 0 ||
+                  (mode === "GROUP" && !groupName.trim())
+                }
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 transition duration-300 hover:-translate-y-0.5 hover:shadow-violet-800/30 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isCreating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <MessageCircle className="h-4 w-4" />
+                )}
+                {isCreating ? "Creating..." : "Start Conversation"}
+              </motion.button>
+            </div>
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>

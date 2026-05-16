@@ -21,17 +21,14 @@ export default function TypingIndicator({ typingUsers }: TypingIndicatorProps) {
       exit={{ opacity: 0 }}
       className="flex items-center gap-2 px-1"
     >
-      {/* Bubble */}
-      <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl rounded-bl-sm border border-white/10 shadow-sm">
-        
-        {/* Dots */}
+      <div className="flex items-center gap-1.5 rounded-[1.25rem] rounded-bl-md border border-white/10 bg-[#14141B]/90 px-4 py-2 shadow-lg shadow-black/20 backdrop-blur-xl">
         {[0, 1, 2].map((i) => (
           <motion.span
             key={i}
-            className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-indigo-400 to-purple-400"
+            className="h-1.5 w-1.5 rounded-full bg-violet-300"
             animate={{
               y: [0, -5, 0],
-              opacity: [0.5, 1, 0.5],
+              opacity: [0.45, 1, 0.45],
             }}
             transition={{
               duration: 0.8,
@@ -43,12 +40,11 @@ export default function TypingIndicator({ typingUsers }: TypingIndicatorProps) {
         ))}
       </div>
 
-      {/* Label */}
       <motion.span
         initial={{ opacity: 0 }}
-        animate={{ opacity: 0.8 }}
+        animate={{ opacity: 0.85 }}
         transition={{ delay: 0.2 }}
-        className="text-xs text-gray-500"
+        className="text-xs font-medium text-slate-500"
       >
         {label}
       </motion.span>
