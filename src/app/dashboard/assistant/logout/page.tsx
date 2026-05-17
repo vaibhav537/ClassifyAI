@@ -1,17 +1,28 @@
 "use client";
 
 import { showSuccessMessage } from "@/lib/helper";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 const Logout = () => {
-  const router = useRouter();
-
   useEffect(() => {
-    localStorage.removeItem("assistantId");
-    showSuccessMessage("Assistant Logged out!")
-    router.replace("/auth/login");
-  }, [router]);
+    const keysToRemove = [
+      "assistantId",
+      "HTML5_QRCODE_DATA",
+      "epr_suggested",
+      "last-online-page",
+      "pusherTransportTLS",
+      "rzp_checkout_anon_id",
+      "rzp_device_id",
+      "userId",
+      "userRole",
+    ];
+
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+    showSuccessMessage("Assistant Logged out!");
+
+    window.location.replace("/auth/login");
+  }, []);
 
   return null;
 };

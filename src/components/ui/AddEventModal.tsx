@@ -1,6 +1,4 @@
 "use client";
-
-import { Tektur } from "next/font/google";
 import React, { useEffect, useState } from "react";
 import { Event } from "@/lib/types";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,11 +7,18 @@ import {
   showLoadingMessage,
   showSuccessMessage,
 } from "@/lib/helper";
+import {
+  CalendarDays,
+  CheckCircle2,
+  Loader2,
+  Pencil,
+  Plus,
+  Sparkles,
+  X,
+} from "lucide-react";
 
-const tektur = Tektur({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
+const inputClass =
+  "w-full rounded-2xl border border-white/10 bg-[#08080C]/65 px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:bg-[#08080C]/85 disabled:cursor-not-allowed disabled:opacity-60";
 
 const AddEventModal = ({
   isOpen,
@@ -36,14 +41,13 @@ const AddEventModal = ({
     active: true,
   });
   const [loading, setLoading] = useState(false);
-  // 1. Add state to hold the campusId
   const [campusId, setCampusId] = useState("");
   const [createdBy, setCreatedBy] = useState("");
 
   useEffect(() => {
-    // 2. Get campusId and the assistant's user ID from localStorage
     const assistantUserId = localStorage.getItem("assistantId") ?? "";
     const assistantCampusId = localStorage.getItem("CampusID") ?? "";
+
     setCreatedBy(assistantUserId);
     setCampusId(assistantCampusId);
 
@@ -51,13 +55,11 @@ const AddEventModal = ({
       setForm({
         title: initialData.title,
         description: initialData.description ?? "",
-        // The API expects a full ISO string, but the date input needs YYYY-MM-DD
         date: new Date(initialData.date).toISOString().slice(0, 10),
         type: initialData.type,
         active: initialData.active ?? true,
       });
     } else {
-      // Reset form for 'add' mode
       setForm({
         title: "",
         description: "",
@@ -71,7 +73,7 @@ const AddEventModal = ({
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -79,14 +81,13 @@ const AddEventModal = ({
   const handleSubmit = async () => {
     setLoading(true);
     showLoadingMessage(
-      mode === "add" ? "Creating event..." : "Updating event..."
+      mode === "add" ? "Creating event..." : "Updating event...",
     );
 
     try {
-      // 3. Add campusId to the API request payload for both 'add' and 'edit'
-      let payload: any = {
+      const payload: any = {
         ...form,
-        date: new Date(form.date).toISOString(), // Send the full ISO string
+        date: new Date(form.date).toISOString(),
         campusId: campusId,
         createdBy: createdBy,
       };
@@ -104,7 +105,7 @@ const AddEventModal = ({
           method: mode === "add" ? "POST" : "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        }
+        },
       );
 
       const data = await res.json();
@@ -114,7 +115,7 @@ const AddEventModal = ({
       }
 
       showSuccessMessage(
-        `Event ${mode === "add" ? "created" : "updated"} successfully!`
+        `Event ${mode === "add" ? "created" : "updated"} successfully!`,
       );
       onSuccess();
       onClose();
@@ -125,6 +126,8 @@ const AddEventModal = ({
     }
   };
 
+  const isEdit = mode === "edit";
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -133,101 +136,226 @@ const AddEventModal = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/75 flex justify-center items-center z-[9999]"
+          className="fixed inset-0 z-[999999] grid place-items-center overflow-hidden bg-[#08080C]/95 p-3 text-white backdrop-blur-2xl sm:p-5"
           onClick={onClose}
         >
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.15),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.08),transparent_30%),radial-gradient(circle_at_center,rgba(217,70,239,0.05),transparent_38%)]" />
+          <div className="pointer-events-none absolute -left-28 top-16 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
+          <div className="pointer-events-none absolute -right-28 bottom-16 h-80 w-80 rounded-full bg-cyan-500/5 blur-3xl" />
+
           <motion.div
             key="modal"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="from-orange-800/50 via-orange-300/50 border-orange-400 border to-orange-800/50 bg-gradient-to-bl rounded-xl p-6 w-full max-w-md space-y-4"
+            initial={{ opacity: 0, y: 22, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 22, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="relative flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/95 shadow-2xl shadow-black/60 backdrop-blur-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className={`text-2xl ${tektur.className} text-orange-100`}>
-              {mode === "add" ? "Add New Event" : "Edit Event"}
-            </h2>
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-400/5" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-300/45 to-transparent" />
 
-            <input
-              name="title"
-              placeholder="Title"
-              className="w-full  rounded p-2  outline-none ring-1 ring-orange-200 focus:ring-2 transition-all duration-500 focus:ring-orange-400"
-              value={form.title}
-              autoComplete="off"
-              onChange={handleChange}
-            />
-            <textarea
-              name="description"
-              placeholder="Description"
-              className="w-full  rounded p-2  outline-none ring-1 ring-orange-200 focus:ring-2 transition-all duration-500 focus:ring-orange-400"
-              value={form.description}
-              autoComplete="off"
-              onChange={handleChange}
-            />
+            <div className="relative z-10 flex shrink-0 items-start justify-between gap-4 border-b border-white/10 p-5 sm:p-6">
+              <div>
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] ${
+                    isEdit
+                      ? "border-cyan-300/20 bg-cyan-500/10 text-cyan-200"
+                      : "border-violet-300/20 bg-violet-500/10 text-violet-200"
+                  }`}
+                >
+                  {isEdit ? (
+                    <Pencil className="h-3.5 w-3.5" />
+                  ) : (
+                    <Plus className="h-3.5 w-3.5" />
+                  )}
+                  {isEdit ? "Edit Event" : "Create Event"}
+                </span>
 
-            <input
-              name="date"
-              type="date"
-              autoComplete="off"
-              className="w-full  rounded p-2  outline-none ring-1 ring-orange-200 focus:ring-2 transition-all duration-500 focus:ring-orange-400"
-              value={form.date}
-              onChange={handleChange}
-            />
+                <h2
+                  className="mt-3 text-2xl font-extrabold tracking-tight text-white"
+                >
+                  {isEdit ? "Edit Campus Event" : "Add New Event"}
+                </h2>
 
-            <select
-              name="type"
-              className="w-full  rounded p-2  outline-none ring-1 ring-orange-200 focus:ring-2 transition-all duration-500 focus:ring-orange-400"
-              value={form.type}
-              onChange={handleChange}
-            >
-              <option value="EXAM" className="bg-amber-700">
-                Exam
-              </option>
-              <option value="HOLIDAY" className="bg-amber-700">
-                Holiday
-              </option>
-              <option value="EVENT" className="bg-amber-700">
-                Event
-              </option>
-              <option value="OTHER" className="bg-amber-700">
-                Other
-              </option>
-            </select>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  {isEdit
+                    ? "Update event details and visibility status."
+                    : "Create a new campus event for the assistant schedule."}
+                </p>
+              </div>
 
-            {mode === "edit" && (
-              <select
-                name="active"
-                className="w-full bg-gray-700 rounded p-2 text-white outline-none ring-1 ring-transparent focus:ring-orange-400"
-                value={form.active ? "true" : "false"}
-                onChange={(e) =>
-                  setForm({ ...form, active: e.target.value === "true" })
-                }
-              >
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-              </select>
-            )}
-
-            <div className="flex justify-end gap-2 pt-2">
               <button
-                className="px-4 py-2 rounded bg-gray-600 text-white font-semibold hover:bg-gray-500"
+                type="button"
                 onClick={onClose}
+                disabled={loading}
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-400 transition hover:border-red-300/30 hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-60"
+                aria-label="Close modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="relative z-10 min-h-0 flex-1 overflow-y-auto p-5 scrollbar-hide sm:p-6">
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                    Event Title
+                  </label>
+                  <input
+                    name="title"
+                    placeholder="Enter event title"
+                    className={inputClass}
+                    value={form.title}
+                    autoComplete="off"
+                    onChange={handleChange}
+                    disabled={loading}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                    Description
+                  </label>
+                  <textarea
+                    name="description"
+                    placeholder="Write short event description"
+                    className={`${inputClass} min-h-[120px] resize-none`}
+                    value={form.description}
+                    autoComplete="off"
+                    onChange={handleChange}
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                      Event Date
+                    </label>
+                    <div className="relative">
+                      <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" />
+                      <input
+                        name="date"
+                        type="date"
+                        autoComplete="off"
+                        className={`${inputClass} pl-11`}
+                        value={form.date}
+                        onChange={handleChange}
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                      Event Type
+                    </label>
+                    <select
+                      name="type"
+                      className={`${inputClass} appearance-none text-slate-300`}
+                      value={form.type}
+                      onChange={handleChange}
+                      disabled={loading}
+                    >
+                      <option value="EXAM" className="bg-[#14141B]">
+                        Exam
+                      </option>
+                      <option value="HOLIDAY" className="bg-[#14141B]">
+                        Holiday
+                      </option>
+                      <option value="EVENT" className="bg-[#14141B]">
+                        Event
+                      </option>
+                      <option value="OTHER" className="bg-[#14141B]">
+                        Other
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                {isEdit && (
+                  <div>
+                    <label className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                      Event Status
+                    </label>
+                    <select
+                      name="active"
+                      className={`${inputClass} appearance-none text-slate-300`}
+                      value={form.active ? "true" : "false"}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          active: e.target.value === "true",
+                        })
+                      }
+                      disabled={loading}
+                    >
+                      <option value="true" className="bg-[#14141B]">
+                        Active
+                      </option>
+                      <option value="false" className="bg-[#14141B]">
+                        Inactive
+                      </option>
+                    </select>
+                  </div>
+                )}
+
+                <div className="rounded-[1.5rem] border border-white/10 bg-[#08080C]/45 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10">
+                      <Sparkles className="h-4 w-4 text-violet-200" />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-extrabold text-white">
+                        Assistant Event Sync
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        This event will be connected with the selected campus
+                        and shown inside assistant event sections.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative z-10 flex shrink-0 flex-col gap-3 border-t border-white/10 p-5 sm:flex-row sm:justify-end sm:p-6">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-extrabold text-slate-300 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={onClose}
+                disabled={loading}
               >
                 Cancel
               </button>
+
               <button
-                className="px-4 py-2 rounded bg-orange-500 text-white font-semibold hover:bg-orange-600 disabled:bg-gray-400"
+                type="button"
+                className={`inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-extrabold text-white shadow-xl transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 ${
+                  isEdit
+                    ? "bg-gradient-to-r from-cyan-600 via-violet-500 to-cyan-500 shadow-cyan-950/40 hover:shadow-cyan-800/30"
+                    : "bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 shadow-violet-950/40 hover:shadow-violet-800/30"
+                }`}
                 onClick={handleSubmit}
                 disabled={loading}
               >
                 {loading ? (
-                  <span className="animate-pulse">
-                    {mode === "add" ? "Adding…" : "Updating…"}
-                  </span>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isEdit ? (
+                  <CheckCircle2 className="h-4 w-4" />
                 ) : (
-                  <span>{mode === "add" ? "Add Event" : "Update Event"}</span>
+                  <Plus className="h-4 w-4" />
                 )}
+
+                {loading
+                  ? mode === "add"
+                    ? "Adding…"
+                    : "Updating…"
+                  : mode === "add"
+                    ? "Add Event"
+                    : "Update Event"}
               </button>
             </div>
           </motion.div>

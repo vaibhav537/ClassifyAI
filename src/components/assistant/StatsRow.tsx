@@ -1,7 +1,7 @@
 "use client";
+
 import React from "react";
 import StatsCard from "./StatsCard";
-import { motion } from "framer-motion";
 
 const StatsRow = ({
   stats,
@@ -18,15 +18,6 @@ const StatsRow = ({
   titleArray: string[];
   showExpiredCard?: boolean;
 }) => {
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: i * 0.1 },
-    }),
-  };
-
   const cards: { title: string; value: number; color?: string }[] = [
     { title: titleArray[0], value: stats.totalUsers },
     { title: titleArray[1], value: stats.premiumUsers },
@@ -38,18 +29,25 @@ const StatsRow = ({
     cards.push({
       title: "Expired Premiums",
       value: stats.expiredPremiums,
-      color: "border-red-500",
+      color: "red",
     });
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 w-full">
-      {cards.map((card) => (
+    <div
+      className={`grid w-full gap-4 ${
+        showExpiredCard
+          ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-5"
+          : "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4"
+      }`}
+    >
+      {cards.map((card, index) => (
         <StatsCard
           key={card.title}
           title={card.title}
           value={card.value}
           color={card.color}
+          index={index}
         />
       ))}
     </div>

@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import React from "react";
-import { Tektur } from "next/font/google";
 import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -15,12 +13,6 @@ import {
   faChartSimple,
   faBullhorn,
 } from "@fortawesome/free-solid-svg-icons";
-
-// --- FONT SETUP ---
-const tektur = Tektur({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
 
 // --- NAVIGATION LINKS ---
 const links = [
@@ -55,62 +47,95 @@ const AssistantSidebar = () => {
 
   return (
     <motion.aside
-      initial={{ x: -100, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.5, type: "spring" }}
-      className={`bg-gradient-to-t from-orange-900 via-gray-900 to-black text-gray-300
-                    flex flex-row items-center justify-around p-2 rounded-xl
-                    lg:flex-col lg:justify-start lg:w-48 lg:min-h-[46vw] lg:gap-40 lg:rounded-full lg:p-4
-                    ${tektur.className}`}
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="relative w-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#14141B]/80 p-3 text-slate-300 shadow-2xl shadow-black/25 backdrop-blur-2xl lg:min-h-[calc(100vh-10rem)] lg:p-4"
     >
-      <motion.h1
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className={`hidden lg:text-center lg:block text-2xl font-bold text-orange-600 mb-4 capitalize lg:mt-20 ${tektur.className}`}
-      >
-        Assistant panel
-      </motion.h1>
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-400/5" />
+      <div className="pointer-events-none absolute -left-16 top-10 h-40 w-40 rounded-full bg-violet-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute -right-16 bottom-10 h-40 w-40 rounded-full bg-fuchsia-500/10 blur-3xl" />
 
-      <nav className="flex flex-row items-center justify-center gap-2 lg:flex-col lg:gap-4 relative">
-        {links.map((link) => (
-          <div
-            key={link.href}
-            className="relative"
-            onMouseEnter={() => setHovered(link.label)}
-            onMouseLeave={() => setHovered(null)}
-          >
-            <a
-              href={link.href}
-              className={`p-3 rounded flex items-center justify-center text-3xl transition-colors duration-200 ${
-                pathname === link.href
-                  ? "text-orange-500"
-                  : "text-gray-400 hover:text-orange-500/80"
-              }`}
-            >
-              <FontAwesomeIcon icon={link.icon} />
-            </a>
+      <div className="relative z-10 flex min-w-0 flex-row items-center gap-3 lg:flex-col lg:items-stretch">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1, duration: 0.25 }}
+          className="hidden rounded-[1.5rem] border border-violet-300/20 bg-violet-500/10 px-4 py-4 text-center lg:block"
+        >
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-violet-200/70">
+            Classify AI
+          </p>
+          <h1 className="mt-2 text-xl font-extrabold tracking-tight text-white">
+            Assistant Panel
+          </h1>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Control center
+          </p>
+        </motion.div>
 
-            <AnimatePresence>
-              {hovered === link.label && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.2 }}
-                  className={`absolute z-20 w-max rounded-lg bg-black px-4 py-2 text-sm text-orange-100 shadow-lg
-                        bottom-full left-1/2 mb-2 -translate-x-1/2
-                        lg:left-full lg:top-1/2 lg:bottom-auto lg:ml-3 lg:-translate-x-0 lg:-translate-y-1/2
-                    `}
+        <nav className="relative flex min-w-0 flex-1 items-center gap-2 overflow-x-auto scrollbar-hide lg:mt-5 lg:flex-col lg:items-stretch lg:overflow-visible">
+          {links.map((link, index) => {
+            const isActive = pathname === link.href;
+
+            return (
+              <div
+                key={link.href}
+                className="relative shrink-0 lg:w-full"
+                onMouseEnter={() => setHovered(link.label)}
+                onMouseLeave={() => setHovered(null)}
+              >
+                <a
+                  href={link.href}
+                  className={`group relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border text-lg transition duration-300 lg:h-auto lg:w-full lg:justify-start lg:gap-3 lg:px-4 lg:py-3 ${
+                    isActive
+                      ? "border-violet-300/35 bg-violet-500/15 text-violet-100 shadow-xl shadow-violet-950/20"
+                      : "border-white/10 bg-white/[0.035] text-slate-500 hover:-translate-y-0.5 hover:border-violet-300/30 hover:bg-violet-500/10 hover:text-violet-100"
+                  }`}
                 >
-                  {link.label}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        ))}
-      </nav>
+                  <span
+                    className={`pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-400/5 transition duration-300 ${
+                      isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    }`}
+                  />
+
+                  <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl">
+                    <FontAwesomeIcon icon={link.icon} />
+                  </span>
+
+                  <span className="relative z-10 hidden min-w-0 truncate text-sm font-extrabold lg:block">
+                    {link.label}
+                  </span>
+
+                  {isActive && (
+                    <motion.span
+                      layoutId="assistant-sidebar-active"
+                      className="absolute inset-y-2 left-0 hidden w-1 rounded-r-full bg-gradient-to-b from-violet-400 to-fuchsia-400 lg:block"
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                    />
+                  )}
+                </a>
+
+                <AnimatePresence>
+                  {hovered === link.label && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.94, y: 4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.94, y: 4 }}
+                      transition={{ duration: 0.18 }}
+                      className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max -translate-x-1/2 rounded-2xl border border-white/10 bg-[#14141B]/95 px-3 py-2 text-xs font-extrabold text-violet-100 shadow-2xl shadow-black/35 backdrop-blur-2xl lg:hidden"
+                    >
+                      {link.label}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </nav>
+      </div>
     </motion.aside>
   );
 };
+
 export default AssistantSidebar;

@@ -4,17 +4,31 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import useSWR from "swr";
+import { Tektur } from "next/font/google";
+import {
+  AlertCircle,
+  BookOpen,
+  CheckCircle2,
+  Clock3,
+  Loader2,
+  Mail,
+  Plus,
+  Trash2,
+  UserPlus,
+  UserRoundCog,
+  UserRoundMinus,
+  Users,
+  X,
+} from "lucide-react";
 
-// --- FONT PLACEHOLDER ---
-// Removed the 'next/font' import. We'll apply the class name directly.
-const tektur = {
-  className: "font-tektur", // Assuming 'font-tektur' is defined in your global CSS
-};
+const tektur = Tektur({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
-// --- MODAL PORTAL (Self-contained) ---
-// The ModalPortal logic is now included directly in this file to resolve the import error.
 const ModalPortal = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
@@ -25,6 +39,8 @@ const ModalPortal = ({ children }: { children: React.ReactNode }) => {
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
+const inputClass = `${tektur.className} w-full rounded-2xl border border-white/10 bg-[#08080C]/65 px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:bg-[#08080C]/85 disabled:cursor-not-allowed disabled:opacity-60`;
+
 const LinkCards = ({
   forRole,
   onActionComplete,
@@ -34,6 +50,8 @@ const LinkCards = ({
 }) => {
   const [modalOpen, setModalOpen] = useState<"add" | "remove" | null>(null);
   const [loading, setLoading] = useState(false);
+  const [campusId, setCampusId] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -44,10 +62,8 @@ const LinkCards = ({
     designation: "",
     department: "",
   });
-  const [hodTeaches, setHodTeaches] = useState(true);
-  const campusId =
-    typeof window !== "undefined" ? localStorage.getItem("campusId") : null;
 
+  const [hodTeaches, setHodTeaches] = useState(true);
   const [assistantId, setAssistantId] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<"form" | "otp">("form");
@@ -58,6 +74,7 @@ const LinkCards = ({
     code: "",
     description: "",
   });
+
   const [assignedSubjects, setAssignedSubjects] = useState<
     { name: string; code?: string; description?: string }[]
   >([]);
@@ -66,12 +83,21 @@ const LinkCards = ({
     type: "success" | "error";
     text: string;
   }>(null);
+
   useEffect(() => {
     const assistantID = localStorage.getItem("assistantId");
+    const storedCampusId =
+      localStorage.getItem("CampusID") || localStorage.getItem("campusId");
+
     if (assistantID) {
       setAssistantId(assistantID);
     }
+
+    if (storedCampusId) {
+      setCampusId(storedCampusId);
+    }
   }, []);
+
   const { data: recentUser, isLoading: loadingRecent } = useSWR(
     campusId
       ? `/api/assistant/recent-user?role=${forRole.toUpperCase()}&campusId=${campusId}`
@@ -84,18 +110,22 @@ const LinkCards = ({
       setMessage({ type: "error", text: "Please enter email" });
       return;
     }
+
     setLoading(true);
+
     const res = await fetch("/api/mail/send-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: formData.email }),
     });
+
     if (res.ok) {
       setStep("otp");
       setMessage({ type: "success", text: "OTP sent to your email" });
     } else {
       setMessage({ type: "error", text: "Failed to send OTP" });
     }
+
     setLoading(false);
   };
 
@@ -104,12 +134,15 @@ const LinkCards = ({
       setMessage({ type: "error", text: "Please enter OTP" });
       return;
     }
+
     setLoading(true);
+
     const res = await fetch("/api/mail/verify-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: formData.email, otp }),
     });
+
     if (res.ok) {
       setEmailVerified(true);
       setStep("form");
@@ -117,13 +150,15 @@ const LinkCards = ({
     } else {
       setMessage({ type: "error", text: "Invalid OTP" });
     }
+
     setLoading(false);
   };
 
   const handleAddSubject = () => {
-    if (currentSubject.name.trim() === "") return; // Don't add empty subjects
+    if (currentSubject.name.trim() === "") return;
+
     setAssignedSubjects([...assignedSubjects, currentSubject]);
-    setCurrentSubject({ name: "", code: "", description: "" }); // Reset input fields
+    setCurrentSubject({ name: "", code: "", description: "" });
   };
 
   const handleRemoveSubject = (index: number) => {
@@ -146,6 +181,7 @@ const LinkCards = ({
         setMessage({ type: "error", text: "Please select designation" });
         return;
       }
+
       if (
         (formData.designation !== "HOD" || hodTeaches) &&
         assignedSubjects.length === 0
@@ -159,6 +195,7 @@ const LinkCards = ({
     }
 
     setLoading(true);
+
     const res = await fetch(`/api/assistant/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -191,12 +228,14 @@ const LinkCards = ({
         text: `${modalOpen === "add" ? "Added" : "Removed"} successfully`,
       });
       onActionComplete?.();
+
       setTimeout(() => {
         closeModal();
       }, 1500);
     } else {
       setMessage({ type: "error", text: "Action failed" });
     }
+
     setLoading(false);
   };
 
@@ -204,6 +243,7 @@ const LinkCards = ({
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeModal();
     };
+
     if (modalOpen) window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [modalOpen]);
@@ -231,392 +271,535 @@ const LinkCards = ({
 
   useEffect(() => {
     if (formData.designation === "HOD") {
-      setHodTeaches(true); // default = YES
+      setHodTeaches(true);
     }
   }, [formData.designation]);
 
+  const roleLabel = forRole === "student" ? "Student" : "Teacher";
+  const isTeacher = forRole === "teacher";
+  const isAddMode = modalOpen === "add";
+
   return (
     <>
-      <div className="h-full border rounded-2xl border-orange-400 w-full flex p-5 justify-center bg-orange-700/5 text-white">
-        <div>
-          <h5 className={`text-xl text-center ${tektur.className}`}>
-            Add or Remove {forRole === "student" ? "Student" : "Teacher"}
-          </h5>
-          <div className="flex flex-col md:flex-row gap-6 md:gap-10 mt-6 items-center md:items-start">
-            <div className="flex flex-col gap-3">
-              <button
-                className="border w-48 text-center hover:bg-orange-700/20 cursor-pointer hover:border-orange-500 transition-all duration-300 rounded-xl p-4"
-                onClick={() => setModalOpen("add")}
-              >
-                Add {forRole}
-              </button>
-              <button
-                className="border w-48 text-center hover:bg-orange-700/20 cursor-pointer hover:border-orange-500 transition-all duration-300 rounded-xl p-4"
-                onClick={() => setModalOpen("remove")}
-              >
-                Remove {forRole}
-              </button>
-            </div>
-            <div className="mt-2 text-center md:text-left">
-              <h6 className="text-lg mb-2">Recent Activity</h6>
-              <div>
-                {loadingRecent && (
-                  <p className="animate-pulse text-sm text-gray-500">
-                    Loading...
-                  </p>
-                )}
-                {!loadingRecent && recentUser?.name ? (
-                  <p>
-                    Added:{" "}
-                    <strong className="text-orange-300">
-                      {recentUser.name}
-                    </strong>{" "}
-                    <span className="text-xs text-gray-500">
-                      ({new Date(recentUser.createdAt).toLocaleDateString()})
-                    </span>
-                  </p>
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="group relative h-full min-h-[250px] overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#14141B]/80 p-5 text-white shadow-2xl shadow-black/25 backdrop-blur-2xl transition duration-300 hover:border-violet-300/35 hover:bg-white/[0.055]"
+      >
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-400/5" />
+        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-violet-500/10 blur-3xl transition duration-300 group-hover:bg-violet-500/15" />
+
+        <div className="relative z-10 flex h-full flex-col justify-between gap-5">
+          <div>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <span className="inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-violet-200">
+                  {isTeacher ? (
+                    <UserRoundCog className="h-3.5 w-3.5" />
+                  ) : (
+                    <Users className="h-3.5 w-3.5" />
+                  )}
+                  {roleLabel} Access
+                </span>
+
+                <h5
+                  className={`mt-4 text-xl font-extrabold tracking-tight text-white ${tektur.className}`}
+                >
+                  Manage {roleLabel}
+                </h5>
+
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  Add verified users or remove existing {forRole} records from
+                  this campus.
+                </p>
+              </div>
+
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-500/10">
+                {isTeacher ? (
+                  <UserRoundCog className="h-5 w-5 text-cyan-200" />
                 ) : (
-                  <p className="text-sm text-gray-500 text-center">
-                    No recent {forRole} found
-                  </p>
+                  <UserPlus className="h-5 w-5 text-cyan-200" />
                 )}
               </div>
             </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-300/20 bg-emerald-500/10 px-4 py-3 text-xs font-extrabold text-emerald-300 transition duration-300 hover:-translate-y-0.5 hover:bg-emerald-500/20"
+                onClick={() => setModalOpen("add")}
+              >
+                <Plus className="h-4 w-4" />
+                Add
+              </button>
+
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-300/20 bg-red-500/10 px-4 py-3 text-xs font-extrabold text-red-300 transition duration-300 hover:-translate-y-0.5 hover:bg-red-500/20"
+                onClick={() => setModalOpen("remove")}
+              >
+                <Trash2 className="h-4 w-4" />
+                Remove
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-[1.5rem] border border-white/10 bg-[#08080C]/45 p-4">
+            <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+              <Clock3 className="h-3.5 w-3.5" />
+              Recent Activity
+            </div>
+
+            <div className="mt-3">
+              {loadingRecent && (
+                <p className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading...
+                </p>
+              )}
+
+              {!loadingRecent && recentUser?.name ? (
+                <p className="text-sm leading-6 text-slate-400">
+                  Added{" "}
+                  <strong className="font-extrabold text-violet-200">
+                    {recentUser.name}
+                  </strong>{" "}
+                  <span className="text-xs text-slate-600">
+                    ({new Date(recentUser.createdAt).toLocaleDateString()})
+                  </span>
+                </p>
+              ) : (
+                !loadingRecent && (
+                  <p className="text-sm font-semibold text-slate-500">
+                    No recent {forRole} found.
+                  </p>
+                )
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <ModalPortal>
         <AnimatePresence>
           {modalOpen && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/85 flex justify-center items-center z-50 p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[999999] grid place-items-center overflow-hidden bg-[#08080C]/95 p-3 text-white backdrop-blur-2xl sm:p-5"
               onClick={closeModal}
             >
-              <div
-                className="from-orange-800/50 via-orange-300/50 to-orange-800/50 bg-gradient-to-bl p-6 rounded-lg shadow-lg text-black w-full max-w-md relative"
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.15),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.08),transparent_30%),radial-gradient(circle_at_center,rgba(217,70,239,0.05),transparent_38%)]" />
+
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.98 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="relative flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/95 shadow-2xl shadow-black/60 backdrop-blur-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
-                <h2 className={`${tektur.className} text-xl mb-4`}>
-                  {modalOpen === "add" ? "Add" : "Remove"} {forRole}
-                </h2>
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-400/5" />
 
-                <input
-                  type="text"
-                  placeholder="Name"
-                  value={formData.name}
-                  autoComplete="off"
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded mb-2`}
-                  disabled={loading}
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={formData.email}
-                  autoComplete="off"
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded mb-2`}
-                  disabled={loading}
-                />
-               {forRole === "teacher" && <input
-                  type="text"
-                  placeholder="Department (e.g., EEE)"
-                  value={formData.department}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      department: e.target.value,
-                    })
-                  }
-                  className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded`}
-                />}
-                {forRole === "teacher" && modalOpen === "add" && (
-                  <select
-                    value={formData.designation}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        designation: e.target.value,
-                      })
-                    }
-                    className={`${tektur.className} w-full ring appearance-none mt-2 text-black/60 ring-orange-400 outline-none p-2 rounded`}
-                  >
-                    <option value="" className="bg-orange-800/80">
-                      Select Designation
-                    </option>
-                    <option
-                      value="PROFESSOR"
-                      className="text-black bg-orange-800/80"
-                    >
-                      Professor
-                    </option>
-                    <option
-                      value="ASSOCIATE_PROFESSOR"
-                      className="text-black bg-orange-800/80"
-                    >
-                      Associate Professor
-                    </option>
-                    <option
-                      value="ASSISTANT_PROFESSOR"
-                      className="text-black bg-orange-800/80"
-                    >
-                      Assistant Professor
-                    </option>
-                    <option
-                      value="LECTURER"
-                      className="text-black bg-orange-800/80"
-                    >
-                      Lecturer
-                    </option>
-                    <option
-                      value="HOD"
-                      className="text-black bg-orange-800/80 rounded-b-4xl"
-                    >
-                      HOD
-                    </option>
-                  </select>
-                )}
-                {formData.designation === "HOD" && (
-                  <div className="mt-3 flex items-center gap-4">
-                    <p className="text-sm mb-2">Does HOD teach subjects?</p>
-
-                    <div
-                      onClick={() => setHodTeaches(!hodTeaches)}
-                      className={`w-10 -mt-2 h-5 flex items-center rounded-full p-1 cursor-pointer transition-all duration-300 ${
-                        hodTeaches ? "bg-orange-500" : "bg-gray-400"
+                <div className="relative z-10 flex shrink-0 items-start justify-between gap-4 border-b border-white/10 p-5 sm:p-6">
+                  <div>
+                    <span
+                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] ${
+                        isAddMode
+                          ? "border-emerald-300/20 bg-emerald-500/10 text-emerald-300"
+                          : "border-red-300/20 bg-red-500/10 text-red-300"
                       }`}
                     >
-                      <div
-                        className={`bg-white/80 w-6 h-6 rounded-full shadow-md transform transition-all duration-300 flex items-center justify-center text-[10px] font-bold ${
-                          hodTeaches ? "translate-x-4" : "-translate-x-3"
+                      {isAddMode ? (
+                        <UserPlus className="h-3.5 w-3.5" />
+                      ) : (
+                        <UserRoundMinus className="h-3.5 w-3.5" />
+                      )}
+                      {isAddMode ? "Add User" : "Remove User"}
+                    </span>
+
+                    <h2
+                      className={`mt-3 text-2xl font-extrabold tracking-tight text-white ${tektur.className}`}
+                    >
+                      {isAddMode ? "Add" : "Remove"} {roleLabel}
+                    </h2>
+
+                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                      {isAddMode
+                        ? "Verify email and complete required profile details."
+                        : "Enter user details to remove this profile."}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-400 transition hover:border-red-300/30 hover:bg-red-500/10 hover:text-red-200"
+                    aria-label="Close modal"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="relative z-10 min-h-0 flex-1 overflow-y-auto p-5 scrollbar-hide sm:p-6">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <input
+                      type="text"
+                      placeholder="Name"
+                      value={formData.name}
+                      autoComplete="off"
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      className={inputClass}
+                      disabled={loading}
+                    />
+
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      value={formData.email}
+                      autoComplete="off"
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      className={inputClass}
+                      disabled={loading}
+                    />
+                  </div>
+
+                  {isTeacher && (
+                    <input
+                      type="text"
+                      placeholder="Department (e.g., EEE)"
+                      value={formData.department}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          department: e.target.value,
+                        })
+                      }
+                      className={`${inputClass} mt-3`}
+                      disabled={loading}
+                    />
+                  )}
+
+                  {isTeacher && isAddMode && (
+                    <select
+                      value={formData.designation}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          designation: e.target.value,
+                        })
+                      }
+                      className={`${inputClass} mt-3 appearance-none text-slate-300`}
+                      disabled={loading}
+                    >
+                      <option value="">Select Designation</option>
+                      <option value="PROFESSOR">Professor</option>
+                      <option value="ASSOCIATE_PROFESSOR">
+                        Associate Professor
+                      </option>
+                      <option value="ASSISTANT_PROFESSOR">
+                        Assistant Professor
+                      </option>
+                      <option value="LECTURER">Lecturer</option>
+                      <option value="HOD">HOD</option>
+                    </select>
+                  )}
+
+                  {formData.designation === "HOD" && (
+                    <div className="mt-4 flex items-center justify-between gap-4 rounded-[1.5rem] border border-white/10 bg-[#08080C]/45 p-4">
+                      <div>
+                        <p className="text-sm font-extrabold text-white">
+                          Does HOD teach subjects?
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          Disable this if HOD has no assigned subjects.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setHodTeaches(!hodTeaches)}
+                        className={`relative h-8 w-16 rounded-full border p-1 transition duration-300 ${
+                          hodTeaches
+                            ? "border-emerald-300/20 bg-emerald-500/20"
+                            : "border-white/10 bg-white/10"
                         }`}
                       >
-                        {hodTeaches ? "Yes" : "No"}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {forRole === "student" && modalOpen === "add" && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-                    <input
-                      type="text"
-                      placeholder="Branch"
-                      value={formData.branch}
-                      autoComplete="off"
-                      onChange={(e) =>
-                        setFormData({ ...formData, branch: e.target.value })
-                      }
-                      className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded`}
-                      disabled={loading}
-                    />
-                    <input
-                      type="number"
-                      placeholder="Year"
-                      value={formData.year}
-                      autoComplete="off"
-                      onChange={(e) =>
-                        setFormData({ ...formData, year: e.target.value })
-                      }
-                      className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded`}
-                      disabled={loading}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Semester (e.g. Semester 1)"
-                      value={formData.semester}
-                      autoComplete="off"
-                      onChange={(e) =>
-                        setFormData({ ...formData, semester: e.target.value })
-                      }
-                      className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded`}
-                      disabled={loading}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Section (e.g.Section A)"
-                      value={formData.section}
-                      autoComplete="off"
-                      onChange={(e) =>
-                        setFormData({ ...formData, section: e.target.value })
-                      }
-                      className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded`}
-                      disabled={loading}
-                    />
-                  </div>
-                )}
-
-                {forRole === "teacher" &&
-                  modalOpen === "add" &&
-                  (formData.designation !== "HOD" || hodTeaches) && (
-                    <div className="space-y-4 my-4 border-t border-b border-orange-400/50 py-4">
-                      <p className="text-sm font-semibold">
-                        Assign Semester & Section
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          placeholder="Semester (e.g., Semester 3)"
-                          value={formData.semester}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              semester: e.target.value,
-                            })
-                          }
-                          className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded`}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Section (e.g., Section A)"
-                          value={formData.section}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              section: e.target.value,
-                            })
-                          }
-                          className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded`}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="block text-sm font-semibold">
-                            Add Subjects
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="Subject Name"
-                            value={currentSubject.name}
-                            onChange={(e) =>
-                              setCurrentSubject({
-                                ...currentSubject,
-                                name: e.target.value,
-                              })
-                            }
-                            className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded`}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Code"
-                            required
-                            value={currentSubject.code}
-                            onChange={(e) =>
-                              setCurrentSubject({
-                                ...currentSubject,
-                                code: e.target.value,
-                              })
-                            }
-                            className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded`}
-                          />
-                          <textarea
-                            placeholder="Description"
-                            value={currentSubject.description}
-                            onChange={(e) =>
-                              setCurrentSubject({
-                                ...currentSubject,
-                                description: e.target.value,
-                              })
-                            }
-                            rows={2}
-                            className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded`}
-                          ></textarea>
-                          <button
-                            type="button"
-                            onClick={handleAddSubject}
-                            className="w-full bg-orange-500 text-white p-2 rounded hover:bg-orange-600 font-bold text-lg flex items-center justify-center gap-2"
-                          >
-                            <span className="text-xl">+</span> Add Subject
-                          </button>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold mb-1">
-                            Assigned Subjects ({assignedSubjects.length})
-                          </label>
-                          <div className="border rounded-md h-full min-h-[150px] overflow-y-auto p-2 space-y-1">
-                            {assignedSubjects.length > 0 ? (
-                              assignedSubjects.map((sub, index) => (
-                                <div
-                                  key={index}
-                                  className="flex justify-between items-start bg-orange-100/50 p-2 rounded text-sm"
-                                >
-                                  <div className="flex-grow">
-                                    <p className="font-semibold">
-                                      {sub.name} {sub.code && `(${sub.code})`}
-                                    </p>
-                                    <p className="text-xs text-gray-700 italic pr-2">
-                                      {sub.description}
-                                    </p>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveSubject(index)}
-                                    className="text-red-500 font-bold px-2 flex-shrink-0"
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="flex items-center justify-center h-full">
-                                <p className="text-xs text-gray-500">
-                                  No subjects added yet.
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                        <span
+                          className={`absolute top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[9px] font-extrabold text-black transition duration-300 ${
+                            hodTeaches ? "left-9" : "left-1"
+                          }`}
+                        >
+                          {hodTeaches ? "Yes" : "No"}
+                        </span>
+                      </button>
                     </div>
                   )}
 
-                {modalOpen === "add" && step === "otp" && (
-                  <input
-                    type="text"
-                    placeholder="Enter OTP"
-                    autoComplete="off"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className={`${tektur.className} w-full ring ring-orange-400 outline-none p-2 rounded mb-2`}
+                  {forRole === "student" && isAddMode && (
+                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <input
+                        type="text"
+                        placeholder="Branch"
+                        value={formData.branch}
+                        autoComplete="off"
+                        onChange={(e) =>
+                          setFormData({ ...formData, branch: e.target.value })
+                        }
+                        className={inputClass}
+                        disabled={loading}
+                      />
+
+                      <input
+                        type="number"
+                        placeholder="Year"
+                        value={formData.year}
+                        autoComplete="off"
+                        onChange={(e) =>
+                          setFormData({ ...formData, year: e.target.value })
+                        }
+                        className={inputClass}
+                        disabled={loading}
+                      />
+
+                      <input
+                        type="text"
+                        placeholder="Semester (e.g. Semester 1)"
+                        value={formData.semester}
+                        autoComplete="off"
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            semester: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                        disabled={loading}
+                      />
+
+                      <input
+                        type="text"
+                        placeholder="Section (e.g. Section A)"
+                        value={formData.section}
+                        autoComplete="off"
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            section: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                        disabled={loading}
+                      />
+                    </div>
+                  )}
+
+                  {isTeacher &&
+                    isAddMode &&
+                    (formData.designation !== "HOD" || hodTeaches) && (
+                      <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-[#08080C]/45 p-4">
+                        <div className="mb-4 flex items-center gap-2">
+                          <BookOpen className="h-4 w-4 text-violet-200" />
+                          <p className="text-sm font-extrabold text-white">
+                            Assign Semester, Section & Subjects
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <input
+                            type="text"
+                            placeholder="Semester (e.g., Semester 3)"
+                            value={formData.semester}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                semester: e.target.value,
+                              })
+                            }
+                            className={inputClass}
+                            disabled={loading}
+                          />
+
+                          <input
+                            type="text"
+                            placeholder="Section (e.g., Section A)"
+                            value={formData.section}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                section: e.target.value,
+                              })
+                            }
+                            className={inputClass}
+                            disabled={loading}
+                          />
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                          <div className="space-y-3">
+                            <input
+                              type="text"
+                              placeholder="Subject Name"
+                              value={currentSubject.name}
+                              onChange={(e) =>
+                                setCurrentSubject({
+                                  ...currentSubject,
+                                  name: e.target.value,
+                                })
+                              }
+                              className={inputClass}
+                              disabled={loading}
+                            />
+
+                            <input
+                              type="text"
+                              placeholder="Subject Code"
+                              required
+                              value={currentSubject.code}
+                              onChange={(e) =>
+                                setCurrentSubject({
+                                  ...currentSubject,
+                                  code: e.target.value,
+                                })
+                              }
+                              className={inputClass}
+                              disabled={loading}
+                            />
+
+                            <textarea
+                              placeholder="Description"
+                              value={currentSubject.description}
+                              onChange={(e) =>
+                                setCurrentSubject({
+                                  ...currentSubject,
+                                  description: e.target.value,
+                                })
+                              }
+                              rows={3}
+                              className={`${inputClass} resize-none`}
+                              disabled={loading}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={handleAddSubject}
+                              disabled={loading}
+                              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-violet-300/20 bg-violet-500/10 px-4 py-3 text-sm font-extrabold text-violet-200 transition hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Add Subject
+                            </button>
+                          </div>
+
+                          <div className="flex min-h-[260px] flex-col rounded-[1.35rem] border border-white/10 bg-[#14141B]/75 p-3">
+                            <p className="shrink-0 text-sm font-extrabold text-white">
+                              Assigned Subjects ({assignedSubjects.length})
+                            </p>
+
+                            <div className="mt-3 min-h-0 flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-hide">
+                              {assignedSubjects.length > 0 ? (
+                                assignedSubjects.map((sub, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-start justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3"
+                                  >
+                                    <div className="min-w-0">
+                                      <p className="truncate text-sm font-extrabold text-white">
+                                        {sub.name}{" "}
+                                        {sub.code && (
+                                          <span className="text-violet-200">
+                                            ({sub.code})
+                                          </span>
+                                        )}
+                                      </p>
+                                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                                        {sub.description || "No description"}
+                                      </p>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleRemoveSubject(index)
+                                      }
+                                      className="shrink-0 rounded-xl border border-red-300/20 bg-red-500/10 px-2 py-1 text-red-300 transition hover:bg-red-500/20"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="grid h-full min-h-[190px] place-items-center rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 text-center">
+                                  <p className="text-xs font-semibold text-slate-500">
+                                    No subjects added yet.
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                  {isAddMode && step === "otp" && (
+                    <input
+                      type="text"
+                      placeholder="Enter OTP"
+                      autoComplete="off"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      className={`${inputClass} mt-4`}
+                      disabled={loading}
+                    />
+                  )}
+
+                  {message && (
+                    <div
+                      className={`mt-4 flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-center text-sm font-extrabold ${
+                        message.type === "success"
+                          ? "border-emerald-300/20 bg-emerald-500/10 text-emerald-300"
+                          : "border-red-300/20 bg-red-500/10 text-red-300"
+                      }`}
+                    >
+                      {message.type === "success" ? (
+                        <CheckCircle2 className="h-4 w-4" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4" />
+                      )}
+                      {message.text}
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative z-10 flex shrink-0 flex-col gap-3 border-t border-white/10 p-5 sm:flex-row sm:justify-end sm:p-6">
+                  <button
+                    type="button"
+                    onClick={closeModal}
                     disabled={loading}
-                  />
-                )}
-
-                {message && (
-                  <div
-                    className={`my-2 text-base rounded-xl text-center ring-2 p-2 ${
-                      message.type === "success"
-                        ? "ring-green-600"
-                        : "ring-red-600"
-                    } ${tektur.className} ${
-                      message.type === "success"
-                        ? "text-green-300"
-                        : "text-red-300"
-                    }`}
+                    className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-extrabold text-slate-300 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {message.text}
-                  </div>
-                )}
+                    Cancel
+                  </button>
 
-                <div className="flex flex-col justify-end gap-2 mt-4">
-                  {modalOpen === "add" ? (
+                  {isAddMode ? (
                     <>
                       {step === "form" && !emailVerified && (
                         <button
                           onClick={handleSendOtp}
                           disabled={loading}
-                          className={`px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 ${tektur.className}`}
+                          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                         >
+                          {loading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Mail className="h-4 w-4" />
+                          )}
                           {loading ? "Sending…" : "Send OTP"}
                         </button>
                       )}
@@ -625,8 +808,13 @@ const LinkCards = ({
                         <button
                           onClick={handleVerifyOtp}
                           disabled={loading}
-                          className={`px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 ${tektur.className}`}
+                          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                         >
+                          {loading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="h-4 w-4" />
+                          )}
                           {loading ? "Verifying…" : "Verify OTP"}
                         </button>
                       )}
@@ -635,8 +823,13 @@ const LinkCards = ({
                         <button
                           onClick={handleSubmit}
                           disabled={loading}
-                          className={`px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 ${tektur.className}`}
+                          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-300/20 bg-emerald-500/10 px-5 py-3 text-sm font-extrabold text-emerald-300 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                         >
+                          {loading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <UserPlus className="h-4 w-4" />
+                          )}
                           {loading ? "Processing…" : "Add"}
                         </button>
                       )}
@@ -645,13 +838,18 @@ const LinkCards = ({
                     <button
                       onClick={handleSubmit}
                       disabled={loading}
-                      className={`px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 ${tektur.className}`}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-300/20 bg-red-500/10 px-5 py-3 text-sm font-extrabold text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                     >
+                      {loading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <UserRoundMinus className="h-4 w-4" />
+                      )}
                       {loading ? "Processing…" : "Remove"}
                     </button>
                   )}
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

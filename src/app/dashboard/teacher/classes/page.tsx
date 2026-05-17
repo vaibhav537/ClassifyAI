@@ -239,7 +239,7 @@ export default function ClassesPage() {
 
         {activeSessionId && (
           <AttendanceFinalizer
-            token={activeSessionId}
+            classSessionId={activeSessionId}
             onClose={() => setActiveSessionId(null)}
           />
         )}
