@@ -22,40 +22,48 @@ export default function TConfirmModal({
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/70 backdrop-blur-md flex justify-center items-center z-50 p-4"
+        className="fixed inset-0 z-[9999] grid place-items-center bg-black/80 p-4 text-white backdrop-blur-md"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="relative bg-gray-900/70 border border-white/10 rounded-xs shadow-[0_0_25px_rgba(139,92,246,0.3)] backdrop-blur-xl p-8 w-full max-w-md text-white"
-          initial={{ scale: 0.9, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
+          className="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/95 shadow-2xl shadow-black/60 backdrop-blur-2xl"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 18 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Gradient header line */}
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r rounded-2xl from-violet-500 via-blue-500 to-cyan-500 rounded-t-2xl"></div>
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.16),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.08),transparent_34%)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-300/45 to-transparent" />
 
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-4">
-            {title}
-          </h2>
+          <div className="relative z-10 px-5 py-5 sm:px-6">
+            <span className="inline-flex items-center gap-2 rounded-full border border-red-300/20 bg-red-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-red-200">
+              Confirmation
+            </span>
 
-          <p className="text-gray-300 mb-6">{message}</p>
+            <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-white">
+              {title}
+            </h2>
 
-          <div className="flex justify-end gap-4 pt-4 border-t border-white/10">
+            <p className="mt-3 text-sm leading-6 text-slate-400">{message}</p>
+          </div>
+
+          <div className="relative z-10 flex flex-col-reverse gap-3 border-t border-white/10 bg-[#14141B]/90 px-5 py-5 backdrop-blur-2xl sm:flex-row sm:justify-end sm:px-6">
             <button
               onClick={onClose}
               disabled={isLoading}
-              className="py-2 px-4 rounded-xl bg-gray-800/60 border border-gray-700 text-gray-300 hover:text-white hover:border-gray-500 transition-all disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-violet-300/20 bg-violet-500/10 px-5 py-3 text-sm font-extrabold text-violet-100 transition duration-300 hover:-translate-y-0.5 hover:border-violet-300/45 hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
+
             <button
               onClick={onConfirm}
               disabled={isLoading}
-              className="relative py-2 px-5 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-500 via-violet-500 to-cyan-500 hover:opacity-90 hover:shadow-[0_0_15px_rgba(139,92,246,0.5)] transition-all disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-300/20 bg-red-500/10 px-5 py-3 text-sm font-extrabold text-red-200 shadow-xl shadow-black/20 transition duration-300 hover:-translate-y-0.5 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isLoading ? "Deleting..." : "Confirm Delete"}
             </button>

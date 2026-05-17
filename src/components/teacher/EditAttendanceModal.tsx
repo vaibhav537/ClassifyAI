@@ -2,7 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { showErrorMessage, showLoadingMessage, showSuccessMessage, toastDissmisser } from "@/lib/helper";
+import {
+  showErrorMessage,
+  showLoadingMessage,
+  showSuccessMessage,
+  toastDissmisser,
+} from "@/lib/helper";
+import {
+  CalendarDays,
+  CheckCircle2,
+  Edit3,
+  Loader2,
+  Save,
+  UserRound,
+  X,
+} from "lucide-react";
 
 enum AttendanceStatus {
   PRESENT = "PRESENT",
@@ -22,14 +36,15 @@ export default function EditAttendanceModal({
   onSuccess: () => void;
   attendanceRecord: any;
 }) {
-  const [newStatus, setNewStatus] = useState<AttendanceStatus>(attendanceRecord?.status);
+  const [newStatus, setNewStatus] = useState<AttendanceStatus>(
+    attendanceRecord?.status,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [teacherId, setTeacherId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       setTeacherId(localStorage.getItem("teacherId"));
-      // Pre-fill the dropdown with the current status when the modal opens
       setNewStatus(attendanceRecord?.status);
     }
   }, [isOpen, attendanceRecord]);
@@ -39,6 +54,7 @@ export default function EditAttendanceModal({
       showErrorMessage("Session error. Please log in again.");
       return;
     }
+
     if (!newStatus || newStatus === attendanceRecord.status) {
       showErrorMessage("Please select a new status.");
       return;
@@ -46,10 +62,11 @@ export default function EditAttendanceModal({
 
     setIsLoading(true);
     const toastId = showLoadingMessage("Updating status...");
+
     try {
-      const response = await fetch('/api/teacher/past-attendance/edit', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/teacher/past-attendance/edit", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           attendanceId: attendanceRecord.id,
           teacherId: teacherId,
@@ -65,9 +82,8 @@ export default function EditAttendanceModal({
       }
 
       showSuccessMessage("Attendance status updated successfully!");
-      onSuccess(); // Triggers a refresh on the main page
-      onClose();   // Closes the modal
-
+      onSuccess();
+      onClose();
     } catch (err: any) {
       toastDissmisser(toastId);
       showErrorMessage(err.message);
@@ -78,40 +94,168 @@ export default function EditAttendanceModal({
 
   if (!isOpen) return null;
 
+  const statusStyles: Record<AttendanceStatus, string> = {
+    PRESENT: "border-emerald-300/20 bg-emerald-500/10 text-emerald-300",
+    ABSENT: "border-red-300/20 bg-red-500/10 text-red-300",
+    LATE: "border-amber-300/20 bg-amber-500/10 text-amber-300",
+    PENDING: "border-slate-300/20 bg-slate-500/10 text-slate-300",
+  };
+
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/70 flex justify-center items-center z-50 p-4"
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[9999] grid place-items-center bg-black/80 p-4 backdrop-blur-md"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="bg-gray-800 border border-gray-700 p-8 rounded-lg shadow-xl w-full max-w-md text-white"
-          initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+          className="relative w-full max-w-lg overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/95 text-white shadow-2xl shadow-black/60 backdrop-blur-2xl"
+          initial={{ scale: 0.95, y: 24, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          exit={{ scale: 0.95, y: 24, opacity: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
           onClick={(e) => e.stopPropagation()}
         >
-          <h2 className="text-2xl font-bold text-indigo-400 mb-2">Edit Attendance</h2>
-          <div className="text-gray-400 mb-6 text-sm">
-            <p>Student: <span className="font-semibold text-gray-200">{attendanceRecord.studentName}</span></p>
-            <p>Subject: <span className="font-semibold text-gray-200">{attendanceRecord.subjectName}</span></p>
-            <p>Date: <span className="font-semibold text-gray-200">{new Date(attendanceRecord.markedAt).toLocaleDateString()}</span></p>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/16 via-fuchsia-500/7 to-cyan-400/6" />
+          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-500/15 blur-3xl" />
+
+          <div className="relative z-10 flex items-start justify-between gap-4 border-b border-white/10 px-5 py-5 sm:px-6">
+            <div className="min-w-0">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-violet-200">
+                <Edit3 className="h-3.5 w-3.5" />
+                Attendance Editor
+              </div>
+
+              <h2 className="text-2xl font-extrabold tracking-tight text-white">
+                Edit Attendance
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Update the attendance status for this record.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-red-300/20 bg-red-500/10 text-red-200 transition hover:bg-red-500/20"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-400">Change Status</label>
-              <select value={newStatus} onChange={(e) => setNewStatus(e.target.value as AttendanceStatus)} className="w-full bg-gray-700 p-3 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none mt-1">
-                <option value={AttendanceStatus.PRESENT}>Present</option>
-                <option value={AttendanceStatus.ABSENT}>Absent</option>
-                <option value={AttendanceStatus.LATE}>Late</option>
+          <div className="relative z-10 px-5 py-5 sm:px-6">
+            <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10">
+                    <UserRound className="h-4 w-4 text-violet-200" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+                      Student
+                    </p>
+                    <p className="truncate text-sm font-extrabold text-white">
+                      {attendanceRecord.studentName}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-500/10">
+                    <CheckCircle2 className="h-4 w-4 text-cyan-200" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+                      Subject
+                    </p>
+                    <p className="truncate text-sm font-extrabold text-white">
+                      {attendanceRecord.subjectName}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-500/10">
+                    <CalendarDays className="h-4 w-4 text-emerald-300" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+                      Date
+                    </p>
+                    <p className="truncate text-sm font-extrabold text-white">
+                      {new Date(attendanceRecord.markedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <label className="mb-2 block text-sm font-bold text-slate-300">
+                Change Status
+              </label>
+
+              <select
+                value={newStatus}
+                onChange={(e) =>
+                  setNewStatus(e.target.value as AttendanceStatus)
+                }
+                className="w-full appearance-none rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 text-sm font-semibold text-white outline-none transition focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+              >
+                <option
+                  value={AttendanceStatus.PRESENT}
+                  className="bg-[#08080C]"
+                >
+                  Present
+                </option>
+                <option
+                  value={AttendanceStatus.ABSENT}
+                  className="bg-[#08080C]"
+                >
+                  Absent
+                </option>
+                <option value={AttendanceStatus.LATE} className="bg-[#08080C]">
+                  Late
+                </option>
               </select>
+
+              {newStatus && (
+                <div
+                  className={`mt-3 inline-flex rounded-full border px-3 py-1.5 text-xs font-extrabold uppercase tracking-[0.14em] ${statusStyles[newStatus]}`}
+                >
+                  Selected: {newStatus}
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="flex justify-end gap-4 pt-6 mt-6 border-t border-gray-700">
-            <button onClick={onClose} className="py-2 px-4 bg-gray-600 hover:bg-gray-500 font-semibold rounded-lg transition-colors">Cancel</button>
-            <button onClick={handleUpdate} disabled={isLoading} className="py-2 px-4 bg-indigo-600 hover:bg-indigo-700 font-semibold rounded-lg disabled:bg-indigo-400 transition-colors">
-              {isLoading ? 'Saving...' : 'Save Changes'}
+          <div className="relative z-10 flex flex-col-reverse gap-3 border-t border-white/10 px-5 py-5 sm:flex-row sm:justify-end sm:px-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-3 text-sm font-extrabold text-slate-300 transition hover:border-red-300/30 hover:bg-red-500/10 hover:text-red-200"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={handleUpdate}
+              disabled={isLoading}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 transition hover:-translate-y-0.5 hover:shadow-violet-800/30 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {isLoading ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </motion.div>

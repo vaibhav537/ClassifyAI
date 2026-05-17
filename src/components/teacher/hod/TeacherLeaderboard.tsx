@@ -10,7 +10,7 @@ import {
   Tooltip,
 } from "recharts";
 import { motion } from "framer-motion";
-import { Send } from "lucide-react";
+import { Send, Trophy, BookOpen } from "lucide-react";
 import { useState } from "react";
 import StatusBadge from "./StatusBadge";
 import LeaderboardSkeleton from "./LeaderboardSkeleton";
@@ -28,7 +28,9 @@ export default function TeacherLeaderboard({
   const [sending, setSending] = useState(false);
 
   const { data, isLoading, error, mutate } = useSWR(
-    campusId ? `/api/teacher/hod/teacher-leaderboard?campusId=${campusId}` : null,
+    campusId
+      ? `/api/teacher/hod/teacher-leaderboard?campusId=${campusId}`
+      : null,
     fetcher,
   );
 
@@ -60,64 +62,131 @@ export default function TeacherLeaderboard({
   }));
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-white">
-          🏆 Teacher Leaderboard
-        </h2>
+    <div className="relative space-y-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-amber-300">
+            <Trophy className="h-3.5 w-3.5" />
+            Faculty Performance
+          </span>
+
+          <h2 className="mt-3 text-xl font-extrabold tracking-tight text-white">
+            Teacher Leaderboard
+          </h2>
+
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Resource coverage and accountability overview for faculty members.
+          </p>
+        </div>
 
         <button
           onClick={handleNotify}
           disabled={sending}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg hover:scale-105 transition"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-300/20 bg-amber-500/10 px-5 py-3 text-sm font-extrabold text-amber-300 shadow-xl shadow-black/20 transition duration-300 hover:-translate-y-0.5 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Send size={16} />
           {sending ? "Sending..." : "Remind Pending"}
         </button>
       </div>
 
-      <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData}>
-            <XAxis dataKey="name" tick={{ fill: "#aaa", fontSize: 10 }} />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="resources" radius={[6, 6, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="relative h-72 overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-4 shadow-xl shadow-black/20 backdrop-blur-xl">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-violet-500/8" />
+
+        <div className="relative z-10 h-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData}>
+              <XAxis
+                dataKey="name"
+                tick={{ fill: "#64748b", fontSize: 10 }}
+                axisLine={{ stroke: "rgba(255,255,255,0.10)" }}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fill: "#64748b", fontSize: 10 }}
+                axisLine={{ stroke: "rgba(255,255,255,0.10)" }}
+                tickLine={false}
+              />
+              <Tooltip
+                cursor={false}
+                contentStyle={{
+                  background: "#14141B",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  borderRadius: "16px",
+                  color: "#fff",
+                  boxShadow: "0 20px 45px rgba(0,0,0,0.35)",
+                }}
+                labelStyle={{ color: "#fcd34d", fontWeight: 800 }}
+                itemStyle={{ color: "#e2e8f0", fontWeight: 700 }}
+              />
+              <Bar dataKey="resources" radius={[10, 10, 0, 0]} fill="#a78bfa" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      <div className="space-y-3">
-        {data.leaderboard.map((t: any, index: number) => (
-          <motion.div
-            key={t.teacherId}
-            whileHover={{ scale: 1.02 }}
-            className="flex justify-between items-center p-4 rounded-xl bg-white/5 border border-white/10"
-          >
-            <div className="flex items-center gap-4">
-              <span className="text-lg font-bold text-white/70">
-                #{index + 1}
-              </span>
+      {data.leaderboard.length > 0 ? (
+        <div className="space-y-3">
+          {data.leaderboard.map((t: any, index: number) => (
+            <motion.div
+              key={t.teacherId}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.3,
+                ease: "easeOut",
+                delay: index * 0.04,
+              }}
+              whileHover={{ y: -3 }}
+              className="group relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#08080C]/45 p-4 shadow-xl shadow-black/20 backdrop-blur-xl transition duration-300 hover:border-amber-300/30 hover:bg-white/[0.055]"
+            >
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-500/8 via-transparent to-violet-500/8 opacity-70 transition duration-300 group-hover:opacity-100" />
 
-              <div>
-                <p className="text-white font-medium">{t.name}</p>
-                <p className="text-xs text-white/50">
-                  {t.subjectsWithResources}/{t.assignedSubjects} subjects
-                  covered
-                </p>
+              <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-4">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-amber-300/20 bg-amber-500/10 text-sm font-extrabold text-amber-200">
+                    #{index + 1}
+                  </span>
+
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-extrabold text-white">
+                      {t.name}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      {t.subjectsWithResources}/{t.assignedSubjects} subjects
+                      covered
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1.5 text-xs font-extrabold text-violet-200">
+                    <BookOpen className="h-3.5 w-3.5" />
+                    {t.totalResources}
+                  </span>
+
+                  <StatusBadge status={t.status} />
+                </div>
               </div>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid min-h-[220px] place-items-center rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.03] p-6 text-center">
+          <div>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[1.5rem] border border-amber-300/20 bg-amber-500/10">
+              <Trophy className="h-7 w-7 text-amber-300" />
             </div>
 
-            <div className="flex items-center gap-4">
-              <span className="text-white font-semibold">
-                {t.totalResources} 📚
-              </span>
+            <p className="mt-4 text-sm font-extrabold text-slate-200">
+              No leaderboard data yet
+            </p>
 
-              <StatusBadge status={t.status} />
-            </div>
-          </motion.div>
-        ))}
-      </div>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Faculty resource activity will appear here once data is available.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

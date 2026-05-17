@@ -9,8 +9,17 @@ import {
   showSuccessMessage,
   toastDissmisser,
 } from "@/lib/helper";
-import { PlusCircle, Trash2 } from "lucide-react";
-import { set } from "date-fns";
+import {
+  BookOpen,
+  CalendarDays,
+  FileText,
+  Loader2,
+  PlusCircle,
+  Save,
+  ScrollText,
+  Trash2,
+  X,
+} from "lucide-react";
 
 export default function CreateAssignmentModal({
   isOpen,
@@ -26,7 +35,7 @@ export default function CreateAssignmentModal({
   mode?: "create" | "edit";
 }) {
   const [title, setTitle] = useState("");
-  const [questions, setQuestions] = useState<string[]>([""]); // dynamic list
+  const [questions, setQuestions] = useState<string[]>([""]);
   const [dueDate, setDueDate] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [totalMarks, setTotalMarks] = useState("");
@@ -40,7 +49,6 @@ export default function CreateAssignmentModal({
     initialData?.submissions?.length > 0 ||
     initialData?._count?.submissions > 0;
 
-  // Reset + fetch subjects when modal opens
   useEffect(() => {
     if (isOpen) {
       if (mode === "edit" && initialData) {
@@ -72,38 +80,40 @@ export default function CreateAssignmentModal({
         setStatus("DRAFT");
         setRubric("");
       }
+
       const teacherUserId = localStorage.getItem("teacherId");
       const campusId = localStorage.getItem("CampusID");
+
       if (teacherUserId && campusId) {
         const fetchSubjects = async () => {
           const res = await fetch(
             `/api/teacher/subjects?teacherId=${teacherUserId}&campusId=${campusId}`,
           );
+
           if (res.ok) {
             const data = await res.json();
             setTeacherSubjects(data);
+
             if (data.length > 0) {
               setSelectedSubject(data[0].subject.id);
             }
           }
         };
+
         fetchSubjects();
       }
     }
   }, [isOpen, mode, initialData]);
 
-  // Add new question
   const addQuestion = () => {
     setQuestions([...questions, ""]);
   };
 
-  // Remove question
   const removeQuestion = (index: number) => {
-    if (questions.length === 1) return; // keep at least 1
+    if (questions.length === 1) return;
     setQuestions(questions.filter((_, i) => i !== index));
   };
 
-  // Update question text
   const updateQuestion = (index: number, value: string) => {
     const newQuestions = [...questions];
     newQuestions[index] = value;
@@ -133,9 +143,10 @@ export default function CreateAssignmentModal({
     setIsLoading(true);
     const actionText = mode === "create" ? "Creating" : "Updating";
     const toastId = showLoadingMessage(`${actionText} assignment...`);
+
     try {
       const payload = {
-        assignmentId: initialData?.id, // Only needed for PATCH
+        assignmentId: initialData?.id,
         title,
         description: JSON.stringify(questions),
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
@@ -180,158 +191,249 @@ export default function CreateAssignmentModal({
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50 p-4"
+        className="fixed inset-0 z-[9999] grid place-items-center bg-black/80 p-4 backdrop-blur-md"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="bg-gray-900/10 backdrop-blur-xl border border-indigo-500/30 p-8 rounded-2xl shadow-2xl w-full max-w-xl text-white relative"
-          initial={{ scale: 0.9, y: 30 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 30 }}
+          className="relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/95 text-white shadow-2xl shadow-black/60 backdrop-blur-2xl"
+          initial={{ scale: 0.95, y: 24, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          exit={{ scale: 0.95, y: 24, opacity: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
           onClick={(e) => e.stopPropagation()}
         >
-          <h2 className="text-2xl font-extrabold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent mb-6">
-            {mode === "create" ? "New Assignment" : "Edit Assignment"}
-          </h2>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/16 via-fuchsia-500/7 to-cyan-400/6" />
+          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-500/15 blur-3xl" />
 
-          {/* Scrollable form */}
-          <div className="space-y-4 max-h-[65vh] py-1 pl-1 overflow-y-auto pr-2 custom-scrollbar">
-            <input
-              type="text"
-              placeholder="Assignment Title (eg. Linear Algebra Assignment 1)"
-              value={title}
-              required
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-gray-800/70 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
-            />
-
-            {/* Dynamic Questions */}
-            <div>
-              <label className="text-sm text-gray-400">Questions</label>
-              <div className="space-y-3 mt-2">
-                {questions.map((q, i) => (
-                  <div key={i} className="flex gap-2 items-start">
-                    <textarea
-                      placeholder={`Q${i + 1}. Enter your question...`}
-                      value={q}
-                      onChange={(e) => updateQuestion(i, e.target.value)}
-                      rows={2}
-                      className="flex-1 bg-gray-800/70 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeQuestion(i)}
-                      className="p-2 mt-5 bg-red-600/70 hover:bg-red-500 rounded-lg text-white"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addQuestion}
-                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600/70 hover:bg-indigo-500 rounded-lg font-semibold text-sm"
-                >
-                  <PlusCircle size={16} /> Add Question
-                </button>
+          <div className="relative z-10 flex items-start justify-between gap-4 border-b border-white/10 px-5 py-5 sm:px-6">
+            <div className="min-w-0">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-violet-200">
+                <FileText className="h-3.5 w-3.5" />
+                {mode === "create" ? "Assignment Studio" : "Edit Workspace"}
               </div>
+
+              <h2 className="text-2xl font-extrabold tracking-tight text-white">
+                {mode === "create" ? "New Assignment" : "Edit Assignment"}
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Add questions, marks, rubric and publishing status for your
+                class assignment.
+              </p>
             </div>
 
-            {/* Marks + Status */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-red-300/20 bg-red-500/10 text-red-200 transition hover:bg-red-500/20"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+            <div className="grid gap-5">
               <div>
-                <label className="text-sm text-gray-400">Total Marks</label>
+                <label className="mb-2 block text-sm font-bold text-slate-300">
+                  Assignment Title
+                </label>
                 <input
-                  type="number"
-                  placeholder="e.g., 100"
-                  value={totalMarks}
-                  disabled={hasSubmissions}
+                  type="text"
+                  placeholder="eg. Linear Algebra Assignment 1"
+                  value={title}
                   required
-                  onChange={(e) => setTotalMarks(e.target.value)}
-                  className={`w-full bg-gray-800/70 p-3 rounded-lg mt-1 outline-none transition ${hasSubmissions ? "opacity-50 cursor-not-allowed" : "focus:ring-2 focus:ring-indigo-500"}`}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
                 />
               </div>
-              <div>
-                <label className="text-sm text-gray-400">Status</label>
-                <select
-                  value={status}
-                  onChange={(e) =>
-                    setStatus(e.target.value as AssignmentStatus)
-                  }
-                  className="w-full [appearance:none] [&::-ms-expand]:hidden bg-gray-800/70 p-3 rounded-lg mt-1 focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                >
-                  <option value="DRAFT">Draft</option>
-                  <option value="PUBLISHED">Published</option>
-                </select>
+
+              <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-4">
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-sm font-extrabold text-white">
+                      <ScrollText className="h-4 w-4 text-violet-300" />
+                      Questions
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      Add one or more questions for students to answer.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={addQuestion}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-violet-300/20 bg-violet-500/10 px-4 py-2.5 text-xs font-extrabold text-violet-100 transition hover:border-violet-300/40 hover:bg-violet-500/20"
+                  >
+                    <PlusCircle size={16} />
+                    Add Question
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {questions.map((q, i) => (
+                    <div key={i} className="flex gap-2">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-[#08080C]/45 text-sm font-extrabold text-violet-200">
+                        Q{i + 1}
+                      </div>
+
+                      <textarea
+                        placeholder={`Enter question ${i + 1}...`}
+                        value={q}
+                        onChange={(e) => updateQuestion(i, e.target.value)}
+                        rows={2}
+                        className="min-h-[80px] flex-1 resize-none rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => removeQuestion(i)}
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-red-300/20 bg-red-500/10 text-red-200 transition hover:bg-red-500/20"
+                        title="Remove question"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Rubric */}
-            <label className="text-sm text-gray-400">
-              Grading Criteria / Rubric
-            </label>
-            <textarea
-              placeholder="eg. Accuracy – 10 marks, Steps – 5 marks, Presentation – 5 marks"
-              value={rubric}
-              onChange={(e) => setRubric(e.target.value)}
-              rows={3}
-              className="w-full bg-gray-800/70 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
-            ></textarea>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-slate-300">
+                    Total Marks
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g., 100"
+                    value={totalMarks}
+                    disabled={hasSubmissions}
+                    required
+                    onChange={(e) => setTotalMarks(e.target.value)}
+                    className={`w-full rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-slate-600 ${
+                      hasSubmissions
+                        ? "cursor-not-allowed opacity-50"
+                        : "focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                    }`}
+                  />
+                  {hasSubmissions && (
+                    <p className="mt-2 text-xs font-medium text-amber-300">
+                      Marks are locked because submissions already exist.
+                    </p>
+                  )}
+                </div>
 
-            {/* Subject */}
-            <div>
-              <label className="text-sm text-gray-400">
-                Subject {mode === "edit" && "(Locked)"}
-              </label>
-              <select
-                disabled={mode === "edit"}
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                className={`w-full bg-gray-800/70 p-3 rounded-lg mt-1 outline-none transition ${mode === "edit" ? "opacity-50 cursor-not-allowed" : "focus:ring-2 focus:ring-indigo-500"}`}
-              >
-                {teacherSubjects.map((ts) => (
-                  <option key={ts.id} value={ts.subject.id}>
-                    {ts.subject.name} (
-                    {ts.semester.name.includes("Semester")
-                      ? ts.semester.name
-                      : `${ts.semester.name} Semester`}
-                    , {ts.section.name})
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-slate-300">
+                    Status
+                  </label>
+                  <select
+                    value={status}
+                    onChange={(e) =>
+                      setStatus(e.target.value as AssignmentStatus)
+                    }
+                    className="w-full appearance-none rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 text-sm font-semibold text-white outline-none transition focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                  >
+                    <option value="DRAFT" className="bg-[#08080C]">
+                      Draft
+                    </option>
+                    <option value="PUBLISHED" className="bg-[#08080C]">
+                      Published
+                    </option>
+                  </select>
+                </div>
+              </div>
 
-            {/* Due Date */}
-            <div>
-              <label className="text-sm text-gray-400">
-                Due Date (Optional)
-              </label>
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="w-full bg-gray-800/70 p-3 rounded-lg mt-1 focus:ring-2 focus:ring-indigo-500 outline-none transition"
-              />
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-300">
+                  Grading Criteria / Rubric
+                </label>
+                <textarea
+                  placeholder="eg. Accuracy – 10 marks, Steps – 5 marks, Presentation – 5 marks"
+                  value={rubric}
+                  onChange={(e) => setRubric(e.target.value)}
+                  rows={3}
+                  className="w-full resize-none rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-300">
+                  Subject {mode === "edit" && "(Locked)"}
+                </label>
+                <div className="relative">
+                  <BookOpen className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-300" />
+                  <select
+                    disabled={mode === "edit"}
+                    value={selectedSubject}
+                    onChange={(e) => setSelectedSubject(e.target.value)}
+                    className={`w-full appearance-none rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 pl-11 text-sm font-semibold text-white outline-none transition ${
+                      mode === "edit"
+                        ? "cursor-not-allowed opacity-50"
+                        : "focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                    }`}
+                  >
+                    {teacherSubjects.map((ts) => (
+                      <option
+                        key={ts.id}
+                        value={ts.subject.id}
+                        className="bg-[#08080C]"
+                      >
+                        {ts.subject.name} (
+                        {ts.semester.name.includes("Semester")
+                          ? ts.semester.name
+                          : `${ts.semester.name} Semester`}
+                        , {ts.section.name})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-300">
+                  Due Date (Optional)
+                </label>
+                <div className="relative">
+                  <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-300" />
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="w-full rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 pl-11 text-sm font-semibold text-white outline-none transition focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-4 pt-6 mt-6 border-t border-gray-800">
+          <div className="relative z-10 flex flex-col-reverse gap-3 border-t border-white/10 px-5 py-5 sm:flex-row sm:justify-end sm:px-6">
             <button
+              type="button"
               onClick={onClose}
-              className="py-2 px-5 bg-gray-700/70 hover:bg-gray-600 rounded-lg font-semibold transition"
+              className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-3 text-sm font-extrabold text-slate-300 transition hover:border-violet-300/35 hover:bg-violet-500/15 hover:text-white"
             >
               Cancel
             </button>
+
             <button
+              type="button"
               onClick={handleSubmit}
               disabled={isLoading}
-              className="py-2 px-5 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:scale-105 transition-transform rounded-lg font-bold shadow-lg disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 transition hover:-translate-y-0.5 hover:shadow-violet-800/30 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isLoading ? "Saving..." : mode === "create" ? "Create Assignment" : "Save Changes"}
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {isLoading
+                ? "Saving..."
+                : mode === "create"
+                  ? "Create Assignment"
+                  : "Save Changes"}
             </button>
           </div>
         </motion.div>

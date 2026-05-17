@@ -20,7 +20,7 @@ import {
 import GenerateTokenDialog from "@/components/teacher/GenerateTokenDialog";
 import AttendanceFinalizer from "@/components/teacher/AttendanceFinalizer";
 import ActiveSessionTracker from "@/components/teacher/ActiveSessionTracker";
-import { BookOpen, CalendarDays, GraduationCap, Radio } from "lucide-react";
+import { BookOpen, CalendarDays, Radio } from "lucide-react";
 
 export default function TeacherDashboardPage() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -30,9 +30,9 @@ export default function TeacherDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
-  const [activeSessionToken, setActiveSessionToken] = useState<string | null>(
-    null,
-  );
+  const [activeClassSessionId, setActiveClassSessionId] = useState<
+    string | null
+  >(null);
   const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function TeacherDashboardPage() {
 
   const handleFinalizeClose = () => {
     setIsFinalizeModalOpen(false);
-    setActiveSessionToken(null);
+    setActiveClassSessionId(null);
   };
 
   const todayWeekday = new Date()
@@ -194,7 +194,7 @@ export default function TeacherDashboardPage() {
             </div>
           </section>
 
-          {activeSessionToken && (
+          {activeClassSessionId && (
             <section className="overflow-hidden rounded-[2rem] border border-emerald-300/20 bg-emerald-500/10 p-4 shadow-2xl shadow-emerald-950/10 backdrop-blur-2xl">
               <div className="mb-3 flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-500/10">
@@ -220,40 +220,16 @@ export default function TeacherDashboardPage() {
 
           <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(340px,0.85fr)]">
             <div className="min-w-0 space-y-6">
-              <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl">
-                <QuickActionsCard />
-              </div>
-
-              <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl">
-                <SubjectsCard subjects={subjects} />
-              </div>
+              <QuickActionsCard />
+              <SubjectsCard subjects={subjects} />
             </div>
 
-            <aside className="min-w-0 space-y-6">
-              <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl">
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10">
-                    <GraduationCap className="h-5 w-5 text-violet-200" />
-                  </div>
-
-                  <div>
-                    <p className="text-base font-extrabold text-white">
-                      Today&apos;s Schedule
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Classes assigned for {todayWeekday}
-                    </p>
-                  </div>
-                </div>
-
-                <ScheduleCard classes={todaysClasses} />
-              </div>
+            <aside className="min-w-0">
+              <ScheduleCard classes={todaysClasses} />
             </aside>
           </section>
 
-          <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl">
-            <AttendanceSession attendanceSessions={todaysAttendanceSessions} />
-          </section>
+          <AttendanceSession attendanceSessions={todaysAttendanceSessions} />
         </div>
       </main>
 
@@ -269,13 +245,13 @@ export default function TeacherDashboardPage() {
           onClose={() => setIsGenerateModalOpen(false)}
           onSuccess={(token) => {
             setIsGenerateModalOpen(false);
-            setActiveSessionToken(token);
+            setActiveClassSessionId(token);
           }}
         />
 
-        {isFinalizeModalOpen && activeSessionToken && (
+        {isFinalizeModalOpen && activeClassSessionId && (
           <AttendanceFinalizer
-            token={activeSessionToken}
+            classSessionId={activeClassSessionId}
             onClose={handleFinalizeClose}
           />
         )}
