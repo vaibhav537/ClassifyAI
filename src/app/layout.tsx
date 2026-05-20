@@ -37,7 +37,7 @@ export default function RootLayout({
         <NotificationPortal />
         {/* <RootBackground /> */}
         <ClientNavBlocker />
-        <RazorpayScriptLoader />
+        {/* <RazorpayScriptLoader /> */}
         <RouteLoader />
         <NetworkListener />
 

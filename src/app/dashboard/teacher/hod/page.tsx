@@ -5,11 +5,14 @@ import DepartmentPulse from "@/components/teacher/hod/DepartmentPulse";
 import SubjectTrendChart from "@/components/teacher/hod/SubjectTrendChart";
 import TeacherLeaderboard from "@/components/teacher/hod/TeacherLeaderboard";
 import React, { useEffect, useState } from "react";
-import { Activity, ShieldCheck } from "lucide-react";
+import { Activity, ShieldCheck, CalendarClock, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const Page = () => {
   const [campusId, setCampusId] = useState<string | null>(null);
   const [teacherId, setTeacherId] = useState<string | null>(null);
+
+  const router = useRouter();
 
   useEffect(() => {
     setCampusId(localStorage.getItem("CampusID"));
@@ -85,6 +88,46 @@ const Page = () => {
             </div>
           </div>
         </header>
+
+        <section
+          onClick={() => router.push("/dashboard/teacher/hod/timetable")}
+          className="group relative cursor-pointer overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#14141B]/80 p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl transition-all duration-300 hover:-translate-y-1 hover:border-cyan-300/30 hover:bg-white/[0.06] sm:p-6"
+        >
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-violet-500/10" />
+          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-cyan-500/10 blur-3xl transition-all duration-300 group-hover:bg-cyan-400/20" />
+
+          <div className="relative z-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.4rem] border border-cyan-300/20 bg-cyan-500/10">
+                <CalendarClock className="h-7 w-7 text-cyan-200" />
+              </div>
+
+              <div>
+                <span className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-cyan-100">
+                  Academic Scheduler
+                </span>
+
+                <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-white">
+                  Make Timetable
+                </h2>
+
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+                  Configure college timings, working days, lunch breaks,
+                  lectures, labs, rooms, teachers, semester and section-wise
+                  timetable with conflict warnings.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-500/10 px-5 py-3 text-sm font-extrabold text-cyan-100 transition-all duration-300 group-hover:border-cyan-200/40 group-hover:bg-cyan-500/20"
+            >
+              Open Timetable
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </button>
+          </div>
+        </section>
 
         <section className="w-full">
           <DepartmentPulse campusId={campusId} />

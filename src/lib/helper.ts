@@ -10,6 +10,7 @@ import {
   ClipboardCheck,
   NotepadText,
   Upload,
+  MessageCircle,
 } from "lucide-react";
 import React from "react";
 
@@ -283,6 +284,8 @@ export const teacherNavLinks = [
     icon: Megaphone,
   },
   { label: "Resources", href: "/dashboard/teacher/resources", icon: Upload },
+  {label: "Campus Chat", href: "/chat", icon: MessageCircle}
+  
 ];
 
 // --- NEWLY IMPLEMENTED FUNCTION ---
@@ -662,4 +665,14 @@ export const EMOJI_SHORTCUTS: Record<string, string> = {
   star: "⭐",
   check: "✅",
   cross: "❌",
+};
+
+export const formatTimetableTime = (value: string | Date) => {
+  const time = new Date(value).toISOString().slice(11, 16);
+  const [hourRaw, minute] = time.split(":");
+  const hour = Number(hourRaw);
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const normalizedHour = hour % 12 || 12;
+
+  return `${normalizedHour}:${minute} ${suffix}`;
 };

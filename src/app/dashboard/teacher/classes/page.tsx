@@ -10,7 +10,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { TeacherClassSession } from "@/lib/types";
-import { showErrorMessage } from "@/lib/helper";
+import { formatTimetableTime, showErrorMessage } from "@/lib/helper";
 import GenerateTokenDialog from "@/components/teacher/GenerateTokenDialog";
 import AttendanceFinalizer from "@/components/teacher/AttendanceFinalizer";
 import { motion } from "framer-motion";
@@ -178,15 +178,8 @@ export default function ClassesPage() {
                         <Clock className="h-4 w-4 shrink-0 text-emerald-300" />
 
                         <p className="text-sm font-semibold text-slate-300">
-                          {new Date(cls.startTime).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}{" "}
-                          -{" "}
-                          {new Date(cls.endTime).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {formatTimetableTime(cls.startTime)} -{" "}
+                          {formatTimetableTime(cls.endTime)}
                         </p>
                       </div>
                     </div>

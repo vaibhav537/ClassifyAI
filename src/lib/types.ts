@@ -426,3 +426,118 @@ export interface AttendanceRecord {
   status: string;
   date: string;
 }
+
+export type HodContext = {
+  userId: string;
+  campusId: string;
+  teacherId: string;
+  department: string | null;
+};
+
+
+export type Weekday =
+  | "MONDAY"
+  | "TUESDAY"
+  | "WEDNESDAY"
+  | "THURSDAY"
+  | "FRIDAY"
+  | "SATURDAY"
+  | "SUNDAY";
+
+export type TimetableEntryType =
+  | "LECTURE"
+  | "LAB"
+  | "TUTORIAL"
+  | "EXTRA_CLASS"
+  | "LUNCH"
+  | "BREAK"
+  | "FREE"
+  | "EXAM"
+  | "EVENT";
+
+export type TeacherOption = {
+  id: string;
+  department?: string | null;
+  designation?: string | null;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    campusId: string | null;
+  };
+};
+
+export type SubjectOption = {
+  id: string;
+  name: string;
+  code?: string | null;
+};
+
+export type SemesterOption = {
+  id: string;
+  name: string;
+  number?: number | null;
+};
+
+export type SectionOption = {
+  id: string;
+  name: string;
+};
+
+export type TimetableDayConfig = {
+  id: string;
+  campusId: string;
+  weekday: Weekday;
+  startTime: string;
+  endTime: string;
+  isWorking: boolean;
+};
+
+export type TimetableEntry = {
+  id: string;
+  type: TimetableEntryType;
+  title?: string | null;
+  weekday: Weekday;
+  startTime: string;
+  endTime: string;
+  room?: string | null;
+  notes?: string | null;
+  teacherId?: string | null;
+  subjectId?: string | null;
+  semesterId?: string | null;
+  sectionId?: string | null;
+  teacher?: {
+    id: string;
+    user: {
+      id: string;
+      name: string;
+      email: string;
+    };
+  } | null;
+  subject?: SubjectOption | null;
+  semester?: SemesterOption | null;
+  section?: SectionOption | null;
+};
+
+export type TimetableFormState = {
+  id?: string;
+  type: TimetableEntryType;
+  title: string;
+  weekday: Weekday;
+  startTime: string;
+  endTime: string;
+  room: string;
+  teacherId: string;
+  subjectId: string;
+  semesterId: string;
+  sectionId: string;
+  notes: string;
+};
+
+export type TimetableMeta = {
+  teachers: TeacherOption[];
+  subjects: SubjectOption[];
+  semesters: SemesterOption[];
+  sections: SectionOption[];
+  dayConfigs: TimetableDayConfig[];
+};
