@@ -6,7 +6,10 @@ import { useEffect } from "react";
 const Logout = () => {
   useEffect(() => {
     const keysToRemove = [
+      "studentId",
+      "teacherId",
       "assistantId",
+      "adminId",
       "HTML5_QRCODE_DATA",
       "epr_suggested",
       "last-online-page",
@@ -15,6 +18,7 @@ const Logout = () => {
       "rzp_device_id",
       "userId",
       "userRole",
+      "lastCampusSlug",
     ];
 
     keysToRemove.forEach((key) => localStorage.removeItem(key));

@@ -434,7 +434,6 @@ export type HodContext = {
   department: string | null;
 };
 
-
 export type Weekday =
   | "MONDAY"
   | "TUESDAY"
@@ -540,4 +539,56 @@ export type TimetableMeta = {
   semesters: SemesterOption[];
   sections: SectionOption[];
   dayConfigs: TimetableDayConfig[];
+};
+
+export type CurrentUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "STUDENT" | "TEACHER" | "ADMIN" | "ASSISTANT";
+  campusId: string | null;
+  avatarUrl?: string | null;
+};
+
+export interface ChatLayoutProps {
+  userId: string;
+  privateKey: string;
+  campusId: string;
+  currentUser: {
+    id: string;
+    name: string;
+    email: string;
+    role: "STUDENT" | "TEACHER" | "ADMIN" | "ASSISTANT";
+    campusId: string | null;
+    avatarUrl?: string | null;
+  };
+}
+
+export type StudentTimetableEntry = {
+  id: string;
+  type: string;
+  title?: string | null;
+  weekday: string;
+  startTime: string;
+  endTime: string;
+  room?: string | null;
+  teacher?: {
+    user: {
+      name: string;
+      email: string;
+    };
+  } | null;
+  subject?: {
+    id: string;
+    name: string;
+    code?: string | null;
+  } | null;
+  semester?: {
+    id: string;
+    name: string;
+  } | null;
+  section?: {
+    id: string;
+    name: string;
+  } | null;
 };

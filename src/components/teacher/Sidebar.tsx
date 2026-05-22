@@ -24,6 +24,7 @@ export default function Sidebar() {
     localStorage.removeItem("adminId");
     localStorage.removeItem("assistantId");
     localStorage.removeItem("userId");
+    localStorage.removeItem("userRole");
     localStorage.removeItem("lastCampusSlug");
 
     router.push("/auth/login");

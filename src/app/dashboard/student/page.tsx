@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { Attendance, PremiumStatusResponse } from "@/lib/types";
+import {
+  Attendance,
+  PremiumStatusResponse,
+  StudentTimetableEntry,
+} from "@/lib/types";
 import Greeting from "@/components/student/Greeting";
 import Logo from "@/components/apps/Logo";
 import UpgradeToPremiumCard from "@/components/student/UpgradeToPremiumCard";
@@ -17,11 +21,19 @@ import {
   QrCode,
   ShieldCheck,
   Sparkles,
+  Clock3,
+  MapPin,
+  BookOpen,
+  UserRound,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import ChatBot from "@/components/student/ChatBot";
 import PremiumFeaturesCard from "@/components/student/PremiumFeaturesCard";
-import { showErrorMessage } from "@/lib/helper";
+import {
+  formatTimetableTime,
+  formatWeekday,
+  showErrorMessage,
+} from "@/lib/helper";
 import FirstLoginModal from "@/components/student/FirstLoginModal";
 import FaceVerificationModal from "@/components/student/FaceVerificationModal";
 import DashboardLoader from "@/components/student/DashboardLoader";
@@ -43,6 +55,14 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState<boolean>(true);
   const [premiumStatus, setPremiumStatus] =
     useState<PremiumStatusResponse | null>(null);
+  const [todayTimetable, setTodayTimetable] = useState<StudentTimetableEntry[]>(
+    [],
+  );
+  const [weeklyTimetable, setWeeklyTimetable] = useState<
+    StudentTimetableEntry[]
+  >([]);
+  const [todayWeekday, setTodayWeekday] = useState<string>("");
+  const [timetableLoading, setTimetableLoading] = useState<boolean>(false);
 
   const router = useRouter();
 
@@ -60,6 +80,7 @@ export default function StudentDashboard() {
     localStorage.removeItem("adminId");
     localStorage.removeItem("assistantId");
     localStorage.removeItem("userId");
+    localStorage.removeItem("userRole");
     localStorage.removeItem("lastCampusSlug");
     router.push("/auth/login");
   };
@@ -152,10 +173,30 @@ export default function StudentDashboard() {
       }
     };
 
+    const fetchStudentTimetable = async () => {
+      try {
+        setTimetableLoading(true);
+        const res = await fetch("/api/student/timetable");
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to fetch timetable");
+        }
+        setTodayTimetable(data.todayEntries || []);
+        setWeeklyTimetable(data.weeklyEntries || []);
+        setTodayWeekday(data.todayWeekday || "");
+      } catch (error) {
+        console.error("Error fetching student timetable:", error);
+      } finally {
+        setTimetableLoading(false);
+      }
+    };
+
     fetchStats();
     fetchTodayAttendance();
     fetchPremiumStatus();
     fetchStudentData();
+    fetchStudentTimetable();
+    //* debarreded faceverification  state
     // setNeedsFaceVerification(true); //!false for development
   }, []);
 
@@ -356,6 +397,105 @@ export default function StudentDashboard() {
                   )}
                 </div>
               </div>
+              <div className="rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-5 shadow-2xl shadow-black/30 backdrop-blur-2xl">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+                      {todayWeekday ? formatWeekday(todayWeekday) : "Today"}
+                    </p>
+                    <h2 className="mt-1 text-xl font-extrabold text-white">
+                      Today&apos;s Classes
+                    </h2>
+                  </div>
+
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-500/10">
+                    <Clock3 className="h-5 w-5 text-cyan-300" />
+                  </div>
+                </div>
+
+                <div className="max-h-[420px] overflow-y-auto pr-1">
+                  {timetableLoading ? (
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-8 text-center">
+                      <p className="text-sm font-semibold text-slate-300">
+                        Loading timetable...
+                      </p>
+                    </div>
+                  ) : todayTimetable.length > 0 ? (
+                    <ul className="space-y-3">
+                      {todayTimetable.map((entry) => {
+                        const isClass =
+                          entry.type === "LECTURE" ||
+                          entry.type === "LAB" ||
+                          entry.type === "TUTORIAL" ||
+                          entry.type === "EXTRA_CLASS" ||
+                          entry.type === "EXAM";
+
+                        return (
+                          <li
+                            key={entry.id}
+                            className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 transition hover:border-cyan-300/30 hover:bg-white/[0.075]"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-extrabold text-white">
+                                  {isClass
+                                    ? entry.subject?.name || "Class"
+                                    : entry.title || entry.type}
+                                </p>
+
+                                <p className="mt-1 text-xs font-semibold text-cyan-200">
+                                  {formatTimetableTime(entry.startTime)} -{" "}
+                                  {formatTimetableTime(entry.endTime)}
+                                </p>
+                              </div>
+
+                              <span className="shrink-0 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-violet-200">
+                                {entry.type.replace("_", " ")}
+                              </span>
+                            </div>
+
+                            {isClass && (
+                              <div className="mt-3 space-y-2 text-xs text-slate-400">
+                                <div className="flex items-center gap-2">
+                                  <UserRound className="h-3.5 w-3.5 text-violet-300" />
+                                  <span>
+                                    {entry.teacher?.user.name || "Teacher N/A"}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <BookOpen className="h-3.5 w-3.5 text-cyan-300" />
+                                  <span>
+                                    {entry.subject?.code
+                                      ? `${entry.subject.name} (${entry.subject.code})`
+                                      : entry.subject?.name || "Subject N/A"}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-3.5 w-3.5 text-emerald-300" />
+                                  <span>
+                                    {entry.room || "Room not assigned"}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] px-4 py-8 text-center">
+                      <p className="text-sm font-semibold text-slate-300">
+                        No classes scheduled today.
+                      </p>
+                      <p className="mt-2 text-xs leading-5 text-slate-500">
+                        Your semester-section timetable will appear here.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </aside>
 
             <main className="space-y-5">
@@ -420,6 +560,11 @@ export default function StudentDashboard() {
                     faIcon={faMessage}
                     title="View Messages"
                     link="/chat"
+                  />
+                  <SideButtons
+                    faIcon={faBookOpen}
+                    title="View Timetable"
+                    link="/dashboard/student/timetable"
                   />
                 </div>
               </div>

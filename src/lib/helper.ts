@@ -676,3 +676,8 @@ export const formatTimetableTime = (value: string | Date) => {
 
   return `${normalizedHour}:${minute} ${suffix}`;
 };
+
+
+export function formatWeekday(value: string) {
+  return value.charAt(0) + value.slice(1).toLowerCase();
+}

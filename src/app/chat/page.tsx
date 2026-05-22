@@ -5,38 +5,42 @@ import ChatLayout from "@/components/chat/ChatLayout";
 import { initUserKeys } from "@/lib/init-keys";
 import { motion } from "framer-motion";
 import { Loader2, LockKeyhole, MessageCircle, ShieldCheck } from "lucide-react";
+import { CurrentUser } from "@/lib/types";
+import { useRouter } from "next/navigation";
 
 export default function ChatPage() {
-  const [userId, setUserId] = useState("");
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [privateKey, setPrivateKey] = useState("");
-  const [campusId, setCampusId] = useState("");
+  const [error, setError] = useState("");
   const [isReady, setIsReady] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const init = async () => {
-      const id =
-        localStorage.getItem("studentId") ||
-        localStorage.getItem("teacherId") ||
-        localStorage.getItem("adminId") ||
-        localStorage.getItem("assistantId") ||
-        "";
-
-      const campus = localStorage.getItem("CampusID") || "";
-
-      if (!id) return;
-
-      const key = await initUserKeys(id);
-
-      setUserId(id);
-      setPrivateKey(key);
-      setCampusId(campus);
-      setIsReady(true);
+      try {
+        setError("");
+        const response = await fetch("/api/auth/me", {
+          cache: "no-store",
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success || !data.user?.id) {
+          router.push("/auth/login");
+          return;
+        }
+        const user = data.user as CurrentUser;
+        const key = await initUserKeys(user.id);
+        setCurrentUser(user);
+        setPrivateKey(key);
+        setIsReady(true);
+      } catch (error) {
+        console.error("Chat init error:", error);
+        setError("Unable to initialize chat session.");
+      }
     };
-
     init();
-  }, []);
+  }, [router]);
 
-  if (!isReady) {
+  if (!isReady || !currentUser) {
     return (
       <section className="relative grid h-[100dvh] place-items-center overflow-hidden bg-[#08080C] px-4 text-white">
         <div className="pointer-events-none absolute inset-0 app-shell-bg" />
@@ -108,7 +112,7 @@ export default function ChatPage() {
       transition={{ duration: 0.3 }}
       className="min-h-[100dvh] bg-[#08080C] text-white"
     >
-      <ChatLayout userId={userId} privateKey={privateKey} campusId={campusId} />
+      <ChatLayout userId={currentUser.id} privateKey={privateKey} campusId={currentUser.campusId|| ""} currentUser={currentUser} />
     </motion.div>
   );
 }

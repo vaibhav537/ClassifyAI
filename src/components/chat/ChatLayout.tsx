@@ -14,17 +14,13 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-
-interface ChatLayoutProps {
-  userId: string;
-  privateKey: string;
-  campusId: string;
-}
+import { ChatLayoutProps } from "@/lib/types";
 
 export default function ChatLayout({
   userId,
   privateKey,
   campusId,
+  currentUser,
 }: ChatLayoutProps) {
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
@@ -34,14 +30,8 @@ export default function ChatLayout({
   const router = useRouter();
 
   const handleBack = () => {
-    const role = localStorage.getItem("userRole")?.toLowerCase();
-
-    if (role) {
-      router.push(`/dashboard/${role}`);
-      return;
-    }
-
-    router.push("/dashboard/student");
+    const rolePath = currentUser.role.toLowerCase();
+    router.push(`/dashboard/${rolePath}`);
   };
 
   return (

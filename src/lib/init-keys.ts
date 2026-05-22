@@ -12,7 +12,7 @@ export async function initUserKeys(userId: string): Promise<string> {
     await fetch("/api/chat/keys/init", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, publicKey: existingPublicKey }),
+      body: JSON.stringify({ publicKey: existingPublicKey }),
     });
 
     return existingPrivateKey;
@@ -29,7 +29,7 @@ export async function initUserKeys(userId: string): Promise<string> {
   await fetch("/api/chat/keys/init", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, publicKey }),
+    body: JSON.stringify({ publicKey }),
   });
 
   return privateKey;
