@@ -41,6 +41,7 @@ import NotificationBell from "@/components/student/NotificationBell";
 import {
   faBookOpen,
   faBullhorn,
+  faCalendarDays,
   faMessage,
 } from "@fortawesome/free-solid-svg-icons";
 import NotificationHandler from "@/components/ui/NotificationHandler";
@@ -562,7 +563,7 @@ export default function StudentDashboard() {
                     link="/chat"
                   />
                   <SideButtons
-                    faIcon={faBookOpen}
+                    faIcon={faCalendarDays}
                     title="View Timetable"
                     link="/dashboard/student/timetable"
                   />

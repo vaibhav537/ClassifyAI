@@ -564,11 +564,33 @@ export interface ChatLayoutProps {
   };
 }
 
+export type StudentTimetableResponse = {
+  success: boolean;
+  todayWeekday: Weekday;
+  student?: {
+    id: string;
+    semesterId?: string | null;
+    sectionId?: string | null;
+    semester?: {
+      id: string;
+      name: string;
+    } | null;
+    section?: {
+      id: string;
+      name: string;
+    } | null;
+  } | null;
+  todayEntries: StudentTimetableEntry[];
+  weeklyEntries: StudentTimetableEntry[];
+  message?: string;
+  error?: string;
+};
+
 export type StudentTimetableEntry = {
   id: string;
   type: string;
   title?: string | null;
-  weekday: string;
+  weekday: Weekday;
   startTime: string;
   endTime: string;
   room?: string | null;

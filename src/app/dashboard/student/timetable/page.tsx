@@ -12,66 +12,11 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-
-type Weekday =
-  | "MONDAY"
-  | "TUESDAY"
-  | "WEDNESDAY"
-  | "THURSDAY"
-  | "FRIDAY"
-  | "SATURDAY"
-  | "SUNDAY";
-
-type StudentTimetableEntry = {
-  id: string;
-  type: string;
-  title?: string | null;
-  weekday: Weekday;
-  startTime: string;
-  endTime: string;
-  room?: string | null;
-  teacher?: {
-    user: {
-      name: string;
-      email: string;
-    };
-  } | null;
-  subject?: {
-    id: string;
-    name: string;
-    code?: string | null;
-  } | null;
-  semester?: {
-    id: string;
-    name: string;
-  } | null;
-  section?: {
-    id: string;
-    name: string;
-  } | null;
-};
-
-type StudentTimetableResponse = {
-  success: boolean;
-  todayWeekday: Weekday;
-  student?: {
-    id: string;
-    semesterId?: string | null;
-    sectionId?: string | null;
-    semester?: {
-      id: string;
-      name: string;
-    } | null;
-    section?: {
-      id: string;
-      name: string;
-    } | null;
-  };
-  todayEntries: StudentTimetableEntry[];
-  weeklyEntries: StudentTimetableEntry[];
-  message?: string;
-  error?: string;
-};
+import {
+  StudentTimetableEntry,
+  StudentTimetableResponse,
+  Weekday,
+} from "@/lib/types";
 
 const WEEKDAYS: Weekday[] = [
   "MONDAY",
@@ -179,14 +124,20 @@ function TimetableCard({ entry }: { entry: StudentTimetableEntry }) {
 
             <p className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-emerald-300" />
-              <span className="truncate">{entry.room || "Room not assigned"}</span>
+              <span className="truncate">
+                {entry.room || "Room not assigned"}
+              </span>
             </p>
 
             <p className="flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-amber-300" />
               <span className="truncate">
                 {entry.semester?.name || "Semester"}{" "}
-                {entry.section?.name ? `- Section ${entry.section.name}` : ""}
+                {entry.section?.name
+                  ? entry.section.name.toLowerCase().includes("section")
+                    ? entry.section?.name
+                    : `Section ${entry.section.name}`
+                  : " "}
               </span>
             </p>
           </div>
@@ -282,21 +233,22 @@ export default function StudentTimetablePage() {
 
           <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <button
-                type="button"
-                onClick={() => router.push("/dashboard/student")}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-extrabold text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Dashboard
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => router.push("/dashboard/student")}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-extrabold text-slate-300 transition hover:-translate-x-0.5 hover:bg-white/[0.08] hover:text-white"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Dashboard
+                </button>
 
-              <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-cyan-100">
-                <CalendarClock className="h-3.5 w-3.5" />
-                Student Timetable
+                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-500/10 px-3 py-2 text-[10px] font-extrabold uppercase tracking-[0.18em] text-cyan-100">
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  Student Timetable
+                </div>
               </div>
-
-              <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
                 My Weekly Timetable
               </h1>
 
@@ -313,7 +265,11 @@ export default function StudentTimetablePage() {
 
                   <span className="rounded-full border border-cyan-300/20 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-100">
                     {studentInfo.section?.name
-                      ? `Section ${studentInfo.section.name}`
+                      ? studentInfo.section.name
+                          .toLowerCase()
+                          .includes("section")
+                        ? studentInfo.section?.name
+                        : `Section ${studentInfo.section.name}`
                       : "Section not assigned"}
                   </span>
                 </div>
