@@ -63,6 +63,8 @@ export interface AttendanceRecord {
   subject: string;
   status: string;
   date: string;
+  markedAt?: string;
+  markedBy?: string;
 }
 
 export interface Exam {

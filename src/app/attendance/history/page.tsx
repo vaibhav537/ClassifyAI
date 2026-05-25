@@ -1,5 +1,6 @@
 "use client";
 
+import { formatAttendanceDate } from "@/lib/helper";
 import { AttendanceRecord } from "@/lib/types";
 import {
   CalendarDays,
@@ -229,15 +230,7 @@ const AttendanceHistoryPage = () => {
 
                               <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-slate-500">
                                 <CalendarDays className="h-3.5 w-3.5 text-violet-300" />
-                                {new Date(record.date).toLocaleDateString(
-                                  "en-IN",
-                                  {
-                                    weekday: "long",
-                                    day: "numeric",
-                                    month: "short",
-                                    year: "numeric",
-                                  },
-                                )}
+                                {formatAttendanceDate(record.date|| record.markedAt)}
                               </div>
                             </div>
 

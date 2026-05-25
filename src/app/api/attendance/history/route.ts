@@ -5,42 +5,79 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
 
-    // 1. Get campusId and pagination params from the URL
-    const studentId = searchParams.get("studentId");
+    const studentUserId = searchParams.get("studentId");
     const campusId = searchParams.get("campusId");
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const skip = (page - 1) * limit;
 
-    if (!studentId || !campusId) {
+    if (!studentUserId || !campusId) {
       return NextResponse.json(
         { success: false, error: "Student ID and Campus ID are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // 2. Build the secure, scoped where clause
-    const whereClause = {
-      userId: studentId,
-      user: {
-        campusId: campusId,
+    const studentProfile = await prisma.student.findFirst({
+      where: {
+        userId: studentUserId,
+        user: {
+          campusId,
+        },
       },
+      select: {
+        id: true,
+        userId: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            campusId: true,
+          },
+        },
+      },
+    });
+
+    if (!studentProfile) {
+      return NextResponse.json(
+        { success: false, error: "Student profile not found on this campus" },
+        { status: 404 },
+      );
+    }
+
+    const whereClause = {
+      studentId: studentProfile.id,
       classSession: {
-        isNot: null,
+        is: {
+          campusId,
+        },
       },
     };
 
-    // 3. Fetch data and total count in a single transaction for efficiency
     const [history, totalRecords] = await prisma.$transaction([
       prisma.attendance.findMany({
         where: whereClause,
         include: {
           classSession: {
             select: {
+              id: true,
+              date: true,
               subject: true,
               subjectRel: {
                 select: {
+                  id: true,
                   name: true,
+                  code: true,
+                },
+              },
+              teacher: {
+                select: {
+                  id: true,
+                  user: {
+                    select: {
+                      name: true,
+                    },
+                  },
                 },
               },
             },
@@ -49,9 +86,10 @@ export async function GET(req: NextRequest) {
         orderBy: {
           markedAt: "desc",
         },
-        skip: skip,
+        skip,
         take: limit,
       }),
+
       prisma.attendance.count({
         where: whereClause,
       }),
@@ -65,9 +103,12 @@ export async function GET(req: NextRequest) {
         item.classSession?.subjectRel?.name ||
         item.classSession?.subject ||
         "Unknown Subject",
+      subjectCode: item.classSession?.subjectRel?.code || null,
+      markedBy: item.classSession?.teacher?.user?.name || "Unknown Teacher",
+      classSessionId: item.classSession?.id || null,
+      classDate: item.classSession?.date || null,
     }));
-    
-    // 4. Return the paginated response
+
     return NextResponse.json({
       success: true,
       history: formattedHistory,
@@ -80,9 +121,10 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching attendance history:", error);
+
     return NextResponse.json(
       { success: false, error: "Error fetching attendance history" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

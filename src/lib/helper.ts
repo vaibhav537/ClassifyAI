@@ -677,6 +677,23 @@ export const formatTimetableTime = (value: string | Date) => {
   return `${normalizedHour}:${minute} ${suffix}`;
 };
 
+export const formatAttendanceDate = (value?: string | Date | null) => {
+  if (!value) return "Date not available";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Date not available";
+  }
+
+  return date.toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
 
 export function formatWeekday(value: string) {
   return value.charAt(0) + value.slice(1).toLowerCase();

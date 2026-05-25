@@ -7,9 +7,11 @@ import {
   BookOpen,
   CalendarClock,
   Clock3,
+  LayoutGrid,
   Loader2,
   MapPin,
   ShieldCheck,
+  Table2,
   UserRound,
 } from "lucide-react";
 import {
@@ -17,6 +19,7 @@ import {
   StudentTimetableResponse,
   Weekday,
 } from "@/lib/types";
+import ClassicTimetableTable from "@/components/student/ClassicTimetableTable";
 
 const WEEKDAYS: Weekday[] = [
   "MONDAY",
@@ -164,6 +167,7 @@ export default function StudentTimetablePage() {
   );
   const [studentInfo, setStudentInfo] =
     useState<StudentTimetableResponse["student"]>(null);
+  const [viewMode, setViewMode] = useState<"classic" | "modern">("classic");
 
   const fetchTimetable = useCallback(async () => {
     try {
@@ -344,43 +348,104 @@ export default function StudentTimetablePage() {
           </div>
         </section>
 
-        <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-          {WEEKDAYS.map((day) => {
-            const dayEntries = groupedEntries[day];
+        <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-4 shadow-2xl shadow-black/30 backdrop-blur-2xl sm:p-5">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/8 via-transparent to-cyan-500/8" />
 
-            return (
-              <div
-                key={day}
-                className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#14141B]/80 p-4 shadow-2xl shadow-black/20 backdrop-blur-2xl"
+          <div className="relative z-10 mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-300">
+                Weekly Schedule
+              </p>
+              <h2 className="mt-1 text-2xl font-extrabold text-white">
+                Full Timetable
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+                Switch between official table format and modern card format.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1 rounded-[1.25rem] border border-white/10 bg-black/20 p-1">
+              <button
+                type="button"
+                onClick={() => setViewMode("classic")}
+                className={`inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-extrabold transition ${
+                  viewMode === "classic"
+                    ? "bg-cyan-500/15 text-cyan-100 ring-1 ring-cyan-300/25"
+                    : "text-slate-500 hover:bg-white/[0.05] hover:text-white"
+                }`}
               >
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-cyan-500/[0.04]" />
+                <Table2 className="h-4 w-4" />
+                Classic Table
+              </button>
 
-                <div className="relative z-10">
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <h2 className="text-xl font-extrabold text-white">
-                      {formatWeekday(day)}
-                    </h2>
+              <button
+                type="button"
+                onClick={() => setViewMode("modern")}
+                className={`inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-extrabold transition ${
+                  viewMode === "modern"
+                    ? "bg-violet-500/15 text-violet-100 ring-1 ring-violet-300/25"
+                    : "text-slate-500 hover:bg-white/[0.05] hover:text-white"
+                }`}
+              >
+                <LayoutGrid className="h-4 w-4" />
+                Modern Cards
+              </button>
+            </div>
+          </div>
 
-                    <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[10px] font-bold text-slate-300">
-                      {dayEntries.length} Slots
-                    </span>
-                  </div>
+          <div className="relative z-10">
+            {viewMode === "classic" ? (
+              <ClassicTimetableTable
+                entries={weeklyEntries}
+                title="Weekly Timetable"
+                subtitle="Classic Table View"
+                instituteName="Institute Timetable"
+                departmentName="Computer Science & Engineering"
+                semesterName={studentInfo?.semester?.name || null}
+                sectionName={studentInfo?.section?.name || null}
+                className="border-0 bg-transparent shadow-none"
+              />
+            ) : (
+              <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+                {WEEKDAYS.map((day) => {
+                  const dayEntries = groupedEntries[day];
 
-                  <div className="flex flex-col gap-3">
-                    {dayEntries.length > 0 ? (
-                      dayEntries.map((entry) => (
-                        <TimetableCard key={entry.id} entry={entry} />
-                      ))
-                    ) : (
-                      <div className="rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.03] p-5 text-center text-sm font-semibold text-slate-500">
-                        No timetable slots for this day.
+                  return (
+                    <div
+                      key={day}
+                      className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#111118]/80 p-4 shadow-2xl shadow-black/20 backdrop-blur-2xl"
+                    >
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-cyan-500/[0.04]" />
+
+                      <div className="relative z-10">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                          <h2 className="text-xl font-extrabold text-white">
+                            {formatWeekday(day)}
+                          </h2>
+
+                          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[10px] font-bold text-slate-300">
+                            {dayEntries.length} Slots
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col gap-3">
+                          {dayEntries.length > 0 ? (
+                            dayEntries.map((entry) => (
+                              <TimetableCard key={entry.id} entry={entry} />
+                            ))
+                          ) : (
+                            <div className="rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.03] p-5 text-center text-sm font-semibold text-slate-500">
+                              No timetable slots for this day.
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                    </div>
+                  );
+                })}
+              </section>
+            )}
+          </div>
         </section>
       </div>
     </main>

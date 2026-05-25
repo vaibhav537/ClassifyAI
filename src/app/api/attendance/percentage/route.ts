@@ -5,26 +5,43 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
 
-    // 1. Get both studentId and campusId from the URL
-    const studentId = searchParams.get("studentId");
+    const studentUserId = searchParams.get("studentId");
     const campusId = searchParams.get("campusId");
 
-    if (!studentId || !campusId) {
+    if (!studentUserId || !campusId) {
       return NextResponse.json(
         { error: "Student ID and Campus ID are required" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    const studentProfile = await prisma.student.findFirst({
+      where: {
+        userId: studentUserId,
+        user: {
+          campusId,
+        },
+      },
+      select: {
+        id: true,
+        userId: true,
+      },
+    });
+
+    if (!studentProfile) {
+      return NextResponse.json(
+        { error: "Student profile not found on this campus" },
+        { status: 404 },
       );
     }
 
     const attendances = await prisma.attendance.findMany({
       where: {
-        // 2. The 'where' clause now securely filters by both studentId AND campusId.
-        userId: studentId,
-        user: {
-          campusId: campusId,
-        },
+        studentId: studentProfile.id,
         classSession: {
-          isNot: null,
+          is: {
+            campusId,
+          },
         },
       },
       include: {
@@ -33,7 +50,9 @@ export async function GET(request: NextRequest) {
             subject: true,
             subjectRel: {
               select: {
+                id: true,
                 name: true,
+                code: true,
               },
             },
           },
@@ -45,36 +64,59 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([]);
     }
 
-    const subjectMap: Record<string, { present: number; total: number }> = {};
+    const subjectMap: Record<
+      string,
+      {
+        present: number;
+        total: number;
+        subjectCode?: string | null;
+      }
+    > = {};
 
     for (const att of attendances) {
       const subject =
-        att.classSession?.subjectRel?.name || att.classSession?.subject;
-      if (!subject) continue;
+        att.classSession?.subjectRel?.name ||
+        att.classSession?.subject ||
+        "Unknown Subject";
+
+      const subjectCode = att.classSession?.subjectRel?.code || null;
 
       if (!subjectMap[subject]) {
-        subjectMap[subject] = { present: 0, total: 0 };
+        subjectMap[subject] = {
+          present: 0,
+          total: 0,
+          subjectCode,
+        };
       }
 
       subjectMap[subject].total++;
+
       if (att.status === "PRESENT" || att.status === "LATE") {
         subjectMap[subject].present++;
       }
     }
 
     const result = Object.entries(subjectMap).map(([subject, stats]) => {
-      const percentage = parseFloat(
-        ((stats.present / stats.total) * 100).toFixed(1)
+      const percentage = Number(
+        ((stats.present / stats.total) * 100).toFixed(1),
       );
-      return { subject, percentage };
+
+      return {
+        subject,
+        subjectCode: stats.subjectCode || null,
+        present: stats.present,
+        total: stats.total,
+        percentage,
+      };
     });
 
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching attendance percentage by subject:", error);
+
     return NextResponse.json(
       { error: "Failed to fetch attendance percentage by subject" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
