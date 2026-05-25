@@ -1,12 +1,16 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { SDetails } from "@/lib/types";
 import { numberToRoman, showErrorMessage } from "@/lib/helper";
+
 const Greeting = () => {
   const [details, setDetails] = useState<SDetails | null>(null);
+
   useEffect(() => {
     const studentId = localStorage.getItem("studentId");
-    const campusId = localStorage.getItem("CampusID")
+    const campusId = localStorage.getItem("CampusID");
+
     if (!studentId || !campusId) {
       showErrorMessage("No student or Campus ID found, Login Again.");
       return;
@@ -14,10 +18,14 @@ const Greeting = () => {
 
     const fetchStudentDetails = async () => {
       try {
-        const res = await fetch(`/api/student/details?studentId=${studentId}&campusId=${campusId}`);
+        const res = await fetch(
+          `/api/student/details?studentId=${studentId}&campusId=${campusId}`,
+        );
+
         if (!res.ok) {
           throw new Error("Failed to fetch student details");
         }
+
         const data = await res.json();
         setDetails(data);
       } catch (error) {
@@ -27,40 +35,52 @@ const Greeting = () => {
 
     fetchStudentDetails();
   }, []);
-  function removeMiddleName(fullName: string): string {
-  // Split the name by one or more spaces
-  const parts: string[] = fullName.trim().split(/\s+/);
 
-  // If there's no middle name, return as is
-  if (parts.length <= 2) {
-    return fullName;
+  function removeMiddleName(fullName: string): string {
+    const parts: string[] = fullName.trim().split(/\s+/);
+
+    if (parts.length <= 2) {
+      return fullName;
+    }
+
+    return `${parts[0]} ${parts[parts.length - 1]}`;
   }
 
-  // Return only first and last name
-  return `${parts[0]} ${parts[parts.length - 1]}`;
-}
+  const studentName = removeMiddleName(details?.name || "Student");
 
   return (
-    <div className="sm:flex 2xl:ml-2 lg:flex lg:pl-5 lg:space-y-2 lg:mt-10 sm:flex-col sm:gap-1 sm:p-1 sm:w-sm">
-      <h1 className="sm:text-lg lg:text-start lg:text-2xl  sm:text-center 2xl:text-4xl"> WELCOME BACK!</h1>
-      <strong className="sm:capitalize lg:text-start sm:text-base sm:text-center 2xl:text-4xl lg:text-2xl ">{removeMiddleName(details?.name||"")}</strong>
-      <div className="sm:flex sm:gap-3 lg:text-base sm:w-sm lg:ml-0 sm:ml-[84px] 2xl:text-2xl">
+    <div className="w-full">
+      <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">
+        Welcome back
+      </p>
+
+      <h1 className="mt-2 text-2xl font-extrabold capitalize tracking-tight text-white sm:text-3xl 2xl:text-4xl">
+        {studentName}
+      </h1>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         {details?.branch && (
-          <span className="sm:text-center">
-            <strong className="sm:text-center">Branch: </strong>
-            {details?.branch}
+          <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-slate-300">
+            <span className="text-slate-500">Branch</span>{" "}
+            <span className="text-white">{details.branch}</span>
           </span>
         )}
+
         {details?.year && (
-          <span className="sm:text-center">
-            <strong className="sm:text-center">Year: </strong>
-            {numberToRoman(details?.year || 0) || details?.year}
+          <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-slate-300">
+            <span className="text-slate-500">Year</span>{" "}
+            <span className="text-white">
+              {numberToRoman(details.year || 0) || details.year}
+            </span>
           </span>
         )}
+
         {details?.semester && (
-          <span className="sm:text-center">
-            <strong className="sm:text-center">Sem: </strong>
-            {numberToRoman(details?.semester || 0) || details?.semester}
+          <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-slate-300">
+            <span className="text-slate-500">Sem</span>{" "}
+            <span className="text-white">
+              {numberToRoman(details.semester || 0) || details.semester}
+            </span>
           </span>
         )}
       </div>

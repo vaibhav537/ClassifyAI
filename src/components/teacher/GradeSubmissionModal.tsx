@@ -54,8 +54,10 @@ export default function GradeSubmissionModal({
     aiProbability: number;
   } | null>(null);
   const [attachSignature, setAttachSignature] = useState(false);
+
   const currentIndex =
     allSubmissions?.findIndex((s) => s.id === submission?.id) ?? -1;
+
   const hasNext =
     currentIndex !== -1 && currentIndex < (allSubmissions?.length || 0) - 1;
 
@@ -71,6 +73,7 @@ export default function GradeSubmissionModal({
       setFeedbackMode("text");
       setRubric({ concept: 0, execution: 0, formatting: 0 });
       setAttachSignature(true);
+
       if (
         submission.aiSummary?.length > 0 &&
         submission.aiProbability !== null
@@ -99,8 +102,10 @@ export default function GradeSubmissionModal({
     if (!teacherId || !submission.id) {
       return;
     }
+
     setIsAnalyzing(true);
     const toastId = showLoadingMessage("AI is analyzing the document....");
+
     try {
       const response = await fetch("/api/teacher/submissions/analyze", {
         method: "POST",
@@ -110,8 +115,10 @@ export default function GradeSubmissionModal({
           teacherId: teacherId,
         }),
       });
+
       const data = await response.json();
       toastDissmisser(toastId);
+
       if (response.ok) {
         showSuccessMessage("Analysis Completed!");
         setAnalysisResult({
@@ -131,31 +138,38 @@ export default function GradeSubmissionModal({
 
   const saveGradeToDB = async () => {
     if (!teacherId) throw new Error("Session expired. Please Log in again.");
+
     let finalAudioUrl = null;
     const numericGrade = parseFloat(grade);
+
     if (grade === "" || isNaN(numericGrade)) {
       throw new Error("Please enter a valid numeric grade.");
     }
+
     if (totalMarks && numericGrade > totalMarks) {
       throw new Error(`Grade cannot be greater than ${totalMarks}`);
     }
 
-    //? (A. Vanshika) Audio uploading to cloudinary....
     if (feedbackMode === "audio" && audioBlob) {
       const toastId = showLoadingMessage("Uploading audio note....");
+
       try {
         const formData = new FormData();
-        //? (A. Vanshika) Cloudnary accepets audio files in "video" field only....
+
         formData.append("file", audioBlob, "feedback.webm");
-        //? (A. Vanshika) Uploading to cloudinary....
         formData.append("upload_preset", "ClassifyAI-pdf");
+
         const uploadRes = await fetch(
           `https://api.cloudinary.com/v1_1/dd2bczbdo/video/upload`,
           { method: "POST", body: formData },
         );
+
         const uploadData = await uploadRes.json();
-        if (!uploadRes.ok)
+
+        if (!uploadRes.ok) {
           throw new Error(uploadData.error.message || "Audio upload failed");
+        }
+
         finalAudioUrl = uploadData.secure_url;
         toastDissmisser(toastId);
         showSuccessMessage("Audio Uploaded");
@@ -177,16 +191,20 @@ export default function GradeSubmissionModal({
         attachSignature,
       }),
     });
+
     const data = await response.json();
+
     if (!response.ok) {
       throw new Error(data.error || "Failed to Save Grade");
     }
+
     return data;
   };
 
   const handleSave = async () => {
     setIsLoading(true);
     const toastId = showLoadingMessage("Saving Grade...");
+
     try {
       await saveGradeToDB();
       toastDissmisser(toastId);
@@ -204,11 +222,13 @@ export default function GradeSubmissionModal({
   const handleSaveAndNext = async () => {
     setIsNextLoading(true);
     const toastId = showLoadingMessage("Saving and moving to next...");
+
     try {
       await saveGradeToDB();
       toastDissmisser(toastId);
       showSuccessMessage("Grade Saved!");
       onSuccess();
+
       if (hasNext) {
         onNavigate(allSubmissions[currentIndex + 1]);
       } else {
@@ -224,10 +244,10 @@ export default function GradeSubmissionModal({
 
   const getPlagiarismColor = (probability: number) => {
     if (probability < 20)
-      return "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+      return "text-emerald-300 bg-emerald-500/10 border-emerald-300/20";
     if (probability < 50)
-      return "text-yellow-400 bg-yellow-500/10 border-yellow-500/20";
-    return "text-red-400 bg-red-500/10 border-red-500/20";
+      return "text-amber-300 bg-amber-500/10 border-amber-300/20";
+    return "text-red-300 bg-red-500/10 border-red-300/20";
   };
 
   if (!isOpen) return null;
@@ -235,67 +255,85 @@ export default function GradeSubmissionModal({
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/80 backdrop-blur-md flex justify-center items-center z-50 p-4"
+        className="fixed inset-0 z-[9999] grid place-items-center bg-black/80 p-4 backdrop-blur-md"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="bg-slate-900/80 backdrop-blur-xl border border-cyan-500/20 
-    p-8 rounded-3xl shadow-[0_0_50px_rgba(6,182,212,0.15)] 
-    w-full max-w-[150rem] lg:max-w-[150rem] text-white relative overflow-hidden flex flex-col max-h-[90vh]"
-          initial={{ scale: 0.9, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
+          className="relative flex h-[92vh] w-full max-w-[96vw] flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/95 text-white shadow-2xl shadow-black/60 backdrop-blur-2xl 2xl:max-w-[92vw]"
+          initial={{ scale: 0.95, y: 24, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          exit={{ scale: 0.95, y: 24, opacity: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/16 via-fuchsia-500/7 to-cyan-400/6" />
+          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-500/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-cyan-400/8 blur-3xl" />
 
-          <GradeModalHeader submission={submission} isLate={isLate} />
-          <div className="flex gap-6 overflow-hidden">
-            <div className="w-1/2 space-y-6 overflow-y-auto pr-2 custom-scrollbar max-h-[65vh]">
-              <SubmissionPreview
-                submission={submission}
-                openInBrowser={openInBrowser}
-              />
-            </div>
-            <div className="w-1/2 space-y-6 overflow-y-auto pr-2 custom-scrollbar max-h-[65vh]">
-              <GradeSection
-                grade={grade}
-                setGrade={setGrade}
-                gradeMode={gradeMode}
-                setGradeMode={setGradeMode}
-                rubric={rubric}
-                setRubric={setRubric}
-                totalMarks={totalMarks}
-              />
-              <FeedbackSection
-                feedback={feedback}
-                setFeedback={setFeedback}
-                feedbackMode={feedbackMode}
-                setFeedbackMode={setFeedbackMode}
-                attachSignature={attachSignature}
-                setAttachSignature={setAttachSignature}
-                submission={submission}
-                setAudioBlob={setAudioBlob}
-              />
-              <AIAssistantSection
-                analysisResult={analysisResult}
-                isAnalyzing={isAnalyzing}
-                runAIAnalysis={runAIAnalysis}
-                getPlagiarismColor={getPlagiarismColor}
-              />
-            </div>
+          <div className="relative z-10 border-b border-white/10 px-5 py-5 sm:px-6">
+            <GradeModalHeader submission={submission} isLate={isLate} />
           </div>
-          <ModalFooter
-            onClose={onClose}
-            handleSave={handleSave}
-            handleSaveAndNext={handleSaveAndNext}
-            isLoading={isLoading}
-            isNextLoading={isNextLoading}
-            hasNext={hasNext}
-          />
+
+          <div className="relative z-10 grid min-h-0 flex-1 grid-cols-1 gap-5 overflow-hidden p-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)] sm:p-6">
+            <section className="min-h-0 overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 shadow-xl shadow-black/20">
+              <div className="h-full overflow-y-auto p-4 scrollbar-hide sm:p-5">
+                <SubmissionPreview
+                  submission={submission}
+                  openInBrowser={openInBrowser}
+                />
+              </div>
+            </section>
+
+            <section className="min-h-0 overflow-y-auto space-y-5 pr-1 scrollbar-hide">
+              <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-4 shadow-xl shadow-black/20 sm:p-5">
+                <GradeSection
+                  grade={grade}
+                  setGrade={setGrade}
+                  gradeMode={gradeMode}
+                  setGradeMode={setGradeMode}
+                  rubric={rubric}
+                  setRubric={setRubric}
+                  totalMarks={totalMarks}
+                />
+              </div>
+
+              <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-4 shadow-xl shadow-black/20 sm:p-5">
+                <FeedbackSection
+                  feedback={feedback}
+                  setFeedback={setFeedback}
+                  feedbackMode={feedbackMode}
+                  setFeedbackMode={setFeedbackMode}
+                  attachSignature={attachSignature}
+                  setAttachSignature={setAttachSignature}
+                  submission={submission}
+                  setAudioBlob={setAudioBlob}
+                />
+              </div>
+
+              <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-4 shadow-xl shadow-black/20 sm:p-5">
+                <AIAssistantSection
+                  analysisResult={analysisResult}
+                  isAnalyzing={isAnalyzing}
+                  runAIAnalysis={runAIAnalysis}
+                  getPlagiarismColor={getPlagiarismColor}
+                />
+              </div>
+            </section>
+          </div>
+
+          <div className="relative z-10 border-t border-white/10 bg-[#14141B]/90 px-5 py-4 backdrop-blur-2xl sm:px-6">
+            <ModalFooter
+              onClose={onClose}
+              handleSave={handleSave}
+              handleSaveAndNext={handleSaveAndNext}
+              isLoading={isLoading}
+              isNextLoading={isNextLoading}
+              hasNext={hasNext}
+            />
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>

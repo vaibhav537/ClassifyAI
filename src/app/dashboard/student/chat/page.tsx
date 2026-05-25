@@ -1,12 +1,19 @@
 "use client";
+
 import React, { useEffect, useRef, useState } from "react";
-import { ChevronLeft, SendHorizonal } from "lucide-react";
-import { Bot, UserRound } from "lucide-react";
+import {
+  Bot,
+  ChevronLeft,
+  GraduationCap,
+  SendHorizonal,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-// import "highlight.js/styles/github-dark.css";re
+// import "highlight.js/styles/github-dark.css";
 import { useRouter } from "next/navigation";
 
 const Page = () => {
@@ -16,14 +23,17 @@ const Page = () => {
   const [input, setInput] = useState("");
   const [model, setModel] = useState<"openai" | "claude">("openai");
   const [isBotTyping, setIsBotTyping] = useState(false);
-const router = useRouter();
+
+  const router = useRouter();
   const bottomRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "end",
     });
   }, [messages]);
+
   const handleSend = async () => {
     if (!input.trim()) return;
 
@@ -31,6 +41,7 @@ const router = useRouter();
     setMessages(newMessages);
     setInput("");
     setIsBotTyping(true);
+
     try {
       const res = await fetch(`/api/ask`, {
         method: "POST",
@@ -51,130 +62,171 @@ const router = useRouter();
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-between min-h-screen w-full px-4 py-6 text-white">
-      <div className="flex-1 flex items-center justify-center w-full max-w-[95rem] mt-10 px-4">
-        <div className="w-full h-[85vh] rounded-xl bg-white/5 backdrop-blur-md border border-white/10 p-4 flex flex-col justify-between chat-box-glow scrollbar-thin scrollbar-thumb-cyan-500/30 scrollbar-track-transparent">
-          <div className="flex flex-col gap-1 items-center mb-4">
-            <div className="flex gap-2">
-            <Image src={"/only-logo.png"} alt="...." width={35} height={35}/>
-            <p className="text-3xl">Chud<span className="text-cyan-500">AI</span></p>
+    <section className="relative flex min-h-screen flex-col overflow-hidden bg-[#08080C] px-3 py-4 text-white sm:px-5 lg:px-6">
+      <div className="pointer-events-none absolute inset-0 app-shell-bg" />
+      <div className="pointer-events-none absolute left-10 top-10 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-10 right-10 h-80 w-80 rounded-full bg-cyan-400/5 blur-3xl" />
+
+      <div className="relative z-10 mx-auto flex h-[calc(100vh-2rem)] w-full max-w-[1500px] flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/85 shadow-2xl shadow-black/40 backdrop-blur-2xl">
+        <header className="flex flex-col gap-4 border-b border-white/10 px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard/student")}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-slate-300 transition duration-300 hover:border-violet-300/35 hover:bg-violet-500/15 hover:text-white"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10 shadow-lg shadow-violet-950/20">
+              <Image
+                src="/only-logo.png"
+                alt="Classify AI"
+                width={34}
+                height={34}
+                className="h-8 w-8 object-contain drop-shadow-[0_0_18px_rgba(34,211,238,0.2)]"
+                priority
+              />
             </div>
-            <p className="text-sm">Cloud-Hosted Unethical Dataset Artificial Intelligence</p>
-          </div>
-          <div className="flex-1 overflow-y-auto space-y-4 p-2 pr-2 scrollbar-thin scrollbar-thumb-cyan-500/30">
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`flex items-start gap-3 ${
-                  msg.sender === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                {/* Avatar */}
-                <div className="relative shrink-0 w-8 h-8">
-                  <Image
-                    src="/only-logo.png"
-                    alt={msg.sender === "bot" ? "Bot" : "You"}
-                    width={32}
-                    height={32}
-                    className="rounded-full border border-white/10 object-cover"
-                  />
-                  {msg.sender === "user" && (
-                    <div className="absolute -bottom-1 -right-1 bg-cyan-600 rounded-full p-0.5">
-                      <UserRound size={12} className="text-white" />
-                    </div>
-                  )}
-                </div>
 
-                {/* Markdown content inside styled div */}
-                <div
-                  className={`max-w-[70%] px-4 py-2 rounded-xl text-sm leading-relaxed overflow-x-auto ${
-                    msg.sender === "user"
-                      ? "bg-cyan-500/20 text-white border border-cyan-300/30"
-                      : "bg-white/10 text-white border border-white/10"
-                  }`}
-                >
-                  <div
-                    className="prose prose-sm prose-invert max-w-none"
-                  >
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      rehypePlugins={[rehypeHighlight]}
-                    >
-                      {msg.text}
-                    </ReactMarkdown>
-                  </div>
-                </div>
+            <div className="min-w-0">
+              <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-violet-200">
+                <Sparkles className="h-3 w-3" />
+                AI Study Assistant
               </div>
-            ))}
-            {isBotTyping && (
-              <div className="flex items-start gap-3">
-                <div className="relative shrink-0 w-8 h-8">
-                  <Image
-                    src="/only-logo.png"
-                    alt="Bot"
-                    width={32}
-                    height={32}
-                    className="rounded-full border border-white/10 object-cover"
-                  />
-                </div>
 
-                <div className="max-w-[70%] px-4 py-2 rounded-xl text-sm bg-white/10 text-white border border-white/10">
-                  <div className="flex items-center space-x-1">
-                    <div className="w-2 h-2 bg-cyan-300 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                    <div className="w-2 h-2 bg-cyan-300 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                    <div className="w-2 h-2 bg-cyan-300 rounded-full animate-bounce" />
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={bottomRef}/>
+              <h1 className="truncate text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+                Classify AI Chat
+              </h1>
+            </div>
           </div>
 
-          {/* Input Area with styled model selector */}
-          <div className="mt-4 flex items-center gap-2 bg-white/10 border border-white/10 backdrop-blur-sm rounded-lg px-2 py-2">
-            {/* Model selector */}
-            <div className="relative">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="hidden items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-bold text-slate-300 sm:flex">
+              <GraduationCap className="h-4 w-4 text-violet-300" />
+              Doubt Solver
+            </div>
+
+            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2">
+              <Bot className="h-4 w-4 text-violet-300" />
+
               <select
                 value={model}
                 onChange={(e) =>
                   setModel(e.target.value as "openai" | "claude")
                 }
-                className="appearance-none bg-white/10 text-sm text-white px-3 py-1.5 pr-6 rounded-md border border-white/20 outline-none hover:bg-white/20 transition-colors"
+                className="appearance-none bg-transparent text-sm font-bold text-white outline-none"
               >
-                <option className="text-black bg-white">GPT-3.5</option>
-                <option className="text-black bg-white">Claude</option>
+                <option className="bg-[#14141B] text-white">GPT-3.5</option>
+                <option className="bg-[#14141B] text-white">Claude</option>
               </select>
             </div>
-
-            {/* Text input */}
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Ask your doubt..."
-              className="flex-1 bg-transparent outline-none text-white placeholder-white/50 px-2"
-            />
-
-            {/* Send button */}
-            <button
-              onClick={handleSend}
-              className="text-cyan-300 hover:text-white transition-colors px-2"
-            >
-              <SendHorizonal size={20} />
-            </button>
           </div>
-        </div>
+        </header>
+
+        <main className="flex min-h-0 flex-1 flex-col">
+          <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+            <div className="mx-auto flex max-w-5xl flex-col gap-5">
+              {messages.map((msg, index) => {
+                const isUser = msg.sender === "user";
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex items-start gap-3 ${
+                      isUser ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    {!isUser && (
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10">
+                        <Image
+                          src="/only-logo.png"
+                          alt="Bot"
+                          width={28}
+                          height={28}
+                          className="h-7 w-7 object-contain"
+                        />
+                      </div>
+                    )}
+
+                    <div
+                      className={`max-w-[85%] overflow-hidden rounded-[1.5rem] border px-4 py-3 text-sm leading-7 shadow-lg sm:max-w-[72%] ${
+                        isUser
+                          ? "border-violet-300/25 bg-violet-500/15 text-white shadow-violet-950/20"
+                          : "border-white/10 bg-white/[0.06] text-slate-100 shadow-black/20"
+                      }`}
+                    >
+                      <div className="prose prose-sm prose-invert max-w-none prose-p:my-2 prose-pre:rounded-2xl prose-pre:border prose-pre:border-white/10 prose-pre:bg-[#08080C] prose-code:text-violet-200">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[rehypeHighlight]}
+                        >
+                          {msg.text}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+
+                    {isUser && (
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06]">
+                        <UserRound className="h-5 w-5 text-slate-200" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {isBotTyping && (
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10">
+                    <Image
+                      src="/only-logo.png"
+                      alt="Bot"
+                      width={28}
+                      height={28}
+                      className="h-7 w-7 object-contain"
+                    />
+                  </div>
+
+                  <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.06] px-4 py-3 shadow-lg shadow-black/20">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-violet-300 [animation-delay:-0.3s]" />
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-violet-300 [animation-delay:-0.15s]" />
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-violet-300" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div ref={bottomRef} />
+            </div>
+          </div>
+
+          <div className="border-t border-white/10 bg-[#101014]/70 px-4 py-4 backdrop-blur-xl sm:px-6">
+            <div className="mx-auto flex max-w-5xl items-center gap-3 rounded-[1.5rem] border border-white/10 bg-white/[0.06] px-3 py-3 shadow-xl shadow-black/25 transition focus-within:border-violet-300/35 focus-within:ring-4 focus-within:ring-violet-500/10">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                placeholder="Ask your doubt..."
+                className="min-w-0 flex-1 bg-transparent px-2 text-sm text-white outline-none placeholder:text-slate-500"
+              />
+
+              <button
+                type="button"
+                onClick={handleSend}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 text-white shadow-lg shadow-violet-950/35 transition duration-300 hover:-translate-y-0.5 hover:shadow-violet-800/30"
+              >
+                <SendHorizonal className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="mx-auto mt-3 max-w-5xl text-center text-xs text-slate-600">
+              AI can make mistakes. Verify important academic information.
+            </p>
+          </div>
+        </main>
       </div>
-      {/* Back Button */}
-      <div className="absolute top-4 left-4 z-10">
-        <button
-          onClick={() => router.push("/dashboard/student")}
-          className="flex items-center justify-center gap-2 rounded-full  text-white hover:text-cyan-300 transition-colors"
-        >
-          <ChevronLeft size={40}/>
-        </button>
-      </div>
-    </div>
+    </section>
   );
 };
 

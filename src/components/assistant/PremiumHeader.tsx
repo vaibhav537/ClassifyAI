@@ -1,20 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Tektur } from "next/font/google";
 import React, { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPaperPlane } from "@fortawesome/free-solid-svg-icons";
+import {
+  Crown,
+  Loader2,
+  Send,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import {
   showErrorMessage,
   showLoadingMessage,
   showSuccessMessage,
 } from "@/lib/helper";
 
-const tektur = Tektur({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
 
 const PremiumHeader = ({
   totalPremiumStudents,
@@ -22,11 +22,11 @@ const PremiumHeader = ({
   totalPremiumStudents: number;
 }) => {
   const [loading, setLoading] = useState(false);
+
   const handleSendReports = async () => {
     setLoading(true);
     showLoadingMessage("Sending reports...");
 
-    // Always re-fetch from localStorage
     const campus = localStorage.getItem("CampusID");
     const assistant = localStorage.getItem("assistantId");
 
@@ -34,7 +34,7 @@ const PremiumHeader = ({
 
     if (!campus || !assistant) {
       showErrorMessage(
-        "Could not verify assistant identity. Please log in again."
+        "Could not verify assistant identity. Please log in again.",
       );
       setLoading(false);
       return;
@@ -68,39 +68,82 @@ const PremiumHeader = ({
 
   return (
     <motion.header
-      initial={{ opacity: 0, y: -20 }}
+      initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="w-full px-6 shadow flex flex-col gap-4 items-center relative"
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 text-white shadow-2xl shadow-black/25 backdrop-blur-2xl sm:p-6"
     >
-      <motion.h1
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2 }}
-        className={`${tektur.className} text-4xl text-orange-200 text-center`}
-      >
-        Premium Management
-      </motion.h1>
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-400/5" />
+      <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-500/10 blur-3xl" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="flex flex-col sm:flex-row gap-4 items-center"
-      >
-        <span className="bg-amber-600 text-orange-50 px-3 py-1 rounded-full text-sm shadow">
-          Total Premium Students: {totalPremiumStudents}
-        </span>
+      <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-violet-200">
+            <Crown className="h-3.5 w-3.5" />
+            Premium Control
+          </span>
 
-        <button
-          onClick={handleSendReports}
-          disabled={loading}
-          className="bg-orange-700 hover:bg-orange-600 cursor-pointer duration-500 text-white px-4 py-2 rounded-full text-sm shadow disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
-        >
-          <FontAwesomeIcon icon={faPaperPlane} />
-          {loading ? "Sending…" : "Send Monthly Reports"}
-        </button>
-      </motion.div>
+          <h1
+            className="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl "
+          >
+            Premium Dashboard
+          </h1>
+
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+            Track premium users, monitor subscription activity, and send monthly
+            reports from the assistant console.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="inline-flex items-center gap-3 rounded-[1.5rem] border border-emerald-300/20 bg-emerald-500/10 px-4 py-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-500/10">
+              <ShieldCheck className="h-5 w-5 text-emerald-300" />
+            </div>
+
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-emerald-100/70">
+                Premium Users
+              </p>
+              <p className="text-sm font-extrabold text-emerald-100">
+                {totalPremiumStudents} Active
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSendReports}
+            disabled={loading}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 transition duration-300 hover:-translate-y-0.5 hover:shadow-violet-800/30 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            {loading ? "Sending…" : "Send Monthly Reports"}
+          </button>
+        </div>
+      </div>
+
+      <div className="relative z-10 mt-5 rounded-[1.5rem] border border-white/10 bg-[#08080C]/45 p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10">
+            <Sparkles className="h-4 w-4 text-violet-200" />
+          </div>
+
+          <div>
+            <p className="text-sm font-extrabold text-white">
+              Monthly Report Automation
+            </p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Sends premium reports using the current campus and assistant
+              identity.
+            </p>
+          </div>
+        </div>
+      </div>
     </motion.header>
   );
 };

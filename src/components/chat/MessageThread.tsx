@@ -37,6 +37,7 @@ export default function MessageThread({
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(
     null,
   );
+
   const {
     messages,
     isLoading,
@@ -129,41 +130,42 @@ export default function MessageThread({
 
   if (isLoading && messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
+      <div className="flex-1 flex items-center justify-center text-slate-500 text-sm bg-[#08080C]/30">
         Loading messages...
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden  min-h-0 relative">
+    <div className="flex-1 flex flex-col overflow-hidden min-h-0 relative bg-[#08080C]/30">
       {/* Load more */}
       {hasMore && (
-        <div className="flex justify-center py-2 border-b border-white/10">
+        <div className="flex justify-center py-3 border-b border-white/10">
           <button
             onClick={loadMore}
-            className="text-xs text-indigo-400 hover:text-indigo-300 transition"
+            className="rounded-full border border-violet-300/20 bg-violet-500/10 px-4 py-2 text-xs font-extrabold text-violet-200 transition hover:border-violet-300/40 hover:bg-violet-500/20"
           >
             Load older messages
           </button>
         </div>
       )}
+
       {pinnedMessage && (
         <motion.div
           initial={{ y: -12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -12, opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="mx-4 mt-3 flex items-center gap-3 rounded-2xl border border-yellow-500/20 bg-gradient-to-r from-yellow-500/10 to-amber-500/5 px-4 py-3 backdrop-blur-xl shadow-lg"
+          className="mx-4 mt-3 flex items-center gap-3 rounded-[1.5rem] border border-amber-300/20 bg-amber-400/10 px-4 py-3 backdrop-blur-xl shadow-lg shadow-black/20"
         >
           {/* Pin Icon */}
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-yellow-500/15 text-yellow-400">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-amber-300/20 bg-amber-400/10 text-amber-200">
             <Pin size={18} />
           </div>
 
           {/* Content */}
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-yellow-300/80">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-amber-200/80">
               Pinned Message
             </p>
 
@@ -175,57 +177,60 @@ export default function MessageThread({
           {/* Close */}
           <button
             onClick={unpinMessage}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-red-500/10 hover:text-red-400"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl text-slate-400 transition hover:bg-red-500/10 hover:text-red-300"
           >
             <X size={15} />
           </button>
         </motion.div>
       )}
+
       {/*AI Missed  Summary Button*/}
-      <div className="flex items-center justify-center border-b border-white/10 px-4 py-2">
+      <div className="flex items-center justify-center border-b border-white/10 px-4 py-3">
         <button
           onClick={summarizeMissedMessage}
           disabled={isSummarizing || messages.length === 0}
-          className="flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-4 py-2 text-xs font-extrabold text-violet-200 transition hover:border-violet-300/40 hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isSummarizing ? (
-            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-cyan-300 border-t-transparent" />
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-300 border-t-transparent" />
           ) : (
             <Sparkles size={14} />
           )}
           {isSummarizing ? "Summarizing..." : "What did I miss?"}
         </button>
       </div>
+
       <AnimatePresence>
         {missedSummary && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="mx-4 mt-3 rounded-2xl border border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 to-indigo-500/10 p-4 shadow-lg backdrop-blur-xl"
+            className="mx-4 mt-3 rounded-[1.5rem] border border-violet-300/20 bg-[#14141B]/90 p-4 shadow-lg shadow-black/25 backdrop-blur-xl"
           >
             <div className="mb-2 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-cyan-300">
+              <div className="flex items-center gap-2 text-violet-200">
                 <Sparkles size={16} />
-                <p className="text-xs font-semibold uppercase tracking-[0.18em]">
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em]">
                   AI Summary
                 </p>
               </div>
 
               <button
                 onClick={() => setMissedSummary(null)}
-                className="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 transition hover:bg-red-500/10 hover:text-red-400"
+                className="flex h-7 w-7 items-center justify-center rounded-2xl text-slate-400 transition hover:bg-red-500/10 hover:text-red-300"
               >
                 <X size={14} />
               </button>
             </div>
 
-            <p className="whitespace-pre-line text-sm leading-relaxed text-white/85">
+            <p className="whitespace-pre-line text-sm leading-relaxed text-slate-300">
               {missedSummary}
             </p>
           </motion.div>
         )}
       </AnimatePresence>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide px-6 py-4 space-y-4">
         <AnimatePresence initial={false}>
@@ -239,24 +244,25 @@ export default function MessageThread({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className={` flex flex-col gap-1 ${
+                className={`flex flex-col gap-1 ${
                   isOwn ? "items-end" : "items-start"
                 }`}
               >
                 {/* Sender */}
                 {!isOwn && (
-                  <span className="text-xs text-gray-500 px-1">
+                  <span className="text-xs font-bold text-slate-500 px-1">
                     {msg.sender.name}
                   </span>
                 )}
+
                 <div className="group relative flex max-w-[85%] items-center overflow-visible">
                   {/* Bubble */}
                   <motion.div
                     whileHover={{ scale: 1.01 }}
-                    className={` w-fit max-w-full break-words px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-md ${
+                    className={`w-fit max-w-full break-words px-4 py-2.5 rounded-[1.35rem] text-sm leading-relaxed shadow-lg ${
                       isOwn
-                        ? "bg-gradient-to-br from-indigo-500 to-violet-600 text-white rounded-br-sm"
-                        : "bg-white/10 text-gray-100 rounded-bl-sm backdrop-blur-md"
+                        ? "bg-gradient-to-br from-violet-600 via-fuchsia-600 to-violet-500 text-white rounded-br-md shadow-violet-950/25"
+                        : "bg-[#14141B]/90 border border-white/10 text-slate-100 rounded-bl-md backdrop-blur-md shadow-black/20"
                     }`}
                   >
                     {msg.replyTo && (
@@ -264,10 +270,10 @@ export default function MessageThread({
                         className={`mb-2 rounded-xl border-l-2 px-3 py-2 text-xs ${
                           isOwn
                             ? "border-white/40 bg-white/10"
-                            : "border-cyan-400/50 bg-black/20"
+                            : "border-violet-300/50 bg-black/20"
                         }`}
                       >
-                        <p className="font-semibold text-cyan-300">
+                        <p className="font-semibold text-violet-200">
                           {msg.replyTo.sender?.name}
                         </p>
 
@@ -276,16 +282,17 @@ export default function MessageThread({
                         </p>
                       </div>
                     )}
+
                     {editingId === msg.id ? (
                       <div className="flex flex-col gap-2 min-w-[220px]">
-                        {" "}
                         <textarea
                           value={editText}
                           onChange={(e) => setEditText(e.target.value)}
-                          className="resize-none rounded-xl bg-black/20 px-3 py-2 text-sm outline-none border border-white/10"
+                          className="resize-none rounded-xl bg-black/20 px-3 py-2 text-sm outline-none border border-white/10 focus:border-violet-300/40"
                           rows={3}
                           autoFocus
                         />
+
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={cancelEditing}
@@ -296,7 +303,7 @@ export default function MessageThread({
 
                           <button
                             onClick={saveEdit}
-                            className="flex h-7 w-7 items-center justify-center rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 transition"
+                            className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 transition"
                           >
                             <Check size={14} />
                           </button>
@@ -312,8 +319,9 @@ export default function MessageThread({
                       </>
                     )}
                   </motion.div>
+
                   <div
-                    className={`absolute top-1/2 z-30 flex -translate-y-1/2 items-center gap-1 rounded-full border border-white/10 bg-black/70 px-2 py-1 shadow-xl backdrop-blur-xl opacity-0 scale-95 transition-all duration-200 group-hover:opacity-100 group-hover:scale-100 ${
+                    className={`absolute top-1/2 z-30 flex -translate-y-1/2 items-center gap-1 rounded-full border border-white/10 bg-[#08080C]/90 px-2 py-1 shadow-xl backdrop-blur-xl opacity-0 scale-95 transition-all duration-200 group-hover:opacity-100 group-hover:scale-100 ${
                       isOwn
                         ? "-left-3 -translate-x-full"
                         : "-right-3 translate-x-full"
@@ -338,7 +346,7 @@ export default function MessageThread({
                       type="button"
                       title="Reply"
                       onClick={() => setReplyingTo(msg)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 transition hover:bg-cyan-500/15 hover:text-cyan-300"
+                      className="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 transition hover:bg-violet-500/15 hover:text-violet-200"
                     >
                       <Reply size={14} />
                     </button>
@@ -385,7 +393,7 @@ export default function MessageThread({
                         isOwn ? "right-full mr-3" : "left-full ml-3"
                       }`}
                     >
-                      <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/80 shadow-2xl backdrop-blur-xl">
+                      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#08080C]/95 shadow-2xl backdrop-blur-xl">
                         <EmojiPicker
                           onEmojiClick={(emojiData) => {
                             reactToMessage(msg.id, emojiData.emoji);
@@ -411,7 +419,7 @@ export default function MessageThread({
                         target="_blank"
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.05 }}
-                        className="text-xs text-cyan-400 hover:underline bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"
+                        className="text-xs text-violet-200 hover:text-white bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 hover:border-violet-300/35 transition"
                       >
                         📎 {att.title}
                       </motion.a>
@@ -443,7 +451,7 @@ export default function MessageThread({
                         onClick={() => reactToMessage(msg.id, emoji)}
                         className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs border transition ${
                           data.reacted
-                            ? "bg-cyan-500/20 border-cyan-400/40 text-cyan-200"
+                            ? "bg-violet-500/20 border-violet-300/40 text-violet-100"
                             : "bg-white/10 border-white/10 text-white hover:bg-white/20"
                         }`}
                       >
@@ -456,24 +464,26 @@ export default function MessageThread({
 
                 {/* Timestamp */}
                 <div className="flex items-center gap-1 px-1">
-                  <span className="text-[10px] text-gray-600">
+                  <span className="text-[10px] text-slate-600">
                     {formatDistanceToNow(new Date(msg.createdAt), {
                       addSuffix: true,
                     })}
                   </span>
+
                   {msg.editedAt && (
-                    <span className="text-[10px] italic text-gray-500">
+                    <span className="text-[10px] italic text-slate-500">
                       edited
                     </span>
                   )}
+
                   {isOwn && (
                     <span className="text-[10px]">
                       {Object.entries(readByUsers).some(
                         ([readerId]) => readerId !== userId,
                       ) ? (
-                        <span className="text-cyan-400">✓✓</span>
+                        <span className="text-violet-300">✓✓</span>
                       ) : (
-                        <span className="text-gray-500">✓</span>
+                        <span className="text-slate-500">✓</span>
                       )}
                     </span>
                   )}
@@ -505,19 +515,19 @@ export default function MessageThread({
             exit={{ opacity: 0, y: 20 }}
             className="absolute bottom-24 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50"
           >
-            <div className="flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl backdrop-blur-xl shadow-xl">
-              <span className="text-yellow-400 text-xl shrink-0">🔐</span>
+            <div className="flex items-start gap-3 p-4 bg-amber-400/10 border border-amber-300/25 rounded-2xl backdrop-blur-xl shadow-xl">
+              <span className="text-amber-300 text-xl shrink-0">🔐</span>
 
               <div className="flex-1">
-                <p className="text-sm font-semibold text-yellow-300">
+                <p className="text-sm font-semibold text-amber-200">
                   Encryption Not Ready
                 </p>
-                <p className="text-xs text-yellow-200/70 mt-1">{chatError}</p>
+                <p className="text-xs text-amber-100/70 mt-1">{chatError}</p>
               </div>
 
               <button
                 onClick={() => setChatError(null)}
-                className="text-yellow-500 hover:text-yellow-300 transition"
+                className="text-amber-300 hover:text-white transition"
               >
                 <X size={16} />
               </button>
@@ -531,12 +541,12 @@ export default function MessageThread({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
-          className="mx-4 mb-2 flex items-start gap-3 rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 backdrop-blur-xl"
+          className="mx-4 mb-2 flex items-start gap-3 rounded-2xl border border-violet-300/20 bg-violet-500/10 px-4 py-3 backdrop-blur-xl"
         >
-          <div className="mt-1 h-10 w-1 rounded-full bg-cyan-400" />
+          <div className="mt-1 h-10 w-1 rounded-full bg-violet-300" />
 
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-cyan-300">
+            <p className="text-xs font-semibold text-violet-200">
               Replying to {replyingTo.sender?.name || "message"}
             </p>
 
@@ -553,6 +563,7 @@ export default function MessageThread({
           </button>
         </motion.div>
       )}
+
       {/* Input */}
       <MessageInput
         onSend={(text, attachments) =>

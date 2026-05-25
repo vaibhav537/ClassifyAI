@@ -1,7 +1,12 @@
 "use client";
+
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { Attendance, PremiumStatusResponse } from "@/lib/types";
+import {
+  Attendance,
+  PremiumStatusResponse,
+  StudentTimetableEntry,
+} from "@/lib/types";
 import Greeting from "@/components/student/Greeting";
 import Logo from "@/components/apps/Logo";
 import UpgradeToPremiumCard from "@/components/student/UpgradeToPremiumCard";
@@ -9,11 +14,26 @@ import HorizontalBar from "@/components/student/HorizontalBar";
 import AppCalendar from "@/components/student/Calender";
 import BarGraph from "@/components/student/Graph";
 import NumberCard from "@/components/student/NumberCard";
-import { LogOut } from "lucide-react";
+import {
+  Bot,
+  CalendarDays,
+  LogOut,
+  QrCode,
+  ShieldCheck,
+  Sparkles,
+  Clock3,
+  MapPin,
+  BookOpen,
+  UserRound,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import ChatBot from "@/components/student/ChatBot";
 import PremiumFeaturesCard from "@/components/student/PremiumFeaturesCard";
-import { showErrorMessage } from "@/lib/helper";
+import {
+  formatTimetableTime,
+  formatWeekday,
+  showErrorMessage,
+} from "@/lib/helper";
 import FirstLoginModal from "@/components/student/FirstLoginModal";
 import FaceVerificationModal from "@/components/student/FaceVerificationModal";
 import DashboardLoader from "@/components/student/DashboardLoader";
@@ -21,7 +41,7 @@ import NotificationBell from "@/components/student/NotificationBell";
 import {
   faBookOpen,
   faBullhorn,
-  faFile,
+  faCalendarDays,
   faMessage,
 } from "@fortawesome/free-solid-svg-icons";
 import NotificationHandler from "@/components/ui/NotificationHandler";
@@ -30,48 +50,92 @@ import SideButtons from "@/components/student/SideButtons";
 export default function StudentDashboard() {
   const [todayAttendance, setTodayAttendance] = useState<Attendance[]>([]);
   const [stats, setStats] = useState<any>(null);
-  const [needsFaceVerification, setNeedsFaceVerification] = useState(true);
+  const [needsFaceVerification, setNeedsFaceVerification] = useState(false);
   const [isFirstLogin, setIsFirstLogin] = useState(false);
   const [studentDetails, setStudentDetails] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [premiumStatus, setPremiumStatus] =
     useState<PremiumStatusResponse | null>(null);
+  const [todayTimetable, setTodayTimetable] = useState<StudentTimetableEntry[]>(
+    [],
+  );
+  const [weeklyTimetable, setWeeklyTimetable] = useState<
+    StudentTimetableEntry[]
+  >([]);
+  const [todayWeekday, setTodayWeekday] = useState<string>("");
+  const [timetableLoading, setTimetableLoading] = useState<boolean>(false);
+
   const router = useRouter();
 
-  const logout = () => {
-    localStorage.removeItem("studentId"); // Use the correct key for student
-    localStorage.removeItem("lastCampusSlug"); // Also clear the campus slug
+  const logout = async () => {
+    try {
+      await fetch("/api/logout", {
+        method: "POST",
+      });
+    } catch (error) {
+      console.error("Logout API failed:", error);
+    }
+
+    localStorage.removeItem("studentId");
+    localStorage.removeItem("teacherId");
+    localStorage.removeItem("adminId");
+    localStorage.removeItem("assistantId");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("lastCampusSlug");
     router.push("/auth/login");
   };
 
   useEffect(() => {
     const studentId = localStorage.getItem("studentId");
     const campusId = localStorage.getItem("CampusID");
+
     setLoading(true);
+
     if (!studentId) {
       showErrorMessage("No student ID found, Login Again.");
       setLoading(false);
       return;
     }
+
     const fetchStudentData = async () => {
       try {
         const detailsRes = await fetch(
           `/api/student/details?studentId=${studentId}&campusId=${campusId}`,
         );
         const detailsData = await detailsRes.json();
+
         if (!detailsRes.ok) throw new Error("Failed to fetch user details");
 
         setStudentDetails(detailsData);
 
         if (!detailsData.avatarUrl) {
           setIsFirstLogin(true);
+          setNeedsFaceVerification(false);
+          return;
         }
+
+        setIsFirstLogin(false);
+
+        const sessionRes = await fetch("/api/auth/session");
+        const sessionData = await sessionRes.json();
+
+        if (!sessionRes.ok) {
+          showErrorMessage(
+            sessionData.error || "Session expired. Please login again.",
+          );
+          router.push("/auth/login");
+          return;
+        }
+
+        setNeedsFaceVerification(!sessionData.session?.faceVerified);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {
         setLoading(false);
       }
     };
+
     const fetchTodayAttendance = async () => {
       try {
         const res = await fetch(
@@ -97,6 +161,7 @@ export default function StudentDashboard() {
         console.error("Error fetching attendance statistics:", error);
       }
     };
+
     const fetchPremiumStatus = async () => {
       try {
         const res = await fetch(
@@ -108,11 +173,32 @@ export default function StudentDashboard() {
         console.error("Error fetching attendance statistics:", error);
       }
     };
+
+    const fetchStudentTimetable = async () => {
+      try {
+        setTimetableLoading(true);
+        const res = await fetch("/api/student/timetable");
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to fetch timetable");
+        }
+        setTodayTimetable(data.todayEntries || []);
+        setWeeklyTimetable(data.weeklyEntries || []);
+        setTodayWeekday(data.todayWeekday || "");
+      } catch (error) {
+        console.error("Error fetching student timetable:", error);
+      } finally {
+        setTimetableLoading(false);
+      }
+    };
+
     fetchStats();
     fetchTodayAttendance();
     fetchPremiumStatus();
     fetchStudentData();
-    setNeedsFaceVerification(false); //false for development
+    fetchStudentTimetable();
+    //* debarreded faceverification  state
+    // setNeedsFaceVerification(true); //!false for development
   }, []);
 
   const handleAvatarSuccess = (newAvatarUrl: string) => {
@@ -120,91 +206,300 @@ export default function StudentDashboard() {
     setIsFirstLogin(false);
     setNeedsFaceVerification(true);
   };
-  const handleFaceVerificationSuccess = () => {
-    setNeedsFaceVerification(false);
+
+  const handleFaceVerificationSuccess = async () => {
+    try {
+      const res = await fetch("/api/auth/face-verified", {
+        method: "PATCH",
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to save face verification");
+      }
+
+      setNeedsFaceVerification(false);
+    } catch (error: any) {
+      console.error("Failed to save face verification: ", error);
+      showErrorMessage(error.message || "Face verification can not be saved");
+    }
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <DashboardLoader />
-      </div>
-    );
+    return <DashboardLoader />;
   }
 
   return (
     <>
       <NotificationHandler userId={localStorage.getItem("studentId") || ""} />
+
       {isFirstLogin && studentDetails && (
         <FirstLoginModal
           studentId={studentDetails.id}
           onSuccess={handleAvatarSuccess}
         />
       )}
+
       {needsFaceVerification && studentDetails?.avatarUrl && (
         <FaceVerificationModal
           studentId={studentDetails.id}
-          avatarUrl={studentDetails.avatarUrl} // <-- Pass the avatarUrl
+          avatarUrl={studentDetails.avatarUrl}
           onSuccess={handleFaceVerificationSuccess}
         />
       )}
-      <div className="sm:min-h-screen  sm:p-4">
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 h-full">
-          {/* Left Sidebar */}
-          <div className="w-full lg:w-64 xl:w-72 2xl:w-[25rem]">
-            <div className=" lg:block space-y-3  sm:flex">
-              <Logo />
-              <Greeting />
-            </div>
-            <Link
-              href="/attendance/scan"
-              className="sm:block 2xl:h-17 text-center 2xl:text-xl 2xl:pt-4 lg:mt-5 sm:text-center sm:text-sm bg-gray-200/15 border border-gray-300 hover:bg-gray-300/10 hover:text-gray-500 font-semibold sm:px-3 sm:py-3 rounded-xl transition duration-300 ease-in-out shadow-md"
-            >
-              Scan QR to Mark Attendance
-            </Link>
 
-            <div className="bg-gray-100/15 p-4 rounded-xl lg:mt-10 shadow-sm overflow-hidden">
-              <h2 className="text-xs 2xl:text-lg font-semibold mb-4">
-                📅 Today's Attendance
-              </h2>
-              <div className="max-h-64 2xl:text-base sm:max-h-80 lg:max-h-96">
-                {loading ? (
-                  <p className="text-sm">Loading...</p>
-                ) : todayAttendance.length > 0 ? (
-                  <ul className="space-y-3 overflow-y-auto max-h-full pr-2">
-                    {todayAttendance.map((att, idx) => (
-                      <li
-                        key={idx}
-                        className="p-3 sm:p-4 bg-gradient-to-br from-[#070a0f]/80 to-[#243B55]/80 rounded-xl"
-                      >
-                        <p className="text-sm">
-                          <strong>Subject:</strong> {att.subject}
-                        </p>
-                        <p className="text-sm">
-                          <strong>Status:</strong> {att.status}
-                        </p>
-                        <p className="text-sm">
-                          <strong>Marked By:</strong> {att.markedBy}
-                        </p>
-                        <p className="text-xs text-gray-100 mt-1">
-                          {new Date(att.date).toLocaleDateString()}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-gray-200 2xl:text-base text-sm">
-                    No attendance marked today.
+      <section className="relative min-h-screen overflow-x-hidden bg-[#08080C] px-3 py-4 text-slate-100 sm:px-5 lg:px-6">
+        <div className="pointer-events-none absolute inset-0 app-shell-bg" />
+        <div className="pointer-events-none absolute left-10 top-10 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-10 right-10 h-80 w-80 rounded-full bg-cyan-400/5 blur-3xl" />
+
+        <div className="relative z-10 mx-auto flex max-w-[1800px] flex-col gap-5">
+          <header className="relative z-[200] overflow-visible rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-3 shadow-2xl shadow-black/30 backdrop-blur-2xl sm:p-4">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center">
+                <div className="flex shrink-0 items-center justify-center rounded-[1.5rem] border border-white/10 bg-white/[0.045] px-4 py-3 shadow-xl shadow-black/20">
+                  <Logo imageClassName="!w-[145px] sm:!w-[165px] lg:!w-[185px] 2xl:!w-[205px]" />
+                </div>
+
+                <div className="hidden h-14 w-px bg-white/10 lg:block" />
+
+                <div className="min-w-0">
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-violet-200">
+                    <Sparkles className="h-3 w-3" />
+                    Student Dashboard
+                  </div>
+
+                  <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                    Your learning workspace
+                  </h1>
+
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+                    Attendance, exams, resources and AI study tools organized in
+                    one place.
                   </p>
-                )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 xl:min-w-[430px] xl:max-w-[520px]">
+                <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] px-4 py-3">
+                  <Greeting />
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <NotificationBell />
+
+                    <div className="hidden items-center gap-2 rounded-2xl border border-emerald-300/20 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-200 sm:flex">
+                      <ShieldCheck className="h-4 w-4" />
+                      Verified Session
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {premiumStatus?.features?.includes("AI_CHATBOT") && (
+                      <button
+                        type="button"
+                        onClick={() => router.push("/dashboard/student/chat")}
+                        className="group inline-flex items-center justify-center gap-2 rounded-2xl border border-violet-300/20 bg-violet-500/10 px-4 py-2.5 text-sm font-bold text-violet-100 transition duration-300 hover:-translate-y-0.5 hover:border-violet-300/45 hover:bg-violet-500/20"
+                      >
+                        <Bot className="h-4 w-4 text-violet-200" />
+                        <span className="hidden sm:inline">Chat AI</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={logout}
+                      className="group inline-flex items-center justify-center gap-2 rounded-2xl border border-red-300/20 bg-red-500/10 px-4 py-2.5 text-sm font-bold text-red-100 transition duration-300 hover:-translate-y-0.5 hover:border-red-300/45 hover:bg-red-500/20"
+                    >
+                      <LogOut className="h-4 w-4 text-red-200 transition group-hover:translate-x-0.5" />
+                      <span className="hidden sm:inline">Logout</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </header>
 
-          {/* Main Content Area */}
-          <div className="flex-1 flex 2xl:ml-10 flex-col lg:flex-row gap-4 lg:gap-6">
-            {/* Middle Section - Navigation Cards */}
-            <div className="w-full lg:w-80 2xl:w-[30rem] xl:w-96 flex flex-col space-y-4">
+          <div className="relative z-0 grid gap-5 xl:grid-cols-[320px_minmax(360px,430px)_1fr] 2xl:grid-cols-[360px_minmax(420px,500px)_1fr]">
+            <aside className="space-y-5">
+              <Link
+                href="/attendance/scan"
+                className="group flex items-center gap-4 rounded-[2rem] border border-violet-400/20 bg-gradient-to-br from-violet-600/20 via-fuchsia-500/10 to-cyan-400/10 p-5 shadow-2xl shadow-violet-950/20 backdrop-blur-xl transition duration-300 hover:-translate-y-0.5 hover:border-violet-300/40 hover:shadow-violet-900/30"
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-500/20 ring-1 ring-violet-300/20">
+                  <QrCode className="h-6 w-6 text-violet-200" />
+                </div>
+
+                <div className="text-left">
+                  <p className="text-base font-extrabold text-white">
+                    Scan QR Attendance
+                  </p>
+                  <p className="mt-1 text-sm leading-5 text-slate-400">
+                    Mark your class attendance securely.
+                  </p>
+                </div>
+              </Link>
+
+              <div className="rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-5 shadow-2xl shadow-black/30 backdrop-blur-2xl">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-300">
+                      Today
+                    </p>
+                    <h2 className="mt-1 text-xl font-extrabold text-white">
+                      Attendance
+                    </h2>
+                  </div>
+
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05]">
+                    <CalendarDays className="h-5 w-5 text-cyan-300" />
+                  </div>
+                </div>
+
+                <div className="max-h-[420px] overflow-y-auto pr-1">
+                  {todayAttendance.length > 0 ? (
+                    <ul className="space-y-3">
+                      {todayAttendance.map((att, idx) => (
+                        <li
+                          key={idx}
+                          className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 transition hover:border-violet-300/30 hover:bg-white/[0.075]"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-bold text-white">
+                                {att.subject}
+                              </p>
+                              <p className="mt-1 text-xs text-slate-400">
+                                Marked by {att.markedBy}
+                              </p>
+                            </div>
+
+                            <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-emerald-300">
+                              {att.status}
+                            </span>
+                          </div>
+
+                          <p className="mt-3 text-xs font-medium text-slate-500">
+                            {new Date(att.date).toLocaleDateString()}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] px-4 py-8 text-center">
+                      <p className="text-sm font-semibold text-slate-300">
+                        No attendance marked today.
+                      </p>
+                      <p className="mt-2 text-xs leading-5 text-slate-500">
+                        Your marked classes will appear here.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-5 shadow-2xl shadow-black/30 backdrop-blur-2xl">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+                      {todayWeekday ? formatWeekday(todayWeekday) : "Today"}
+                    </p>
+                    <h2 className="mt-1 text-xl font-extrabold text-white">
+                      Today&apos;s Classes
+                    </h2>
+                  </div>
+
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-500/10">
+                    <Clock3 className="h-5 w-5 text-cyan-300" />
+                  </div>
+                </div>
+
+                <div className="max-h-[420px] overflow-y-auto pr-1">
+                  {timetableLoading ? (
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-8 text-center">
+                      <p className="text-sm font-semibold text-slate-300">
+                        Loading timetable...
+                      </p>
+                    </div>
+                  ) : todayTimetable.length > 0 ? (
+                    <ul className="space-y-3">
+                      {todayTimetable.map((entry) => {
+                        const isClass =
+                          entry.type === "LECTURE" ||
+                          entry.type === "LAB" ||
+                          entry.type === "TUTORIAL" ||
+                          entry.type === "EXTRA_CLASS" ||
+                          entry.type === "EXAM";
+
+                        return (
+                          <li
+                            key={entry.id}
+                            className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 transition hover:border-cyan-300/30 hover:bg-white/[0.075]"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-extrabold text-white">
+                                  {isClass
+                                    ? entry.subject?.name || "Class"
+                                    : entry.title || entry.type}
+                                </p>
+
+                                <p className="mt-1 text-xs font-semibold text-cyan-200">
+                                  {formatTimetableTime(entry.startTime)} -{" "}
+                                  {formatTimetableTime(entry.endTime)}
+                                </p>
+                              </div>
+
+                              <span className="shrink-0 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-violet-200">
+                                {entry.type.replace("_", " ")}
+                              </span>
+                            </div>
+
+                            {isClass && (
+                              <div className="mt-3 space-y-2 text-xs text-slate-400">
+                                <div className="flex items-center gap-2">
+                                  <UserRound className="h-3.5 w-3.5 text-violet-300" />
+                                  <span>
+                                    {entry.teacher?.user.name || "Teacher N/A"}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <BookOpen className="h-3.5 w-3.5 text-cyan-300" />
+                                  <span>
+                                    {entry.subject?.code
+                                      ? `${entry.subject.name} (${entry.subject.code})`
+                                      : entry.subject?.name || "Subject N/A"}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-3.5 w-3.5 text-emerald-300" />
+                                  <span>
+                                    {entry.room || "Room not assigned"}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] px-4 py-8 text-center">
+                      <p className="text-sm font-semibold text-slate-300">
+                        No classes scheduled today.
+                      </p>
+                      <p className="mt-2 text-xs leading-5 text-slate-500">
+                        Your semester-section timetable will appear here.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </aside>
+
+            <main className="space-y-5">
               {premiumStatus?.isPremium ? (
                 <PremiumFeaturesCard
                   studentId={localStorage.getItem("studentId") || ""}
@@ -213,7 +508,8 @@ export default function StudentDashboard() {
               ) : (
                 <UpgradeToPremiumCard />
               )}
-              <div className="sm:grid sm:grid-cols-2 lg:grid lg:grid-cols-1">
+
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
                 <HorizontalBar
                   content="Check your past attendance records"
                   linkRef="/attendance/history"
@@ -228,22 +524,24 @@ export default function StudentDashboard() {
                   content="See how many classes you can skip safely"
                   linkRef="/attendance/stats"
                   title="Bunk Manager"
-                  locked={!premiumStatus?.features.includes("BUNK_MANAGER")}
+                  locked={!premiumStatus?.features?.includes("BUNK_MANAGER")}
                 />
                 <HorizontalBar
                   content="Get a smart study plan based on your upcoming exams"
                   linkRef="/study-plan"
                   title="Study Plan"
-                  locked={!premiumStatus?.features.includes("STUDY_PLAN")}
+                  locked={!premiumStatus?.features?.includes("STUDY_PLAN")}
                 />
               </div>
-            </div>
+            </main>
 
-            {/* Right Section - Charts and Stats */}
-            <div className="flex-1 sm:flex-0 2xl:ml-10 flex flex-col space-y-6 relative">
-              <div className="flex flex-row-reverse gap-2">
-                <div className="flex flex-col gap-5">
-                  <NotificationBell />
+            <section className="space-y-5">
+              <div className="grid gap-5 2xl:grid-cols-[1fr_88px]">
+                <div className="min-w-0 rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-4 shadow-2xl shadow-black/30 backdrop-blur-2xl">
+                  <BarGraph />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 2xl:grid-cols-1">
                   <SideButtons
                     faIcon={faBookOpen}
                     title="View Assignments"
@@ -264,93 +562,46 @@ export default function StudentDashboard() {
                     title="View Messages"
                     link="/chat"
                   />
-                </div>
-                {/* Bar Graph */}
-                <div className="w-full">
-                  <BarGraph />
+                  <SideButtons
+                    faIcon={faCalendarDays}
+                    title="View Timetable"
+                    link="/dashboard/student/timetable"
+                  />
                 </div>
               </div>
-              {/* Calendar and Number Cards */}
-              <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 mr-[8rem]">
-                <div className="flex-1">
+
+              <div className="grid gap-5 xl:grid-cols-[1fr_220px]">
+                <div className="min-w-0 rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-4 shadow-2xl shadow-black/30 backdrop-blur-2xl">
                   <AppCalendar />
                 </div>
-                <div className="flex sm:ml-9 flex-row xl:flex-col gap-4 xl:gap-6 xl:w-48">
-                  <div className="flex-1">
-                    <NumberCard
-                      title="Lectures Attended"
-                      value={
-                        isNaN(Number.parseInt(stats?.presents))
-                          ? "..."
-                          : Number.parseInt(stats?.presents).toString()
-                      }
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <NumberCard
-                      title="Attendance %"
-                      value={
-                        isNaN(Number.parseInt(stats?.presentPercentage))
-                          ? "..."
-                          : Number.parseInt(
-                              stats?.presentPercentage,
-                            ).toString() + "%"
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
 
-              {/* Logout Button */}
-              <div
-                className="fixed 2xl:hidden top-4 right-4 sm:top-6 sm:right-6 lg:absolute lg:top-0 lg:right-[48rem] group cursor-pointer z-10"
-                onClick={() => logout()}
-              >
-                <div className="relative flex flex-col items-center justify-center p-2 rounded-full transition">
-                  <LogOut className="text-cyan-300 w-5 h-5 sm:w-6 sm:h-6" />
-                  <span className="absolute top-full mt-1 px-2 py-1 text-xs rounded bg-cyan-500 text-white opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-200 pointer-events-none whitespace-nowrap">
-                    Logout
-                  </span>
-                </div>
-              </div>
-              <div className="2xl:flex 2xl:gap-13">
-                <div
-                  className="hidden gap-4 items-center justify-center ring hover:ring-2 w-56 p-3 ml-2 rounded-2xl bg-white/10 backdrop-blur-lg ring-blue-300 transition-all duration-300 hover:bg-blue-500 cursor-pointer 2xl:flex"
-                  onClick={() => logout()}
-                >
-                  <LogOut
-                    size={50}
-                    className="text-cyan-300 mt-1 text-xl w-5 h-5 sm:w-6 sm:h-6"
+                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-1">
+                  <NumberCard
+                    title="Lectures Attended"
+                    value={
+                      isNaN(Number.parseInt(stats?.presents))
+                        ? "..."
+                        : Number.parseInt(stats?.presents).toString()
+                    }
                   />
-                  <span className="text-xl">Logout</span>
-                </div>
 
-                {premiumStatus?.features?.includes("AI_CHATBOT") && (
-                  <div
-                    className="hidden gap-4 items-center justify-center ring hover:ring-2 w-56 p-3 ml-2 rounded-2xl bg-white/10 backdrop-blur-lg ring-blue-300 transition-all duration-300 hover:bg-blue-500 cursor-pointer 2xl:flex"
-                    onClick={() => router.push("/dashboard/student/chat")}
-                  >
-                    <span className="text-xl">Chat AI</span>
-                  </div>
-                )}
-              </div>
-              {/* ChatBot - Only show on larger screens or make it responsive */}
-              {premiumStatus?.features?.includes("AI_CHATBOT") && (
-                <div className="hidden 2xl:hidden lg:block">
-                  <ChatBot />
+                  <NumberCard
+                    title="Attendance %"
+                    value={
+                      isNaN(Number.parseInt(stats?.presentPercentage))
+                        ? "..."
+                        : Number.parseInt(stats?.presentPercentage).toString() +
+                          "%"
+                    }
+                  />
                 </div>
-              )}
-            </div>
+              </div>
+            </section>
           </div>
         </div>
 
-        {/* Mobile ChatBot - Show at bottom on smaller screens */}
-        {premiumStatus?.features?.includes("AI_CHATBOT") && (
-          <div className="lg:hidden 2xl:hidden fixed bottom-4 right-4 z-20">
-            <ChatBot />
-          </div>
-        )}
-      </div>
+        {premiumStatus?.features?.includes("AI_CHATBOT") && <ChatBot />}
+      </section>
     </>
   );
 }

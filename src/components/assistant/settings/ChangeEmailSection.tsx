@@ -4,14 +4,8 @@ import {
   showLoadingMessage,
   showSuccessMessage,
 } from "@/lib/helper";
-import { Tektur } from "next/font/google";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
-const tektur = Tektur({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
 
 export default function ChangeEmailSection() {
   const [currentEmail, setCurrentEmail] = useState("");
@@ -31,7 +25,7 @@ export default function ChangeEmailSection() {
       }
       try {
         const res = await fetch(
-          `/api/assistant/settings/email?assistantId=${id}`
+          `/api/assistant/settings/email?assistantId=${id}`,
         );
         const data = await res.json();
         if (res.ok) {
@@ -39,8 +33,8 @@ export default function ChangeEmailSection() {
         } else {
           showErrorMessage(data.error || "Failed to load email.");
         }
-      } catch(error) {
-        console.log(error)
+      } catch (error) {
+        console.log(error);
         showErrorMessage("Something went wrong while fetching email.");
       }
     };
@@ -68,7 +62,7 @@ export default function ChangeEmailSection() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ newEmail, assistantId }),
-        }
+        },
       );
 
       const data = await res.json();
@@ -99,18 +93,21 @@ export default function ChangeEmailSection() {
     showLoadingMessage("Verifying and updating...");
     try {
       // Step 1: Verify the code
-      const verifyRes = await fetch("/api/assistant/settings/email/verify-code", {
-        // Assuming this is the correct verify path
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: verificationCode, assistantId }), // Also send assistantId to verify against the correct redis key
-      });
+      const verifyRes = await fetch(
+        "/api/assistant/settings/email/verify-code",
+        {
+          // Assuming this is the correct verify path
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: verificationCode, assistantId }), // Also send assistantId to verify against the correct redis key
+        },
+      );
 
       if (!verifyRes.ok) {
         const data = await verifyRes.json();
         throw new Error(
           data.error ||
-            "Verification failed. The code may be incorrect or expired."
+            "Verification failed. The code may be incorrect or expired.",
         );
       }
 
@@ -125,7 +122,7 @@ export default function ChangeEmailSection() {
 
       if (!updateRes.ok) {
         throw new Error(
-          updateData.error || "Failed to update email after verification."
+          updateData.error || "Failed to update email after verification.",
         );
       }
 
@@ -142,125 +139,155 @@ export default function ChangeEmailSection() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
+    <motion.section
+      initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="relative overflow-hidden z-0 bg-gradient-to-br from-white/10 to-black/20 backdrop-blur-md h-[75vh] flex flex-col items-center p-6 rounded-xl shadow-xl border border-white/10"
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="relative min-h-[75vh] overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-5 text-white shadow-2xl shadow-black/25 backdrop-blur-2xl sm:p-6"
     >
-      {/* Animated gradient blobs */}
-      <div className="absolute inset-0 z-0">
-        {/* Purple blob - static with pulse animation */}
-        <div className="absolute -top-1/3 -left-1/3 w-96 h-96 bg-purple-500/20 rounded-full filter blur-3xl animate-pulse"></div>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.14),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.06),transparent_30%)]" />
+      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-violet-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-28 right-0 h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
 
-        {/* Orange blob - moves in a circular pattern */}
-        <motion.div
-          className="absolute w-80 h-80 animate-pulse bg-orange-500/20 rounded-full filter blur-2xl"
-          animate={{
-            x: ["100%", "0%", "-20%", "0%", "100%"],
-            y: ["100%", "50%", "0%", "50%", "100%"],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
-        />
+      <div className="relative z-10 flex min-h-[calc(75vh-3rem)] flex-col">
+        <div className="flex flex-col gap-4 border-b border-white/10 pb-6">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-violet-200">
+            Secure Settings
+          </div>
 
-        {/* Blue blob - smaller, faster movement */}
-        <motion.div
-          className="absolute w-40 h-40 animate-pulse bg-blue-500/10 rounded-full filter blur-xl"
-          animate={{
-            x: ["25%", "75%", "50%", "25%"],
-            y: ["25%", "75%", "25%", "75%"],
-            scale: [1, 1.2, 0.8, 1],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1,
-          }}
-        />
-      </div>
-
-      <motion.h2
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
-        className={`text-4xl font-bold mb-10 mt-10 text-orange-300 z-10 ${tektur.className}`}
-      >
-        Change Admin Email
-      </motion.h2>
-
-      <p className="text-white/80 mb-14 z-10">
-        Current Email:{" "}
-        <span className="font-semibold">
-          {currentEmail || (
-            <span className="ml-1 animate-pulse">Loading...</span>
-          )}
-        </span>
-      </p>
-
-      <div className="flex flex-col gap-10 mt-20 max-w-sm w-full z-10">
-        <AnimatePresence mode="wait">
-          {step === "request" && (
-            <motion.div
-              key="request"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="flex flex-col gap-6"
+          <div>
+            <motion.h2
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl "
             >
-              <input
-                type="email"
-                autoComplete="off"
-                placeholder="Enter new email"
-                className="px-4 py-3 rounded bg-white/10 text-white placeholder:text-white/50 focus:outline-none"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-              />
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={handleRequestVerification}
-                disabled={loading}
-                className="bg-orange-600 outline-none hover:bg-orange-700 cursor-pointer transition rounded px-4 py-2 text-white font-semibold"
-              >
-                {loading ? "Sending…" : "Send Verification Code"}
-              </motion.button>
-            </motion.div>
-          )}
+              Change Admin Email
+            </motion.h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+              Update the admin email after verifying the security code sent to
+              your registered inboxes.
+            </p>
+          </div>
+        </div>
 
-          {step === "verify" && (
-            <motion.div
-              key="verify"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="flex flex-col gap-6"
-            >
-              <input
-                type="text"
-                placeholder="Enter verification code"
-                className="px-4 py-3 rounded bg-white/10 text-white placeholder:text-white/50 focus:outline-none"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
-              />
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={handleVerifyAndUpdate}
-                disabled={loading}
-                className="bg-green-600 outline-none hover:bg-green-700 cursor-pointer transition rounded px-4 py-2 text-white font-semibold"
-              >
-                {loading ? "Verifying…" : "Verify & Update"}
-              </motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="grid flex-1 grid-cols-1 gap-6 py-6 lg:grid-cols-[0.85fr_1.15fr]">
+          <div className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.035] p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-400/5" />
+
+            <div className="relative z-10 flex h-full flex-col justify-between gap-8">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-500">
+                  Current Email
+                </p>
+
+                <div className="mt-4 rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-4">
+                  <p className="break-all text-sm font-bold text-slate-100">
+                    {currentEmail || (
+                      <span className="inline-flex animate-pulse text-slate-500">
+                        Loading...
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-violet-300/20 bg-violet-500/10 p-4 text-sm leading-6 text-violet-100">
+                Verification is required before your admin email can be changed.
+                Keep the code private and complete the update from this panel.
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#101014]/80 p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl sm:p-6">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-fuchsia-400/5" />
+
+            <div className="relative z-10">
+              <div className="mb-6 flex items-center gap-3">
+                <div
+                  className={`h-2.5 w-2.5 rounded-full ${
+                    step === "request" ? "bg-violet-300" : "bg-emerald-300"
+                  }`}
+                />
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-500">
+                  {step === "request"
+                    ? "Step 1 · Request Code"
+                    : "Step 2 · Verify Code"}
+                </p>
+              </div>
+
+              <AnimatePresence mode="wait">
+                {step === "request" && (
+                  <motion.div
+                    key="request"
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -18 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="flex flex-col gap-5"
+                  >
+                    <div>
+                      <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                        New Email Address
+                      </label>
+                      <input
+                        type="email"
+                        autoComplete="off"
+                        placeholder="Enter new email"
+                        className="w-full rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                      />
+                    </div>
+
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleRequestVerification}
+                      disabled={loading}
+                      className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 outline-none transition duration-300 hover:-translate-y-0.5 hover:shadow-violet-800/30 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {loading ? "Sending…" : "Send Verification Code"}
+                    </motion.button>
+                  </motion.div>
+                )}
+
+                {step === "verify" && (
+                  <motion.div
+                    key="verify"
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -18 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="flex flex-col gap-5"
+                  >
+                    <div>
+                      <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                        Verification Code
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Enter verification code"
+                        className="w-full rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                      />
+                    </div>
+
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleVerifyAndUpdate}
+                      disabled={loading}
+                      className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-emerald-300/20 bg-emerald-500/10 px-5 py-3 text-sm font-extrabold text-emerald-200 outline-none transition duration-300 hover:-translate-y-0.5 hover:border-emerald-300/45 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {loading ? "Verifying…" : "Verify & Update"}
+                    </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
       </div>
-    </motion.div>
+    </motion.section>
   );
 }

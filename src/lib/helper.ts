@@ -1,5 +1,6 @@
 import toast from "react-hot-toast";
 import { prisma } from "./prisma";
+import crypto from "crypto";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import {
   BookOpen,
@@ -9,6 +10,7 @@ import {
   ClipboardCheck,
   NotepadText,
   Upload,
+  MessageCircle,
 } from "lucide-react";
 import React from "react";
 
@@ -282,7 +284,8 @@ export const teacherNavLinks = [
     icon: Megaphone,
   },
   { label: "Resources", href: "/dashboard/teacher/resources", icon: Upload },
-  { label: "Logout", href: "/dashboard/teacher/logout", icon: LogOut },
+  {label: "Campus Chat", href: "/chat", icon: MessageCircle}
+  
 ];
 
 // --- NEWLY IMPLEMENTED FUNCTION ---
@@ -580,29 +583,29 @@ export function getTimeAgo(dateString: string) {
   return "Just now";
 }
 
-export const transformUsername = async (email: string): Promise<string> => {
-  let base = email.split("@")[0];
-  base = base
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "");
-  if (!base) base = "user";
-
-  let username = base;
-  let counter = 1;
+export const transformUsername = async (
+  prefix = "USR",
+): Promise<string> => {
   while (true) {
+    const year = new Date().getFullYear();
+
+    const number = crypto.randomInt(1000, 10000);
+
+    const code = crypto
+      .randomBytes(2)
+      .toString("hex")
+      .toUpperCase();
+
+    const username = `${prefix}-${year}-${number}-${code}`;
+
     const existing = await prisma.user.findUnique({
       where: { username },
     });
 
-    if (!existing) break;
-
-    username = `${base}_${counter}`;
-    counter++;
+    if (!existing) {
+      return username;
+    }
   }
-
-  return username;
 };
 
 export async function importPublicKey(base64Key: string): Promise<CryptoKey> {
@@ -663,3 +666,18 @@ export const EMOJI_SHORTCUTS: Record<string, string> = {
   check: "✅",
   cross: "❌",
 };
+
+export const formatTimetableTime = (value: string | Date) => {
+  const time = new Date(value).toISOString().slice(11, 16);
+  const [hourRaw, minute] = time.split(":");
+  const hour = Number(hourRaw);
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const normalizedHour = hour % 12 || 12;
+
+  return `${normalizedHour}:${minute} ${suffix}`;
+};
+
+
+export function formatWeekday(value: string) {
+  return value.charAt(0) + value.slice(1).toLowerCase();
+}

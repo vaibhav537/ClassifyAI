@@ -15,10 +15,21 @@ import {
   showLoadingMessage,
   showSuccessMessage,
 } from "@/lib/helper";
+import {
+  CheckCircle2,
+  Loader2,
+  MapPin,
+  Monitor,
+  QrCode,
+  Send,
+  Users,
+  Wifi,
+  X,
+} from "lucide-react";
 
 function SkeletonBox({ className = "" }: { className?: string }) {
   return (
-    <div className={`animate-pulse bg-gray-700/50 rounded-md ${className}`} />
+    <div className={`animate-pulse rounded-2xl bg-white/10 ${className}`} />
   );
 }
 
@@ -37,6 +48,7 @@ export default function GenerateTokenDialog({
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [assignedClasses, setAssignedClasses] = useState<any[]>([]);
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedSemester, setSelectedSemester] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
@@ -70,17 +82,41 @@ export default function GenerateTokenDialog({
     async function fetchData() {
       setIsFetchingInitial(true);
       try {
-        const [subjectsRes, semestersRes, sectionsRes] = await Promise.all([
-          fetch(`/api/teacher/subjects/all?campusId=${campusId}`),
-          fetch(`/api/teacher/semester/all?campusId=${campusId}`),
-          fetch(`/api/teacher/sections/all?campusId=${campusId}`),
-        ]);
-        if (!subjectsRes.ok || !semestersRes.ok || !sectionsRes.ok)
-          throw new Error("Failed to load initial data.");
+        const teacherUserId = localStorage.getItem("teacherId");
 
-        const subjectsData = await subjectsRes.json();
-        const semestersData = await semestersRes.json();
-        const sectionsData = await sectionsRes.json();
+        if (!teacherUserId || !campusId) {
+          throw new Error("Teacher ID or Campus ID missing.");
+        }
+
+        const assignedRes = await fetch(
+          `/api/teacher/subjects?teacherId=${teacherUserId}&campusId=${campusId}`,
+        );
+
+        if (!assignedRes.ok) {
+          throw new Error("Failed to load assigned class data.");
+        }
+
+        const assignedData = await assignedRes.json();
+
+        setAssignedClasses(assignedData);
+
+        const subjectsData = [
+          ...new Map(
+            assignedData.map((item: any) => [item.subject.id, item.subject]),
+          ).values(),
+        ] as Subject[];
+
+        const semestersData = [
+          ...new Map(
+            assignedData.map((item: any) => [item.semester.id, item.semester]),
+          ).values(),
+        ] as Semester[];
+
+        const sectionsData = [
+          ...new Map(
+            assignedData.map((item: any) => [item.section.id, item.section]),
+          ).values(),
+        ] as Section[];
 
         setSubjects(subjectsData);
         setSemesters(semestersData);
@@ -102,6 +138,7 @@ export default function GenerateTokenDialog({
         setIsFetchingInitial(false);
       }
     }
+
     fetchData();
   }, [isOpen, preselectedClass, campusId]);
 
@@ -112,11 +149,14 @@ export default function GenerateTokenDialog({
       setIsFetchingStudents(true);
       setStudents([]);
       setSelectedStudents([]);
+
       try {
         const res = await fetch(
-          `/api/teacher/semester/students?semesterId=${selectedSemester}&sectionId=${selectedSection}&campusId=${campusId}`
+          `/api/teacher/semester/students?semesterId=${selectedSemester}&sectionId=${selectedSection}&campusId=${campusId}`,
         );
+
         if (!res.ok) throw new Error("Failed to fetch students.");
+
         const data = await res.json();
         setStudents(data);
       } catch (err: any) {
@@ -125,6 +165,7 @@ export default function GenerateTokenDialog({
         setIsFetchingStudents(false);
       }
     }
+
     fetchStudents();
   }, [selectedSemester, selectedSection, campusId]);
 
@@ -132,9 +173,29 @@ export default function GenerateTokenDialog({
     setSelectedStudents((prev) =>
       prev.includes(studentId)
         ? prev.filter((id) => id !== studentId)
-        : [...prev, studentId]
+        : [...prev, studentId],
     );
   };
+
+  const availableSemesters = [
+    ...new Map(
+      assignedClasses
+        .filter((item) => item.subject.id === selectedSubject)
+        .map((item) => [item.semester.id, item.semester]),
+    ).values(),
+  ] as Semester[];
+
+  const availableSections = [
+    ...new Map(
+      assignedClasses
+        .filter(
+          (item) =>
+            item.subject.id === selectedSubject &&
+            item.semester.id === selectedSemester,
+        )
+        .map((item) => [item.section.id, item.section]),
+    ).values(),
+  ] as Section[];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,7 +203,9 @@ export default function GenerateTokenDialog({
     setError("");
     setSuccess("");
     showLoadingMessage("Getting your location...");
+
     const teacherUserId = localStorage.getItem("teacherId");
+
     if (!teacherUserId) {
       setError("Could not find teacher ID. Please log in again.");
       setIsLoading(false);
@@ -151,23 +214,28 @@ export default function GenerateTokenDialog({
 
     try {
       let location = null;
+
       if (mode === "OFFLINE") {
         location = await getCurrentLocation();
         showLoadingMessage("Location found. Generating tokens...");
       }
+
       const response = await fetch("/api/attendance/create-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           subjectId: selectedSubject,
+          semesterId: selectedSemester,
           studentIds: selectedStudents,
           teacherUserId,
           sectionId: selectedSection,
-          location: location,
-          mode: mode,
+          location,
+          mode,
         }),
       });
+
       const data = await response.json();
+
       if (!response.ok) {
         showErrorMessage(data.message);
         throw new Error(data.message);
@@ -175,6 +243,7 @@ export default function GenerateTokenDialog({
 
       setSuccess("Tokens sent successfully! Starting session...");
       showSuccessMessage("Tokens sent successfully!");
+
       setTimeout(() => {
         onSuccess(data.classSessionId);
       }, 1500);
@@ -189,183 +258,334 @@ export default function GenerateTokenDialog({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4"
+          className="fixed inset-0 z-[9999] grid place-items-center bg-black/80 p-4 backdrop-blur-md"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="from-gray-950 via-gray-700 to-gray-950 bg-gradient-to-tl text-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-cyan-500/30"
-            initial={{ opacity: 0, scale: 0.85, y: 50 }}
+            className="relative max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/95 text-white shadow-2xl shadow-black/60 backdrop-blur-2xl"
+            initial={{ opacity: 0, scale: 0.95, y: 24 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.85, y: 50 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            exit={{ opacity: 0, scale: 0.95, y: 24 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
           >
-            <h2 className="text-2xl font-bold mb-6 text-cyan-400">
-              Generate & Send QR Codes
-            </h2>
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/16 via-fuchsia-500/7 to-cyan-400/6" />
+            <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-500/15 blur-3xl" />
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Dropdowns */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Subject
-                  </label>
-                  {isFetchingInitial ? (
-                    <SkeletonBox className="h-10 w-full" />
-                  ) : (
-                    <select
-                      value={selectedSubject}
-                      onChange={(e) => setSelectedSubject(e.target.value)}
-                      className="w-full appearance-none bg-gray-800 border border-cyan-500/30 rounded-lg p-2 text-white focus:ring-2 focus:ring-cyan-400"
-                    >
-                      {subjects.map((s) => (
-                        <option key={s.id} value={s.id} className="bg-gray-900">
-                          {s.name} {s.code && `(${s.code})`}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Semester
-                  </label>
-                  {isFetchingInitial ? (
-                    <SkeletonBox className="h-10 w-full" />
-                  ) : (
-                    <select
-                      value={selectedSemester}
-                      onChange={(e) => setSelectedSemester(e.target.value)}
-                      className="w-full appearance-none bg-gray-800 border border-cyan-500/30 rounded-lg p-2 text-white focus:ring-2 focus:ring-cyan-400"
-                    >
-                      {semesters.map((s) => (
-                        <option key={s.id} value={s.id} className="bg-gray-900">
-                          {s.name.includes("Semester")
-                            ? s.name
-                            : `Semester ${s.name}`}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Section
-                  </label>
-                  {isFetchingInitial ? (
-                    <SkeletonBox className="h-10 w-full" />
-                  ) : (
-                    <select
-                      value={selectedSection}
-                      onChange={(e) => setSelectedSection(e.target.value)}
-                      className="w-full appearance-none bg-gray-800 border border-cyan-500/30 rounded-lg p-2 text-white focus:ring-2 focus:ring-cyan-400"
-                    >
-                      {sections.map((s) => (
-                        <option key={s.id} value={s.id} className="bg-gray-900">
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-              </div>
-
-              {/* Students */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300">
-                  Select Students ({selectedStudents.length} selected)
-                </label>
-                {isFetchingStudents ? (
-                  <p className="text-gray-400 p-2">Loading students...</p>
-                ) : (
-                  <div className="mt-2 border grid grid-cols-2 justify-evenly border-cyan-500/20 rounded-lg max-h-60 overflow-y-auto p-2 space-y-1 bg-gray-800/60">
-                    {students.length > 0 ? (
-                      students.map((student, index) => (
-                        <motion.div
-                          key={student.id}
-                          className="flex items-center p-2 hover:bg-gray-700 rounded-md"
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                        >
-                          <input
-                            type="checkbox"
-                            id={`student-${student.id}`}
-                            checked={selectedStudents.includes(student.id)}
-                            onChange={() => handleStudentSelect(student.id)}
-                            className="h-4 w-4 text-cyan-400 border-gray-500 rounded focus:ring-cyan-500"
-                          />
-                          <label
-                            htmlFor={`student-${student.id}`}
-                            className="ml-3 text-sm text-gray-200 cursor-pointer"
-                          >
-                            {student.user.name}
-                          </label>
-                        </motion.div>
-                      ))
-                    ) : (
-                      <p className="text-gray-400 p-2">
-                        No students found for this semester/section.
-                      </p>
-                    )}
+            <div className="relative z-10 flex max-h-[92vh] flex-col">
+              <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-5 sm:px-6">
+                <div className="min-w-0">
+                  <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-violet-200">
+                    <QrCode className="h-3.5 w-3.5" />
+                    Attendance Token
                   </div>
-                )}
-              </div>
 
-              {/* Messages */}
-              {error && (
-                <p className="text-red-400 text-sm bg-red-900/30 p-3 rounded-md">
-                  {error}
-                </p>
-              )}
-              {success && (
-                <p className="text-green-400 text-sm bg-green-900/30 p-3 rounded-md">
-                  {success}
-                </p>
-              )}
-              <div className="relative w-full bg-transparent ring-1 h-10 ring-cyan-800 rounded-lg p-1 flex">
-                <button
-                  type="button"
-                  onClick={() => setMode("OFFLINE")}
-                  className={`relative uppercase w-1/2 text-sm transition-all duration-300 rounded-lg ${
-                    mode === "OFFLINE"
-                      ? "font-semibold bg-cyan-700  text-white z-10"
-                      : "text-gray-200"
-                  } `}
-                >
-                  Offline Mode
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode("ONLINE")}
-                  className={`relative uppercase w-1/2 text-sm transition-all duration-300 rounded-lg ${
-                    mode === "ONLINE"
-                      ? "font-semibold bg-cyan-700 text-white z-10"
-                      : "text-gray-200"
-                  } `}
-                >
-                  Online Mode
-                </button>
-              </div>
-              <div className="flex justify-end gap-4 pt-4 border-t border-gray-700">
+                  <h2 className="text-2xl font-extrabold tracking-tight text-white">
+                    Generate & Send QR Codes
+                  </h2>
+
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Select class details and students to start a secure
+                    attendance session.
+                  </p>
+                </div>
+
                 <button
                   type="button"
                   onClick={onClose}
-                  className="py-2 px-4 bg-gray-700 text-gray-200 font-semibold rounded-lg hover:bg-gray-600 transition"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-red-300/20 bg-red-500/10 text-red-200 transition hover:bg-red-500/20"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading || selectedStudents.length === 0}
-                  className="py-2 px-4 bg-cyan-500 text-white font-semibold rounded-lg hover:bg-cyan-600 transition disabled:bg-cyan-800"
-                >
-                  {isLoading ? "Sending..." : "Generate & Send Emails"}
+                  <X className="h-5 w-5" />
                 </button>
               </div>
-            </form>
+
+              <form
+                onSubmit={handleSubmit}
+                className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6"
+              >
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-slate-300">
+                      Subject
+                    </label>
+
+                    {isFetchingInitial ? (
+                      <SkeletonBox className="h-12 w-full" />
+                    ) : (
+                      <select
+                        value={selectedSubject}
+                        onChange={(e) => {
+                          const subjectId = e.target.value;
+                          setSelectedSubject(subjectId);
+
+                          const firstMatchingClass = assignedClasses.find(
+                            (item) => item.subject.id === subjectId,
+                          );
+
+                          if (firstMatchingClass) {
+                            setSelectedSemester(firstMatchingClass.semester.id);
+                            setSelectedSection(firstMatchingClass.section.id);
+                          } else {
+                            setSelectedSemester("");
+                            setSelectedSection("");
+                          }
+                        }}
+                        className="w-full appearance-none rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 text-sm font-semibold text-white outline-none transition focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                      >
+                        {subjects.map((s) => (
+                          <option
+                            key={s.id}
+                            value={s.id}
+                            className="bg-[#08080C]"
+                          >
+                            {s.name} {s.code && `(${s.code})`}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-slate-300">
+                      Semester
+                    </label>
+
+                    {isFetchingInitial ? (
+                      <SkeletonBox className="h-12 w-full" />
+                    ) : (
+                      <select
+                        value={selectedSemester}
+                        onChange={(e) => {
+                          const semesterId = e.target.value;
+                          setSelectedSemester(semesterId);
+
+                          const firstMatchingClass = assignedClasses.find(
+                            (item) =>
+                              item.subject.id === selectedSubject &&
+                              item.semester.id === semesterId,
+                          );
+
+                          if (firstMatchingClass) {
+                            setSelectedSection(firstMatchingClass.section.id);
+                          } else {
+                            setSelectedSection("");
+                          }
+                        }}
+                        className="w-full appearance-none rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 text-sm font-semibold text-white outline-none transition focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                      >
+                        {availableSemesters.map((s) => (
+                          <option
+                            key={s.id}
+                            value={s.id}
+                            className="bg-[#08080C]"
+                          >
+                            {s.name.includes("Semester")
+                              ? s.name
+                              : `Semester ${s.name}`}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-slate-300">
+                      Section
+                    </label>
+
+                    {isFetchingInitial ? (
+                      <SkeletonBox className="h-12 w-full" />
+                    ) : (
+                      <select
+                        value={selectedSection}
+                        onChange={(e) => setSelectedSection(e.target.value)}
+                        className="w-full appearance-none rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 text-sm font-semibold text-white outline-none transition focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                      >
+                        {availableSections.map((s) => (
+                          <option
+                            key={s.id}
+                            value={s.id}
+                            className="bg-[#08080C]"
+                          >
+                            {s.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-4">
+                  <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 text-sm font-extrabold text-white">
+                        <Users className="h-4 w-4 text-violet-300" />
+                        Select Students
+                      </div>
+
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        {selectedStudents.length} selected from{" "}
+                        {students.length} students
+                      </p>
+                    </div>
+
+                    {students.length > 0 && (
+                      <div className="rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1.5 text-xs font-extrabold text-violet-200">
+                        {selectedStudents.length} Selected
+                      </div>
+                    )}
+                  </div>
+
+                  {isFetchingStudents ? (
+                    <div className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-[#08080C]/45 px-4 py-8 text-sm font-bold text-slate-400">
+                      <Loader2 className="h-4 w-4 animate-spin text-violet-300" />
+                      Loading students...
+                    </div>
+                  ) : (
+                    <div className="grid max-h-64 grid-cols-1 gap-2 overflow-y-auto rounded-2xl border border-white/10 bg-[#08080C]/45 p-2 sm:grid-cols-2">
+                      {students.length > 0 ? (
+                        students.map((student, index) => {
+                          const isSelected = selectedStudents.includes(
+                            student.id,
+                          );
+
+                          return (
+                            <motion.label
+                              key={student.id}
+                              htmlFor={`student-${student.id}`}
+                              className={`group flex cursor-pointer items-center gap-3 rounded-2xl border px-3 py-3 transition duration-300 ${
+                                isSelected
+                                  ? "border-violet-300/35 bg-violet-500/15"
+                                  : "border-transparent hover:border-white/10 hover:bg-white/[0.055]"
+                              }`}
+                              initial={{ opacity: 0, x: -14 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.025 }}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`student-${student.id}`}
+                                checked={isSelected}
+                                onChange={() => handleStudentSelect(student.id)}
+                                className="h-4 w-4 rounded border-white/20 bg-[#08080C] text-violet-500 focus:ring-violet-500"
+                              />
+
+                              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-200">
+                                {student.user.name}
+                              </span>
+
+                              {isSelected && (
+                                <CheckCircle2 className="h-4 w-4 shrink-0 text-violet-200" />
+                              )}
+                            </motion.label>
+                          );
+                        })
+                      ) : (
+                        <p className="col-span-full px-4 py-8 text-center text-sm font-medium text-slate-500">
+                          No students found for this semester/section.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-2 rounded-[1.5rem] border border-white/10 bg-[#08080C]/45 p-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setMode("OFFLINE")}
+                    className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold uppercase transition duration-300 ${
+                      mode === "OFFLINE"
+                        ? "bg-violet-500/20 text-violet-100 ring-1 ring-violet-300/30"
+                        : "text-slate-500 hover:bg-white/[0.05] hover:text-white"
+                    }`}
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Offline
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setMode("ONLINE")}
+                    className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold uppercase transition duration-300 ${
+                      mode === "ONLINE"
+                        ? "bg-violet-500/20 text-violet-100 ring-1 ring-violet-300/30"
+                        : "text-slate-500 hover:bg-white/[0.05] hover:text-white"
+                    }`}
+                  >
+                    <Monitor className="h-4 w-4" />
+                    Online
+                  </button>
+                </div>
+
+                <div className="mt-4 rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-500/10">
+                      {mode === "OFFLINE" ? (
+                        <MapPin className="h-5 w-5 text-emerald-300" />
+                      ) : (
+                        <Wifi className="h-5 w-5 text-emerald-300" />
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-extrabold text-white">
+                        {mode === "OFFLINE"
+                          ? "Offline verification enabled"
+                          : "Online attendance mode"}
+                      </p>
+
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        {mode === "OFFLINE"
+                          ? "Location will be requested before generating attendance tokens."
+                          : "Location verification will be skipped for online attendance."}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {error && (
+                  <p className="mt-4 rounded-2xl border border-red-300/20 bg-red-500/10 p-3 text-sm font-semibold text-red-200">
+                    {error}
+                  </p>
+                )}
+
+                {success && (
+                  <p className="mt-4 rounded-2xl border border-emerald-300/20 bg-emerald-500/10 p-3 text-sm font-semibold text-emerald-200">
+                    {success}
+                  </p>
+                )}
+
+                <div className="mt-6 flex flex-col-reverse gap-3 border-t border-white/10 pt-5 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-3 text-sm font-extrabold text-slate-300 transition hover:border-violet-300/35 hover:bg-violet-500/15 hover:text-white"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={
+                      isLoading ||
+                      !selectedSubject ||
+                      !selectedSemester ||
+                      !selectedSection ||
+                      selectedStudents.length === 0
+                    }
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 transition hover:-translate-y-0.5 hover:shadow-violet-800/30 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    {isLoading ? "Sending..." : "Generate & Send Emails"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </motion.div>
         </motion.div>
       )}

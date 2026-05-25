@@ -49,46 +49,94 @@ export default function DefaulterRadar({
   if (error || !data) return <ErrorState message="Failed to load defaulters" />;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-white">Defaulter Radar</h2>
+    <div className="relative space-y-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full border border-red-300/20 bg-red-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-red-300">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            Attendance Risk
+          </span>
+
+          <h2 className="mt-3 text-xl font-extrabold tracking-tight text-white">
+            Defaulter Radar
+          </h2>
+
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Students with low attendance across assigned subjects.
+          </p>
+        </div>
 
         <button
           onClick={handleNotify}
           disabled={loadingSend}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg hover:scale-105 transition"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-300/20 bg-red-500/10 px-5 py-3 text-sm font-extrabold text-red-200 shadow-xl shadow-black/20 transition duration-300 hover:-translate-y-0.5 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Send size={16} />
           {loadingSend ? "Sending..." : "Notify All"}
         </button>
       </div>
-      <div className="grid md:grid-cols-2 gap-5">
-        {data.defaulters.map((student: any) => (
-          <motion.div
-            key={student.studentId}
-            whileHover={{ scale: 1.02 }}
-            className="p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10"
-          >
-            <div className="flex justify-between mb-3">
-              <div>
-                <h3 className="text-lg font-semibold text-white">
-                  {student.name}
-                </h3>
-                <p className="text-xs text-white/60">
-                  Roll: {student.rollNumber}
-                </p>
-              </div>
 
-              <RiskBadge value={student.lowestPercentage} />
+      {data.defaulters.length > 0 ? (
+        <div className="grid gap-5 md:grid-cols-2">
+          {data.defaulters.map((student: any, index: number) => (
+            <motion.div
+              key={student.studentId}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.3,
+                ease: "easeOut",
+                delay: index * 0.04,
+              }}
+              whileHover={{ y: -4 }}
+              className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-5 shadow-xl shadow-black/20 backdrop-blur-xl transition duration-300 hover:border-red-300/30 hover:bg-white/[0.055]"
+            >
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-red-500/10 via-transparent to-violet-500/8 opacity-70 transition duration-300 group-hover:opacity-100" />
+
+              <div className="relative z-10">
+                <div className="mb-4 flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <h3 className="truncate text-lg font-extrabold tracking-tight text-white">
+                      {student.name}
+                    </h3>
+
+                    <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+                      Roll: {student.rollNumber}
+                    </p>
+                  </div>
+
+                  <div className="shrink-0">
+                    <RiskBadge value={student.lowestPercentage} />
+                  </div>
+                </div>
+
+                <div className="space-y-2 rounded-[1.35rem] border border-white/10 bg-[#14141B]/60 p-3">
+                  {student.subjects.map((sub: any) => (
+                    <SubjectBar key={sub.subjectId} sub={sub} />
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid min-h-[220px] place-items-center rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.03] p-6 text-center">
+          <div>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[1.5rem] border border-emerald-300/20 bg-emerald-500/10">
+              <AlertTriangle className="h-7 w-7 text-emerald-300" />
             </div>
-            <div className="space-y-2">
-              {student.subjects.map((sub: any) => (
-                <SubjectBar key={sub.subjectId} sub={sub} />
-              ))}
-            </div>
-          </motion.div>
-        ))}
-      </div>
+
+            <p className="mt-4 text-sm font-extrabold text-slate-200">
+              No defaulters found
+            </p>
+
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Attendance risk alerts will appear here when students fall below
+              the threshold.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,14 @@
+"use client";
+
 import { useRouter } from "next/navigation";
+import {
+  Building2,
+  CalendarDays,
+  Crown,
+  QrCode,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 
 export default function DashboardHeader({
   teacherName,
@@ -14,72 +24,70 @@ export default function DashboardHeader({
   const router = useRouter();
   const today = new Date();
   const isHOD = teacherDesignation.toUpperCase() === "HOD";
-  return (
-    <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10">
-      <div>
-        <h1 className="text-3xl md:text-4xl font-bold">
-          Welcome back, <span className="text-cyan-400">{teacherName}</span>
-        </h1>
-        <div className="flex gap-3">
-          <p className="text-gray-400 mt-2">
-            {today.toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-          <p className="text-cyan-400 font-semibold mt-2">
-            {teacherDesignation} - {teacherDepartment}
-          </p>
-        </div>
-      </div>
-      <div className="flex flex-col md:flex-row gap-4 mt-4 md:mt-0">
-        {isHOD && (
-          <button
-            onClick={() => {
-              router.push("/dashboard/teacher/hod");
-            }}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center gap-2"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-              />
-            </svg>
-            Go to HOD Center
-          </button>
-        )}
 
-        <button
-          onClick={onGenerateQrClick}
-          className="mt-4 md:mt-0 bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center gap-2"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+  return (
+    <header className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl sm:p-6">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/14 via-transparent to-cyan-400/6" />
+      <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-violet-500/12 blur-3xl" />
+
+      <div className="relative z-10 flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+        <div className="min-w-0">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-violet-200">
+            <Sparkles className="h-3 w-3" />
+            Mentor Desk
+          </div>
+
+          <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            Welcome back,{" "}
+            <span className="text-brand-gradient">{teacherName}</span>
+          </h1>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-[#08080C]/45 px-4 py-2 text-sm font-semibold text-slate-300">
+              <CalendarDays className="h-4 w-4 text-violet-300" />
+              {today.toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </div>
+
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-violet-300/20 bg-violet-500/10 px-4 py-2 text-sm font-bold text-violet-100">
+              <UserRound className="h-4 w-4 text-violet-200" />
+              {teacherDesignation}
+            </div>
+
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-500/10 px-4 py-2 text-sm font-bold text-cyan-100">
+              <Building2 className="h-4 w-4 text-cyan-200" />
+              {teacherDepartment}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row xl:shrink-0">
+          {isHOD && (
+            <button
+              type="button"
+              onClick={() => {
+                router.push("/dashboard/teacher/hod");
+              }}
+              className="group inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-300/20 bg-amber-400/10 px-5 py-3 text-sm font-extrabold text-amber-100 shadow-xl shadow-amber-950/10 transition duration-300 hover:-translate-y-0.5 hover:border-amber-300/40 hover:bg-amber-400/20"
+            >
+              <Crown className="h-5 w-5 text-amber-200" />
+              Go to HOD Center
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onGenerateQrClick}
+            className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 transition duration-300 hover:-translate-y-0.5 hover:shadow-violet-800/30"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v1m6 11h-1m-1 6v-1M4 12H3m15-1a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          Start Attendance
-        </button>
+            <QrCode className="h-5 w-5 transition group-hover:rotate-6" />
+            Start Attendance
+          </button>
+        </div>
       </div>
     </header>
   );

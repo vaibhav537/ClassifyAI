@@ -2,14 +2,26 @@
 
 import { useState, useEffect } from "react";
 import useSWR, { mutate } from "swr";
-import { ChevronLeft, ChevronRight, Download, Edit } from "lucide-react";
+import {
+  AlertCircle,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Edit,
+  History,
+  Loader2,
+  Search,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 import DatePicker from "@/components/ui/DatePicker";
 import {
   AttendanceHistoryLoadingSkeleton,
   AttendanceHistoryTableLoadingSkeleton,
 } from "@/components/teacher/SkeletonLoaders";
 import { motion, AnimatePresence } from "framer-motion";
-import { showErrorMessage, showLoadingMessage, showSuccessMessage } from "@/lib/helper";
+import { showErrorMessage, showLoadingMessage } from "@/lib/helper";
 import EditAttendanceModal from "@/components/teacher/EditAttendanceModal";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -38,35 +50,41 @@ export default function AttendanceHistoryPage() {
     if (teacherId && campusId) {
       const fetchFilterData = async () => {
         const res = await fetch(
-          `/api/teacher/subjects?teacherId=${teacherId}&campusId=${campusId}`
+          `/api/teacher/subjects?teacherId=${teacherId}&campusId=${campusId}`,
         );
+
         if (res.ok) {
           setTeacherSubjects(await res.json());
         }
       };
+
       fetchFilterData();
     }
   }, [teacherId, campusId]);
 
   const createApiUrl = (basePath: string) => {
     if (!teacherId || !campusId) return null;
+
     const params = new URLSearchParams({ teacherId, campusId });
+
     if (filters.subjectId) params.append("subjectId", filters.subjectId);
     if (filters.date) params.append("date", filters.date);
+
     if (basePath.includes("past-attendance")) {
       params.append("page", page.toString());
       params.append("limit", "15");
     }
+
     return `${basePath}?${params.toString()}`;
   };
 
   const { data, error, isLoading } = useSWR(
     hydrated ? createApiUrl("/api/teacher/past-attendance") : null,
-    fetcher
+    fetcher,
   );
 
   const handleFilterChange = (
-    e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
+    e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>,
   ) => {
     setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setPage(1);
@@ -74,6 +92,7 @@ export default function AttendanceHistoryPage() {
 
   const handleExport = () => {
     const exportUrl = createApiUrl("/api/teacher/past-attendance/export");
+
     if (exportUrl) {
       showLoadingMessage("Preparing your report...");
       window.location.href = exportUrl;
@@ -82,189 +101,307 @@ export default function AttendanceHistoryPage() {
     }
   };
 
+  console.log({ data: data });
+
   if (!hydrated) return <AttendanceHistoryLoadingSkeleton />;
 
   return (
-    <main className="min-h-screen bg-gradient-to-br  text-white p-8 relative">
-      {/* Header */}
-      <motion.header
-        className="mb-10 text-start"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="text-4xl h-11 font-extrabold bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(0,255,255,0.3)]">
-          Attendance History
-        </h1>
-        <p className="mt-2 text-gray-400">
-          View and filter past attendance records with ease.
-        </p>
-      </motion.header>
+    <main className="relative min-h-full overflow-hidden text-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.10),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.05),transparent_30%)]" />
 
-      {/* Filters */}
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-2xl border border-cyan-500/30 bg-white/5 backdrop-blur-xl shadow-lg shadow-cyan-500/10 mb-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.5 }}
-      >
-        <motion.select
-          name="subjectId"
-          value={filters.subjectId}
-          onChange={handleFilterChange}
-          className="w-full appearance-none bg-gray-900/70 border border-cyan-400/30 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-cyan-400 outline-none transition"
-          whileHover={{ scale: 1.02 }}
-          whileFocus={{ scale: 1.02 }}
+      <div className="relative z-10 flex flex-col gap-6">
+        <motion.header
+          className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl sm:p-6"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
         >
-          <option value="">All Subjects</option>
-          {[
-            ...new Map(
-              teacherSubjects.map((i) => [i.subject.id, i.subject])
-            ).values(),
-          ].map((subject: any) => (
-            <option key={subject.id} value={subject.id} className="bg-gray-900">
-              {subject.name}
-            </option>
-          ))}
-        </motion.select>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/14 via-transparent to-cyan-400/6" />
+          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-violet-500/12 blur-3xl" />
 
-        <motion.div whileHover={{ scale: 1.02 }}>
-          <DatePicker
-            value={filters.date}
-            onChange={(val) => setFilters((p) => ({ ...p, date: val }))}
-          />
-        </motion.div>
-      </motion.div>
+          <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-violet-200">
+                <Sparkles className="h-3 w-3" />
+                Attendance Archive
+              </div>
 
-      {/* Results */}
-      {isLoading ? (
-        <AttendanceHistoryTableLoadingSkeleton />
-      ) : error || !data?.success ? (
-        <p className="text-center text-red-400">
-          Failed to load attendance history.
-        </p>
-      ) : (
-        <motion.div
-          className="rounded-2xl border border-cyan-500/30 bg-white/5 backdrop-blur-xl shadow-xl shadow-cyan-500/10 overflow-hidden"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <table className="w-full text-left">
-            <thead className="bg-gray-900/60 text-xs text-cyan-300 uppercase tracking-wider">
-              <tr>
-                <th className="px-6 py-3">Student Name</th>
-                <th className="px-6 py-3">Subject</th>
-                <th className="px-6 py-3">Status</th>
-                <th className="px-6 py-3">Date & Time</th>
-                <th className="px-6 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-700/50">
-              {data.attendance.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="text-center py-16 text-gray-500 italic"
-                  >
-                    No records found for the selected filters.
-                  </td>
-                </tr>
-              ) : (
-                <AnimatePresence>
-                  {data.attendance.map((rec: any) => (
-                    <motion.tr
-                      key={rec.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="hover:bg-cyan-500/5 transition-all"
-                    >
-                      <td className="px-6 py-4 font-medium">
-                        {rec.studentName}
-                      </td>
-                      <td className="px-6 py-4 text-gray-300">
-                        {rec.subjectName}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            rec.status === "PRESENT"
-                              ? "bg-green-500/20 text-green-300"
-                              : rec.status === "ABSENT"
-                              ? "bg-red-500/20 text-red-300"
-                              : "bg-yellow-500/20 text-yellow-300"
-                          }`}
-                        >
-                          {rec.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-400 text-sm">
-                        {new Date(rec.markedAt)
-                          .toISOString()
-                          .replace("T", " ")
-                          .slice(0, 16)}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => setRecordToEdit(rec)}
-                          className="p-1.5 hover:bg-cyan-600/20 rounded-md transition-all"
-                        >
-                          <Edit size={16} />
-                        </button>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              )}
-            </tbody>
-          </table>
+              <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                Attendance History
+              </h1>
 
-          {/* Pagination */}
-          {data.pagination.totalPages > 1 && (
-            <div className="flex justify-between items-center p-4 bg-gray-900/70 border-t border-cyan-500/20">
-              <motion.button
-                onClick={() => setPage((p) => p - 1)}
-                disabled={data.pagination.currentPage <= 1}
-                className="flex items-center gap-2 px-4 py-2 bg-cyan-600/80 hover:bg-cyan-600 rounded-xl text-sm font-medium disabled:bg-gray-700 disabled:cursor-not-allowed transition"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <ChevronLeft size={16} /> Previous
-              </motion.button>
-
-              <span className="text-sm text-gray-400">
-                Page {data.pagination.currentPage} of{" "}
-                {data.pagination.totalPages}
-              </span>
-
-              <motion.button
-                onClick={() => setPage((p) => p + 1)}
-                disabled={
-                  data.pagination.currentPage >= data.pagination.totalPages
-                }
-                className="flex items-center gap-2 px-4 py-2 bg-cyan-600/80 hover:bg-cyan-600 rounded-xl text-sm font-medium disabled:bg-gray-700 disabled:cursor-not-allowed transition"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Next <ChevronRight size={16} />
-              </motion.button>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+                View, filter, edit and export past attendance records from one
+                clean workspace.
+              </p>
             </div>
-          )}
-        </motion.div>
-      )}
 
-      {/* Download Report Button */}
+            <div className="grid grid-cols-2 gap-3 sm:min-w-[320px]">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-500">
+                  Records
+                </p>
+                <p className="mt-1 text-2xl font-extrabold text-white">
+                  {isLoading ? "..." : data?.attendance?.length || 0}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-violet-300/20 bg-violet-500/10 px-4 py-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-violet-200/70">
+                  Page
+                </p>
+                <p className="mt-1 text-2xl font-extrabold text-violet-100">
+                  {page}
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.header>
+
+        <motion.section
+          className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05, duration: 0.35 }}
+        >
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-400/5" />
+
+          <div className="relative z-10">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10">
+                <Search className="h-5 w-5 text-violet-200" />
+              </div>
+
+              <div>
+                <p className="text-base font-extrabold text-white">Filters</p>
+                <p className="text-xs text-slate-500">
+                  Narrow results by subject and date.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div>
+                <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                  Subject
+                </label>
+
+                <select
+                  name="subjectId"
+                  value={filters.subjectId}
+                  onChange={handleFilterChange}
+                  className="w-full appearance-none rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 text-sm font-semibold text-white outline-none transition focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                >
+                  <option value="" className="bg-[#08080C]">
+                    All Subjects
+                  </option>
+
+                  {[
+                    ...new Map(
+                      teacherSubjects.map((i) => [i.subject.id, i.subject]),
+                    ).values(),
+                  ].map((subject: any) => (
+                    <option
+                      key={subject.id}
+                      value={subject.id}
+                      className="bg-[#08080C]"
+                    >
+                      {subject.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                  Date
+                </label>
+
+                <div className="rounded-2xl border border-white/10 bg-[#08080C]/55 px-3 py-2">
+                  <DatePicker
+                    value={filters.date}
+                    onChange={(val) => {
+                      setFilters((p) => ({ ...p, date: val }));
+                      setPage(1);
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
+        {isLoading ? (
+          <AttendanceHistoryTableLoadingSkeleton />
+        ) : error || !data?.success ? (
+          <section className="grid min-h-[320px] place-items-center rounded-[2rem] border border-red-300/20 bg-red-500/10 p-6 text-center shadow-2xl shadow-black/25 backdrop-blur-2xl">
+            <div>
+              <AlertCircle className="mx-auto h-10 w-10 text-red-300" />
+              <p className="mt-4 text-lg font-extrabold text-red-200">
+                Failed to load attendance history
+              </p>
+              <p className="mt-2 text-sm text-red-100/70">
+                Please refresh and try again.
+              </p>
+            </div>
+          </section>
+        ) : (
+          <motion.section
+            className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/80 shadow-2xl shadow-black/25 backdrop-blur-2xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.35 }}
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px] text-left text-white">
+                <thead className="border-b border-white/10 bg-[#08080C]/45 text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                  <tr>
+                    <th className="px-6 py-4 font-extrabold">Student Name</th>
+                    <th className="px-6 py-4 font-extrabold">Subject</th>
+                    <th className="px-6 py-4 font-extrabold">Status</th>
+                    <th className="px-6 py-4 font-extrabold">Date & Time</th>
+                    <th className="px-6 py-4 text-right font-extrabold">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-white/10">
+                  {data.attendance.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-16 text-center">
+                        <div className="mx-auto max-w-sm">
+                          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05]">
+                            <History className="h-6 w-6 text-slate-600" />
+                          </div>
+
+                          <p className="mt-4 text-sm font-bold text-slate-300">
+                            No records found
+                          </p>
+
+                          <p className="mt-1 text-xs leading-5 text-slate-500">
+                            Try changing the selected subject or date filter.
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    <AnimatePresence>
+                      {data.attendance.map((rec: any, index: number) => (
+                        <motion.tr
+                          key={rec.id}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 8 }}
+                          transition={{ delay: index * 0.015 }}
+                          className="group transition duration-300 hover:bg-white/[0.045]"
+                        >
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-[#08080C]/45 transition group-hover:border-violet-300/25 group-hover:bg-violet-500/10">
+                                <UserRound className="h-4 w-4 text-violet-200" />
+                              </div>
+
+                              <span className="font-bold text-slate-100">
+                                {rec.studentName}
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-4 text-sm font-medium text-slate-400">
+                            {rec.subjectName}
+                          </td>
+
+                          <td className="px-6 py-4">
+                            <span
+                              className={`inline-flex rounded-full border px-3 py-1.5 text-xs font-extrabold ${
+                                rec.status === "PRESENT"
+                                  ? "border-emerald-300/20 bg-emerald-500/10 text-emerald-300"
+                                  : rec.status === "ABSENT"
+                                    ? "border-red-300/20 bg-red-500/10 text-red-300"
+                                    : "border-amber-300/20 bg-amber-500/10 text-amber-300"
+                              }`}
+                            >
+                              {rec.status}
+                            </span>
+                          </td>
+
+                          <td className="px-6 py-4">
+                            <div className="inline-flex items-center gap-2 text-sm font-medium text-slate-400">
+                              <CalendarDays className="h-4 w-4 text-slate-600" />
+                              {new Date(rec.markedAt).toLocaleString("en-IN", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => setRecordToEdit(rec)}
+                              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10 text-violet-200 transition duration-300 hover:-translate-y-0.5 hover:border-violet-300/45 hover:bg-violet-500/20"
+                              title="Edit attendance"
+                            >
+                              <Edit size={16} />
+                            </button>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </AnimatePresence>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {data.pagination.totalPages > 1 && (
+              <div className="flex flex-col gap-3 border-t border-white/10 bg-[#08080C]/35 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => p - 1)}
+                  disabled={data.pagination.currentPage <= 1}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-violet-300/20 bg-violet-500/10 px-4 py-2.5 text-sm font-extrabold text-violet-100 transition duration-300 hover:border-violet-300/45 hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ChevronLeft size={16} />
+                  Previous
+                </button>
+
+                <span className="text-center text-sm font-bold text-slate-500">
+                  Page {data.pagination.currentPage} of{" "}
+                  {data.pagination.totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={
+                    data.pagination.currentPage >= data.pagination.totalPages
+                  }
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-violet-300/20 bg-violet-500/10 px-4 py-2.5 text-sm font-extrabold text-violet-100 transition duration-300 hover:border-violet-300/45 hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+          </motion.section>
+        )}
+      </div>
+
       <motion.button
+        type="button"
         onClick={handleExport}
-        whileHover={{ scale: 1.08 }}
+        whileHover={{ y: -2 }}
         whileTap={{ scale: 0.96 }}
-        className="fixed bottom-8 right-8 flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-2xl shadow-[0_0_20px_rgba(0,255,255,0.3)] hover:shadow-[0_0_30px_rgba(0,255,255,0.5)] transition-all z-50"
+        className="fixed bottom-8 right-8 z-50 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-2xl shadow-violet-950/40 transition duration-300 hover:shadow-violet-800/30"
       >
-        <Download size={18} /> Download Report
+        <Download size={18} />
+        Download Report
       </motion.button>
 
-      {/* Edit Modal */}
       {recordToEdit && (
         <EditAttendanceModal
           isOpen={!!recordToEdit}

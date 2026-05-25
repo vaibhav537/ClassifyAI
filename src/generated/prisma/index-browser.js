@@ -228,6 +228,8 @@ exports.Prisma.ClassSessionScalarFieldEnum = {
 
 exports.Prisma.TimetableEntryScalarFieldEnum = {
   id: 'id',
+  type: 'type',
+  title: 'title',
   weekday: 'weekday',
   startTime: 'startTime',
   endTime: 'endTime',
@@ -236,7 +238,22 @@ exports.Prisma.TimetableEntryScalarFieldEnum = {
   teacherId: 'teacherId',
   subjectId: 'subjectId',
   semesterId: 'semesterId',
-  sectionId: 'sectionId'
+  sectionId: 'sectionId',
+  isActive: 'isActive',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TimetableDayConfigScalarFieldEnum = {
+  id: 'id',
+  campusId: 'campusId',
+  weekday: 'weekday',
+  startTime: 'startTime',
+  endTime: 'endTime',
+  isWorking: 'isWorking',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.AttendanceScalarFieldEnum = {
@@ -270,7 +287,11 @@ exports.Prisma.SessionScalarFieldEnum = {
   id: 'id',
   sessionToken: 'sessionToken',
   userId: 'userId',
-  expiresAt: 'expiresAt'
+  expiresAt: 'expiresAt',
+  faceVerified: 'faceVerified',
+  faceVerifieAt: 'faceVerifieAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.EventScalarFieldEnum = {
@@ -524,6 +545,18 @@ exports.SessionStatus = exports.$Enums.SessionStatus = {
   CANCELLED: 'CANCELLED'
 };
 
+exports.TimetableEntryType = exports.$Enums.TimetableEntryType = {
+  LECTURE: 'LECTURE',
+  LAB: 'LAB',
+  TUTORIAL: 'TUTORIAL',
+  EXTRA_CLASS: 'EXTRA_CLASS',
+  LUNCH: 'LUNCH',
+  BREAK: 'BREAK',
+  FREE: 'FREE',
+  EXAM: 'EXAM',
+  EVENT: 'EVENT'
+};
+
 exports.AttendanceStatus = exports.$Enums.AttendanceStatus = {
   PRESENT: 'PRESENT',
   ABSENT: 'ABSENT',
@@ -571,6 +604,7 @@ exports.Prisma.ModelName = {
   Campus: 'Campus',
   ClassSession: 'ClassSession',
   TimetableEntry: 'TimetableEntry',
+  TimetableDayConfig: 'TimetableDayConfig',
   Attendance: 'Attendance',
   AttendanceToken: 'AttendanceToken',
   Session: 'Session',

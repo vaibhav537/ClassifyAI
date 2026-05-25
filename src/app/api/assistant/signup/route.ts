@@ -1,7 +1,6 @@
 // /api/admin/signup/route.ts
 
-import { logActivity } from "@/lib/helper";
-import { sendWelcomeEmail } from "@/lib/mail";
+import { logActivity, transformUsername } from "@/lib/helper";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -11,13 +10,14 @@ const signupSchema = z.object({
   mode: z.enum(["add", "remove"]),
   name: z.string().min(1),
   email: z.string().email(),
-  role: z.enum(["STUDENT", "TEACHER", "ASSISTANT"]),
+  role: z.enum(["STUDENT", "TEACHER"]),
   premiumFeatures: z.array(z.string()).optional(),
   branch: z.string().optional(),
   year: z.string().optional(),
   semester: z.string().optional(),
   section: z.string().optional(),
   department: z.string().optional(),
+  campusId: z.string().optional(),
   designation: z
     .preprocess(
       (val) => (val === "" ? undefined : val),
@@ -67,25 +67,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const campusId = adminUser.campusId;
+    const campusId = adminUser.campusId ?? data.campusId;
 
     // ==================== ADD USER ====================
     if (data.mode === "add") {
-      // ❌ Permission check
-      if (adminUser.role === "ASSISTANT" && data.role === "ASSISTANT") {
+      //* Why will admin will be associated to a campus, admin is an independent user. ===> Fixed
+      if (!campusId) {
         return NextResponse.json(
-          {
-            error:
-              "You do not have permission to create another Assistant account.",
-          },
-          { status: 403 },
+          { error: "Campus Id is required." },
+          { status: 400 },
         );
       }
 
-      if (!campusId) {
+      if (
+        adminUser.role === "ASSISTANT" &&
+        data.campusId &&
+        data.campusId !== adminUser.campusId
+      ) {
         return NextResponse.json(
-          { error: "Admin is not associated with a campus." },
-          { status: 400 },
+          { error: "Assistant cannot create users outside their campus." },
+          { status: 403 },
         );
       }
 
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      if(data.role === "TEACHER" && !data.department) {
+      if (data.role === "TEACHER" && !data.department) {
         return NextResponse.json(
           { error: "Department is required for teachers" },
           { status: 400 },
@@ -117,11 +118,14 @@ export async function POST(req: NextRequest) {
       }
 
       // ==================== CREATE USER ====================
+      const username = await transformUsername(
+        data.role === "STUDENT" ? "STD" : "TCH",
+      );
       const newUser = await prisma.user.create({
         data: {
           name: data.name,
           email: data.email,
-          username: data.email.split("@")[0],
+          username,
           role: data.role,
           campusId,
           premiumFeatures: data.premiumFeatures
@@ -153,58 +157,71 @@ export async function POST(req: NextRequest) {
         });
 
         // ✅ Correct subject logic
-        const shouldAssignSubjects =
-          data.role === "TEACHER" &&
-          (data.designation !== "HOD" ||
-            (data.designation === "HOD" && data.assignedSubjects?.length));
+        const assignedSubjects = data.assignedSubjects ?? [];
+        const shouldAssignSubjects = assignedSubjects.length > 0;
 
-        if (
-          shouldAssignSubjects &&
-          data.assignedSubjects &&
-          data.assignedSubjects.length > 0 &&
-          data.semester &&
-          data.section
-        ) {
-          const semesterRecord = await prisma.semester.findFirst({
+        if (shouldAssignSubjects && data.semester && data.section) {
+          let semesterRecord = await prisma.semester.findFirst({
             where: { name: data.semester, campusId },
           });
 
-          const sectionRecord = await prisma.section.findFirst({
+          if (!semesterRecord) {
+            semesterRecord = await prisma.semester.create({
+              data: {
+                name: data.semester,
+                number: Number(data.semester.match(/\d+/)?.[0] || 0),
+                campusId,
+              },
+            });
+          }
+
+          let sectionRecord = await prisma.section.findFirst({
             where: { name: data.section, campusId },
           });
 
-          if (semesterRecord && sectionRecord) {
-            const subjectIds = await Promise.all(
-              data.assignedSubjects.map(async (subject) => {
-                const existingSubject = await prisma.subject.findFirst({
-                  where: { name: subject.name, campusId },
-                });
-
-                if (existingSubject) return existingSubject.id;
-
-                const newSubject = await prisma.subject.create({
-                  data: {
-                    name: subject.name,
-                    code: subject.code,
-                    description: subject.description,
-                    campusId,
-                  },
-                });
-
-                return newSubject.id;
-              }),
-            );
-
-            await prisma.teacherSubject.createMany({
-              data: subjectIds.map((subjectId) => ({
-                teacherId: teacherProfile.id,
-                subjectId,
-                semesterId: semesterRecord.id,
-                sectionId: sectionRecord.id,
-              })),
-              skipDuplicates: true,
+          if (!sectionRecord) {
+            sectionRecord = await prisma.section.create({
+              data: {
+                name: data.section,
+                campusId,
+              },
             });
           }
+          const subjectIds = await Promise.all(
+            assignedSubjects.map(async (subject) => {
+              const existingSubject = await prisma.subject.findFirst({
+                where: {
+                  OR: [
+                    { name: subject.name, campusId },
+                    ...(subject.code ? [{ code: subject.code, campusId }] : []),
+                  ],
+                },
+              });
+
+              if (existingSubject) return existingSubject.id;
+
+              const newSubject = await prisma.subject.create({
+                data: {
+                  name: subject.name,
+                  code: subject.code,
+                  description: subject.description,
+                  campusId,
+                },
+              });
+
+              return newSubject.id;
+            }),
+          );
+
+          await prisma.teacherSubject.createMany({
+            data: subjectIds.map((subjectId) => ({
+              teacherId: teacherProfile.id,
+              subjectId,
+              semesterId: semesterRecord.id,
+              sectionId: sectionRecord.id,
+            })),
+            skipDuplicates: true,
+          });
         }
       }
 
@@ -248,15 +265,6 @@ export async function POST(req: NextRequest) {
             sectionId: sectionRecord?.id,
           },
         });
-      }
-
-      // ==================== ASSISTANT ====================
-      if (newUser.role === "ASSISTANT") {
-        try {
-          await sendWelcomeEmail(newUser.email, newUser.name);
-        } catch (err) {
-          console.error("Email failed:", err);
-        }
       }
 
       // ==================== LOG ====================

@@ -4,71 +4,93 @@ import { useState } from "react";
 import ConversationList from "./ConversationList";
 import MessageThread from "./MessageThread";
 import NewConversationDialog from "./NewConversationDialog";
-import { ChevronLeft, Plus } from "lucide-react";
+import {
+  ChevronLeft,
+  MessageCircle,
+  Plus,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-
-interface ChatLayoutProps {
-  userId: string;
-  privateKey: string;
-  campusId: string;
-}
+import Image from "next/image";
+import { ChatLayoutProps } from "@/lib/types";
 
 export default function ChatLayout({
   userId,
   privateKey,
   campusId,
+  currentUser,
 }: ChatLayoutProps) {
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(null);
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
+
   const router = useRouter();
 
+  const handleBack = () => {
+    const rolePath = currentUser.role.toLowerCase();
+    router.push(`/dashboard/${rolePath}`);
+  };
+
   return (
-    <motion.div
+    <motion.section
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-      className="relative flex h-[100dvh] bg-gradient-to-br from-gray-950 via-black to-gray-900 text-white overflow-hidden"
+      transition={{ duration: 0.35 }}
+      className="relative flex h-[100dvh] overflow-hidden bg-[#08080C] text-white"
     >
-      {/* Back Button */}
-      <div className="absolute top-3 left-5 z-10">
-        <button
-          onClick={() => router.push("/dashboard/student")}
-          className="flex items-center justify-center p-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-lg hover:bg-cyan-500/20 hover:border-cyan-400 text-white transition-all duration-300"
-        >
-          <ChevronLeft size={24} />
-        </button>
-      </div>
+      <div className="pointer-events-none absolute inset-0 app-shell-bg" />
+      <div className="pointer-events-none absolute -left-24 top-16 h-96 w-96 rounded-full bg-violet-500/12 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-10 right-10 h-96 w-96 rounded-full bg-cyan-400/6 blur-3xl" />
 
-      {/* Glow Effects */}
-      <div className="absolute top-[-100px] left-[-100px] w-[300px] h-[300px] bg-purple-600/20 blur-[120px] rounded-full" />
-      <div className="absolute bottom-[-120px] right-[-120px] w-[300px] h-[300px] bg-indigo-600/20 blur-[120px] rounded-full" />
-
-      {/* Sidebar */}
       <motion.aside
-        initial={{ x: -40, opacity: 0 }}
+        initial={{ x: -32, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative w-80 shrink-0 border-r border-white/10 flex flex-col bg-white/5 backdrop-blur-xl"
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="relative z-10 flex w-[340px] shrink-0 flex-col border-r border-white/10 bg-[#14141B]/80 shadow-2xl shadow-black/35 backdrop-blur-2xl"
       >
-        <div className="p-5 border-b  border-white/10 flex items-center justify-between">
-          <h1 className="text-2xl pl-15  font-bold bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-500 bg-clip-text text-transparent tracking-wide">
-            Messages
-          </h1>
+        <div className="border-b border-white/10 p-4">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-slate-300 transition duration-300 hover:-translate-y-0.5 hover:border-violet-300/35 hover:bg-violet-500/15 hover:text-white"
+              aria-label="Back to dashboard"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
 
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setIsNewChatOpen(true)}
-            className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition text-gray-400 hover:text-white"
-          >
-            <Plus size={18} />
-          </motion.button>
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => setIsNewChatOpen(true)}
+              className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 text-white shadow-lg shadow-violet-950/35 transition duration-300 hover:-translate-y-0.5 hover:shadow-violet-800/30"
+              aria-label="Start new chat"
+            >
+              <Plus className="h-5 w-5" />
+            </motion.button>
+          </div>
+
+          <div className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/[0.045] p-4">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-violet-200">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Secure Campus Chat
+            </div>
+
+            <h1 className="text-2xl font-extrabold tracking-tight text-white">
+              Messages
+            </h1>
+
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Encrypted conversations for your campus workspace.
+            </p>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="min-h-0 flex-1 overflow-y-auto p-3">
           <ConversationList
             userId={userId}
             selectedId={selectedConversationId}
@@ -77,17 +99,16 @@ export default function ChatLayout({
         </div>
       </motion.aside>
 
-      {/* Main Chat Area */}
-      <main className="relative flex-1 flex flex-col min-h-0">
+      <main className="relative z-10 flex min-w-0 flex-1 flex-col">
         <AnimatePresence mode="wait">
           {selectedConversationId ? (
             <motion.div
               key="chat"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25 }}
-              className="h-full flex flex-col bg-black/20 backdrop-blur-sm"
+              className="flex h-full min-h-0 flex-col bg-[#08080C]/35 backdrop-blur-xl"
             >
               <MessageThread
                 userId={userId}
@@ -98,50 +119,59 @@ export default function ChatLayout({
           ) : (
             <motion.div
               key="empty"
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.3 }}
-              className="flex-1 flex flex-col items-center justify-center text-gray-400 relative z-20 pt-16"
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.28 }}
+              className="grid h-full place-items-center p-6"
             >
-              <div className="flex flex-col items-center gap-4 px-8 py-6 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.1, type: "spring", stiffness: 120 }}
-                  className="text-5xl opacity-80"
-                >
-                  <img
-                    src="/chat-logo.png"
-                    alt="no conversation"
-                    className="w-30 h-30"
-                  />
-                </motion.div>
+              <div className="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/85 p-8 text-center shadow-2xl shadow-black/40 backdrop-blur-2xl">
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/16 via-fuchsia-500/8 to-cyan-400/8" />
+                <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-violet-500/15 blur-3xl" />
 
-                <div className="text-center space-y-1">
-                  <p className="text-sm text-gray-300">
+                <div className="relative z-10">
+                  <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-[1.5rem] border border-violet-300/20 bg-violet-500/10 shadow-xl shadow-violet-950/30">
+                    <Image
+                      src="/chat-logo.png"
+                      alt="No conversation selected"
+                      width={58}
+                      height={58}
+                      className="h-14 w-14 object-contain"
+                      priority
+                    />
+                  </div>
+
+                  <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.2em] text-violet-200">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Conversation Hub
+                  </div>
+
+                  <h2 className="text-2xl font-extrabold tracking-tight text-white">
                     No conversation selected
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Choose a chat from the left or start a new one
-                  </p>
-                </div>
+                  </h2>
 
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsNewChatOpen(true)}
-                  className="mt-2 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-500 text-sm font-medium"
-                >
-                  Start New Chat
-                </motion.button>
+                  <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-400">
+                    Choose a chat from the left panel or start a new secure
+                    conversation.
+                  </p>
+
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setIsNewChatOpen(true)}
+                    className="mt-7 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 transition duration-300 hover:-translate-y-0.5 hover:shadow-violet-800/30"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Start New Chat
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </main>
 
-      {/* New Chat Dialog */}
       <NewConversationDialog
         isOpen={isNewChatOpen}
         onClose={() => setIsNewChatOpen(false)}
@@ -152,6 +182,6 @@ export default function ChatLayout({
           setIsNewChatOpen(false);
         }}
       />
-    </motion.div>
+    </motion.section>
   );
 }

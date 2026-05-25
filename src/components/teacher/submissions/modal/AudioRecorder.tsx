@@ -1,6 +1,7 @@
 "use client";
+
 import { AudioRecorderProps } from "@/lib/types";
-import { Mic, Square, Trash2 } from "lucide-react";
+import { Mic, Square, Trash2, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export default function AudioRecorder({ onAudioReady }: AudioRecorderProps) {
@@ -10,22 +11,27 @@ export default function AudioRecorder({ onAudioReady }: AudioRecorderProps) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
   const timeRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     return () => {
       if (timeRef.current) clearInterval(timeRef.current);
     };
   }, []);
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
+
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
+
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, {
           type: "audio/webm",
@@ -34,9 +40,11 @@ export default function AudioRecorder({ onAudioReady }: AudioRecorderProps) {
         setAudioUrl(url);
         onAudioReady(audioBlob);
       };
+
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
+
       timeRef.current = setInterval(() => {
         setRecordingTime((prev) => prev + 1);
       }, 1000);
@@ -45,6 +53,7 @@ export default function AudioRecorder({ onAudioReady }: AudioRecorderProps) {
       alert("Please allow microphone access to record feedback.");
     }
   };
+
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
@@ -52,89 +61,111 @@ export default function AudioRecorder({ onAudioReady }: AudioRecorderProps) {
         .getTracks()
         .forEach((track) => track.stop());
       setIsRecording(false);
+
       if (timeRef.current) clearInterval(timeRef.current);
     }
   };
+
   const deleteRecording = () => {
     setAudioUrl(null);
     setRecordingTime(0);
     onAudioReady(null);
   };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
-  return (
-    <div
-      className="w-full max-w-md mx-auto  mb-3
-      bg-gradient-to-br from-[#0f172a]/80 via-[#0b1120]/80 to-[#020617]/80 
-      backdrop-blur-xl border border-white/10 
-      shadow-xl shadow-cyan-500/10
-      p-6 rounded-2xl flex flex-col items-center gap-5 transition-all"
-    >
-      {!audioUrl ? (
-        <>
-          <button
-            onClick={isRecording ? stopRecording : startRecording}
-            className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300${
-              isRecording
-                ? "bg-red-500/20 text-red-400 border border-red-500/40 shadow-lg shadow-red-500/20 animate-pulse"
-                : "bg-gradient-to-br from-cyan-500/20 via-purple-500/20 to-blue-500/20  text-cyan-400 border border-cyan-400/30 hover:scale-105 hover:shadow-cyan-500/30 hover:text-white"
-            }`}
-          >
-            <div className="absolute inset-0 rounded-full blur-xl opacity-30 bg-cyan-500"></div>
 
-            {isRecording ? (
-              <Square size={26} fill="currentColor" />
-            ) : (
-              <Mic size={30} />
-            )}
-          </button>
-          <div className="text-center space-y-1">
-            <p
-              className={`text-sm font-semibold tracking-wide ${
-                isRecording ? "text-red-400" : "text-gray-300"
+  return (
+    <div className="relative w-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.035] p-5">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-400/5" />
+      <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-violet-500/10 blur-3xl" />
+
+      <div className="relative z-10">
+        {!audioUrl ? (
+          <div className="flex flex-col items-center gap-5 text-center">
+            <button
+              type="button"
+              onClick={isRecording ? stopRecording : startRecording}
+              className={`relative flex h-20 w-20 items-center justify-center rounded-full border transition duration-300 ${
+                isRecording
+                  ? "border-red-300/30 bg-red-500/15 text-red-300 shadow-xl shadow-red-950/20"
+                  : "border-violet-300/25 bg-violet-500/10 text-violet-200 shadow-xl shadow-violet-950/20 hover:-translate-y-0.5 hover:border-violet-300/45 hover:bg-violet-500/20 hover:text-white"
               }`}
             >
-              {isRecording
-                ? `Recording • ${formatTime(recordingTime)}`
-                : "Start Voice Recording"}
-            </p>
+              <div
+                className={`pointer-events-none absolute inset-0 rounded-full blur-2xl ${
+                  isRecording ? "bg-red-500/25" : "bg-violet-500/25"
+                }`}
+              />
 
-            {!isRecording && (
-              <p className="text-xs text-gray-500">
-                Tap mic & ensure permissions are enabled
+              {isRecording && (
+                <span className="absolute inset-[-8px] animate-ping rounded-full border border-red-300/20" />
+              )}
+
+              {isRecording ? (
+                <Square className="relative z-10 h-7 w-7" fill="currentColor" />
+              ) : (
+                <Mic className="relative z-10 h-8 w-8" />
+              )}
+            </button>
+
+            <div>
+              <p
+                className={`text-sm font-extrabold tracking-wide ${
+                  isRecording ? "text-red-300" : "text-white"
+                }`}
+              >
+                {isRecording
+                  ? `Recording • ${formatTime(recordingTime)}`
+                  : "Start Voice Recording"}
               </p>
-            )}
-          </div>
-        </>
-      ) : (
-        <div
-          className="w-full flex items-center gap-3 
-          bg-white/5 backdrop-blur-lg 
-          p-3 rounded-xl border border-white/10 
-          shadow-inner"
-        >
-          <audio
-            src={audioUrl}
-            controls
-            className="h-10 w-full rounded outline-none opacity-90"
-          />
 
-          <button
-            onClick={deleteRecording}
-            className="p-2 rounded-lg 
-              text-gray-400 
-              hover:text-red-400 
-              hover:bg-red-500/10 
-              transition-all duration-200"
-            title="Delete recording"
-          >
-            <Trash2 size={18} />
-          </button>
-        </div>
-      )}
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                {isRecording
+                  ? "Tap stop when your feedback is complete."
+                  : "Tap mic and allow microphone permission."}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-[1.5rem] border border-white/10 bg-[#08080C]/45 p-4">
+            <div className="mb-3 flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10">
+                <Volume2 className="h-5 w-5 text-violet-200" />
+              </div>
+
+              <div>
+                <p className="text-sm font-extrabold text-white">
+                  Audio Feedback Ready
+                </p>
+                <p className="text-xs text-slate-500">
+                  Review or delete this recording.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <audio
+                src={audioUrl}
+                controls
+                className="h-10 w-full rounded outline-none opacity-90"
+              />
+
+              <button
+                type="button"
+                onClick={deleteRecording}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-red-300/20 bg-red-500/10 text-red-200 transition hover:bg-red-500/20"
+                title="Delete recording"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

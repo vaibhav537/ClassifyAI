@@ -411,3 +411,206 @@ export interface NewConversationDialogProps {
   campusId: string;
   onCreated: (conversationId: string) => void;
 }
+
+export type LogoProps = {
+  width?: number;
+  height?: number;
+  className?: string;
+  imageClassName?: string;
+};
+
+export interface AttendanceRecord {
+  id: string;
+  studentId: string;
+  subject: string;
+  status: string;
+  date: string;
+}
+
+export type HodContext = {
+  userId: string;
+  campusId: string;
+  teacherId: string;
+  department: string | null;
+};
+
+export type Weekday =
+  | "MONDAY"
+  | "TUESDAY"
+  | "WEDNESDAY"
+  | "THURSDAY"
+  | "FRIDAY"
+  | "SATURDAY"
+  | "SUNDAY";
+
+export type TimetableEntryType =
+  | "LECTURE"
+  | "LAB"
+  | "TUTORIAL"
+  | "EXTRA_CLASS"
+  | "LUNCH"
+  | "BREAK"
+  | "FREE"
+  | "EXAM"
+  | "EVENT";
+
+export type TeacherOption = {
+  id: string;
+  department?: string | null;
+  designation?: string | null;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    campusId: string | null;
+  };
+};
+
+export type SubjectOption = {
+  id: string;
+  name: string;
+  code?: string | null;
+};
+
+export type SemesterOption = {
+  id: string;
+  name: string;
+  number?: number | null;
+};
+
+export type SectionOption = {
+  id: string;
+  name: string;
+};
+
+export type TimetableDayConfig = {
+  id: string;
+  campusId: string;
+  weekday: Weekday;
+  startTime: string;
+  endTime: string;
+  isWorking: boolean;
+};
+
+export type TimetableEntry = {
+  id: string;
+  type: TimetableEntryType;
+  title?: string | null;
+  weekday: Weekday;
+  startTime: string;
+  endTime: string;
+  room?: string | null;
+  notes?: string | null;
+  teacherId?: string | null;
+  subjectId?: string | null;
+  semesterId?: string | null;
+  sectionId?: string | null;
+  teacher?: {
+    id: string;
+    user: {
+      id: string;
+      name: string;
+      email: string;
+    };
+  } | null;
+  subject?: SubjectOption | null;
+  semester?: SemesterOption | null;
+  section?: SectionOption | null;
+};
+
+export type TimetableFormState = {
+  id?: string;
+  type: TimetableEntryType;
+  title: string;
+  weekday: Weekday;
+  startTime: string;
+  endTime: string;
+  room: string;
+  teacherId: string;
+  subjectId: string;
+  semesterId: string;
+  sectionId: string;
+  notes: string;
+};
+
+export type TimetableMeta = {
+  teachers: TeacherOption[];
+  subjects: SubjectOption[];
+  semesters: SemesterOption[];
+  sections: SectionOption[];
+  dayConfigs: TimetableDayConfig[];
+};
+
+export type CurrentUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "STUDENT" | "TEACHER" | "ADMIN" | "ASSISTANT";
+  campusId: string | null;
+  avatarUrl?: string | null;
+};
+
+export interface ChatLayoutProps {
+  userId: string;
+  privateKey: string;
+  campusId: string;
+  currentUser: {
+    id: string;
+    name: string;
+    email: string;
+    role: "STUDENT" | "TEACHER" | "ADMIN" | "ASSISTANT";
+    campusId: string | null;
+    avatarUrl?: string | null;
+  };
+}
+
+export type StudentTimetableResponse = {
+  success: boolean;
+  todayWeekday: Weekday;
+  student?: {
+    id: string;
+    semesterId?: string | null;
+    sectionId?: string | null;
+    semester?: {
+      id: string;
+      name: string;
+    } | null;
+    section?: {
+      id: string;
+      name: string;
+    } | null;
+  } | null;
+  todayEntries: StudentTimetableEntry[];
+  weeklyEntries: StudentTimetableEntry[];
+  message?: string;
+  error?: string;
+};
+
+export type StudentTimetableEntry = {
+  id: string;
+  type: string;
+  title?: string | null;
+  weekday: Weekday;
+  startTime: string;
+  endTime: string;
+  room?: string | null;
+  teacher?: {
+    user: {
+      name: string;
+      email: string;
+    };
+  } | null;
+  subject?: {
+    id: string;
+    name: string;
+    code?: string | null;
+  } | null;
+  semester?: {
+    id: string;
+    name: string;
+  } | null;
+  section?: {
+    id: string;
+    name: string;
+  } | null;
+};

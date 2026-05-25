@@ -196,16 +196,16 @@ export const sendAttendanceQrEmail = async (
  * Sends a professionally designed welcome email to a new user.
  * @param email - The recipient's email address.
  * @param name - The recipient's name for personalization.
- * @param temporaryPassword - The temporary password for their first login.
+ * @param username - The recipient's username for login credentials.
  */
-export const sendWelcomeEmail = async (email: string, name: string) => {
+export const sendWelcomeEmail = async (email: string, name: string, username: string) => {
   const htmlContent = `
  <<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Campus Admin Account Created</title>
+  <title>Campus Assistant Account Created</title>
   <style>
     body { margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; background-color:#f5f7fb; }
     .container { max-width:600px; margin:28px auto; padding:20px; }
@@ -232,17 +232,18 @@ export const sendWelcomeEmail = async (email: string, name: string) => {
       <!-- HEADER -->
       <div class="hero">
         <h1>Welcome to ClassifyAI</h1>
-        <p style="margin-top:6px; font-size:13px; opacity:0.95;">Your Campus Admin account has been created</p>
+        <p style="margin-top:6px; font-size:13px; opacity:0.95;">Your Campus Assistant account has been created</p>
       </div>
 
       <!-- BODY -->
       <div class="content">
         <p class="lead">Hello ${name},</p>
-        <p>We’re excited to let you know that a <b>Campus Admin account</b> has been created for you on the ClassifyAI platform.</p>
+        <p>We’re excited to let you know that a <b>Campus Assistant account</b> has been created for you on the ClassifyAI platform.</p>
         
         <!-- INFO BOX -->
         <div class="info-box">
           <p style="margin:0;"><strong>Registered Email:</strong> ${email}</p>
+          <p style="margin:0;"><strong>Username:</strong> ${username}</p>
         </div>
 
         <p>To log in, please visit the ClassifyAI login page and enter your registered email address.  

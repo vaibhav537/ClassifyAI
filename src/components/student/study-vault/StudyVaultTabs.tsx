@@ -6,15 +6,16 @@ export default function StudyVaultTabs({
   setActiveTab,
 }: any) {
   return (
-    <div className="flex flex-wrap gap-3 mb-8">
+    <div className="flex flex-wrap gap-2">
       {TABS.map((tab: any) => (
         <button
+          type="button"
           key={tab.id}
           onClick={() => setActiveTab(tab.id)}
-          className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
+          className={`rounded-2xl border px-4 py-2.5 text-sm font-extrabold transition duration-300 ${
             activeTab === tab.id
-              ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-[0_0_25px_rgba(6,182,212,0.5)] scale-105"
-              : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+              ? "border-violet-300/35 bg-violet-500/20 text-violet-100 shadow-lg shadow-violet-950/20"
+              : "border-white/10 bg-white/[0.045] text-slate-400 hover:-translate-y-0.5 hover:border-violet-300/30 hover:bg-violet-500/10 hover:text-white"
           }`}
         >
           {tab.label}

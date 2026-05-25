@@ -15,37 +15,98 @@ export async function GET(req: NextRequest) {
     const skip = (page - 1) * limit;
 
     if (!teacherId || !campusId) {
-      return NextResponse.json({ error: "Teacher ID and Campus ID are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Teacher ID and Campus ID are required" },
+        { status: 400 },
+      );
     }
     const teacherProfile = await prisma.teacher.findFirst({
-      where: { userId: teacherId, user: { campusId: campusId } },
-      select: { id: true },
+      where: {
+        userId: teacherId,
+        user: {
+          campusId,
+        },
+      },
+      select: {
+        id: true,
+      },
     });
 
     if (!teacherProfile) {
-      return NextResponse.json({ error: "Teacher not found on this campus." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Teacher not found on this campus." },
+        { status: 404 },
+      );
     }
+
+    const assignedSubjects = await prisma.teacherSubject.findMany({
+      where: {
+        teacherId: teacherProfile.id,
+      },
+      select: {
+        subjectId: true,
+        semesterId: true,
+        sectionId: true,
+      },
+    });
+
+    if (assignedSubjects.length === 0) {
+      return NextResponse.json({
+        success: true,
+        attendance: [],
+        pagination: {
+          currentPage: page,
+          totalPages: 0,
+          totalRecords: 0,
+        },
+      });
+    }
+
     const whereClause: any = {
       classSession: {
         teacherId: teacherProfile.id,
-        campusId: campusId,
+        campusId,
+        OR: assignedSubjects.map((item) => ({
+          subjectId: item.subjectId,
+          semesterId: item.semesterId,
+          sectionId: item.sectionId,
+        })),
       },
     };
 
     if (date) {
-        const attendanceDate = new Date(date);
-        const startOfDay = new Date(attendanceDate.setUTCHours(0, 0, 0, 0));
-        const endOfDay = new Date(attendanceDate.setUTCHours(23, 59, 59, 999));
-        whereClause.markedAt = { gte: startOfDay, lt: endOfDay };
+      const startOfDay = new Date(`${date}T00:00:00.000Z`);
+      const endOfDay = new Date(`${date}T23:59:59.999Z`);
+
+      whereClause.markedAt = {
+        gte: startOfDay,
+        lte: endOfDay,
+      };
     }
     if (subjectId) {
-        whereClause.classSession.subjectId = subjectId;
+      const isAssignedSubject = assignedSubjects.some(
+        (item) => item.subjectId === subjectId,
+      );
+
+      if (!isAssignedSubject) {
+        return NextResponse.json({
+          success: true,
+          attendance: [],
+          pagination: {
+            currentPage: page,
+            totalPages: 0,
+            totalRecords: 0,
+          },
+        });
+      }
+
+      whereClause.classSession.subjectId = subjectId;
     }
     if (semesterId) {
-        whereClause.classSession.semesterId = semesterId;
+      whereClause.classSession.semesterId = semesterId;
     }
     if (sectionId) {
-        whereClause.classSession.sectionId = sectionId;
+      whereClause.classSession.sectionId = sectionId;
     }
     const [records, totalRecords] = await prisma.$transaction([
       prisma.attendance.findMany({
@@ -54,10 +115,29 @@ export async function GET(req: NextRequest) {
         take: limit,
         orderBy: { markedAt: "desc" },
         include: {
-          user: { select: { name: true } },
+          student: {
+            include: {
+              user: {
+                select: {
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
           classSession: {
             include: {
-              subjectRel: { select: { name: true } },
+              subjectRel: {
+                select: {
+                  name: true,
+                },
+              },
             },
           },
         },
@@ -65,12 +145,13 @@ export async function GET(req: NextRequest) {
       prisma.attendance.count({ where: whereClause }),
     ]);
 
-    const formattedRecords = records.map(rec => ({
-        id: rec.id,
-        studentName: rec.user?.name || 'Unknown',
-        subjectName: rec.classSession?.subjectRel?.name || 'Unknown',
-        status: rec.status,
-        markedAt: rec.markedAt,
+    const formattedRecords = records.map((rec) => ({
+      id: rec.id,
+      studentName: rec.student?.user?.name || rec.user?.name || "Unknown",
+      studentEmail: rec.student?.user?.email || rec.user?.email || null,
+      subjectName: rec.classSession?.subjectRel?.name || "Unknown",
+      status: rec.status,
+      markedAt: rec.markedAt,
     }));
 
     return NextResponse.json({
@@ -82,9 +163,11 @@ export async function GET(req: NextRequest) {
         totalRecords,
       },
     });
-
   } catch (error) {
     console.error("Error fetching past attendance:", error);
-    return NextResponse.json({ error: "Failed to fetch attendance records." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch attendance records." },
+      { status: 500 },
+    );
   }
 }

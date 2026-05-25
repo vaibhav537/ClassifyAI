@@ -1,21 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Tektur } from "next/font/google";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plan } from "@/lib/types";
-import { showErrorMessage, showLoadingMessage, showSuccessMessage } from "@/lib/helper";
-
-const tektur = Tektur({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
+import {
+  showErrorMessage,
+  showLoadingMessage,
+  showSuccessMessage,
+} from "@/lib/helper";
 
 export default function ManagePlansSection() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
-  
+
   // 1. ADD STATE to store the assistant's ID
   const [assistantId, setassistantId] = useState<string | null>(null);
 
@@ -24,15 +22,15 @@ export default function ManagePlansSection() {
     const id = localStorage.getItem("assistantId"); // Assuming this is the key for the logged-in assistant's ID
     setassistantId(id);
   }, []);
-  
+
   // This effect now depends on assistantId to run
   useEffect(() => {
     // Don't fetch plans if we don't know who the assistant is yet
     if (!assistantId) {
-        // If there's no assistantId after the initial check, stop loading.
-        if (!loading) setLoading(false);
-        return;
-    };
+      // If there's no assistantId after the initial check, stop loading.
+      if (!loading) setLoading(false);
+      return;
+    }
 
     const fetchPlans = async () => {
       setLoading(true);
@@ -43,10 +41,10 @@ export default function ManagePlansSection() {
         if (res.ok) {
           setPlans(data.plans);
         } else {
-          console.log(data)
+          console.log(data);
           throw new Error(data.message || "Failed to fetch plans.");
         }
-      } catch(err: any) {
+      } catch (err: any) {
         showErrorMessage(err.message);
       } finally {
         setLoading(false);
@@ -69,8 +67,8 @@ export default function ManagePlansSection() {
     }
     // 4. CHECK for assistantId before trying to save
     if (!assistantId) {
-        showErrorMessage("Could not verify your identity. Please log in again.");
-        return;
+      showErrorMessage("Could not verify your identity. Please log in again.");
+      return;
     }
 
     setSaving(name);
@@ -87,10 +85,11 @@ export default function ManagePlansSection() {
         showSuccessMessage(`Updated ${name.replace("_", " ")} successfully.`);
         // No need to manually refetch, useSWR would handle this automatically
         // but for now, we can keep the manual refetch
-        const newRes = await fetch(`/api/assistant/settings/plans?assistantId=${assistantId}`);
+        const newRes = await fetch(
+          `/api/assistant/settings/plans?assistantId=${assistantId}`,
+        );
         const newData = await newRes.json();
         if (newRes.ok) setPlans(newData.plans);
-
       } else {
         throw new Error(data.error || "Failed to update plan.");
       }
@@ -102,111 +101,138 @@ export default function ManagePlansSection() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
+    <motion.section
+      initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="relative bg-gradient-to-br from-white/10 to-black/20 backdrop-blur-md h-[75vh] flex flex-col items-center p-6 rounded-xl shadow-xl border border-white/10 w-full"
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="relative min-h-[75vh] w-full overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-5 text-white shadow-2xl shadow-black/25 backdrop-blur-2xl sm:p-6"
     >
-        {/* Your existing UI for animated blobs and the header remains the same */}
-        <div className="absolute inset-0 z-0 overflow-hidden rounded-xl">
-        <div className="absolute -top-1/3 -left-1/3 w-96 h-96 bg-purple-500/20 rounded-full filter blur-3xl animate-pulse"></div>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.14),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.06),transparent_30%)]" />
+      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-violet-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-28 right-0 h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
 
-        {/* Orange blob - moves in a circular pattern */}
-        <motion.div
-          className="absolute w-80 h-80 animate-pulse bg-orange-500/20 rounded-full filter blur-2xl"
-          animate={{
-            x: ["100%", "0%", "-20%", "0%", "100%"],
-            y: ["100%", "50%", "0%", "50%", "100%"],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
-        />
+      <div className="relative z-10 flex min-h-[calc(75vh-3rem)] flex-col gap-6">
+        <div className="flex flex-col gap-4 border-b border-white/10 pb-6">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-violet-200">
+            Revenue Control
+          </div>
 
-        {/* Blue blob - smaller, faster movement */}
-        <motion.div
-          className="absolute w-40 h-40 animate-pulse bg-blue-500/10 rounded-full filter blur-xl"
-          animate={{
-            x: ["25%", "75%", "50%", "25%"],
-            y: ["25%", "75%", "25%", "75%"],
-            scale: [1, 1.2, 0.8, 1],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1,
-          }}
-        />
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <motion.h2
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl"
+              >
+                Manage Premium Plans
+              </motion.h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+                Update subscription pricing for premium plans used across your
+                Classify AI workspace.
+              </p>
+            </div>
+
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-500/10 px-4 py-2 text-xs font-extrabold text-emerald-300">
+              {plans.length} {plans.length === 1 ? "Plan" : "Plans"}
+            </div>
+          </div>
         </div>
-        <motion.h2 initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
-        className={`text-4xl font-bold mb-10 mt-10 text-orange-300 z-10 ${tektur.className}`}
-      >
-            Manage Premium Plans
-        </motion.h2>
 
-        <AnimatePresence>
-            {loading ? (
-            <motion.p
-                key="loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-white/80 mt-20 z-10 animate-pulse"
-            >
-                Loading plans…
-            </motion.p>
-            ) : (
+        <AnimatePresence mode="wait">
+          {loading ? (
             <motion.div
-                key="plans"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="space-y-5 mt-5 w-full max-w-2xl z-10"
+              key="loading"
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -18 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="grid flex-1 place-items-center"
             >
-                {plans.map((plan, index) => (
-                <motion.div
-                    key={plan.name}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="bg-neutral-800/50 flex flex-col md:flex-row justify-between items-center p-4 rounded-lg gap-4"
-                >
-                    <div className="font-semibold text-lg capitalize w-52 text-orange-300">
-                    {plan.name.replace("_", " ").toLowerCase()} plan
+              <div className="w-full max-w-2xl space-y-4">
+                {[1, 2, 3].map((item) => (
+                  <div
+                    key={item}
+                    className="animate-pulse rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl"
+                  >
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div className="h-5 w-44 rounded-full bg-white/10" />
+                      <div className="h-11 w-40 rounded-2xl bg-white/10" />
+                      <div className="h-11 w-24 rounded-2xl bg-white/10" />
                     </div>
-                    <motion.input
-                    type="number"
-                    min={1}
-                    className="px-4 py-2 rounded bg-white/5 text-white w-[10rem] placeholder:text-white/50 focus:outline-none"
-                    value={plan.price}
-                    onChange={(e) =>
-                        handleChange(
-                        index,
-                        Math.max(1, parseInt(e.target.value) || 1)
-                        )
-                    }
-                    whileFocus={{ scale: 1.02 }}
-                    />
-                    <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleSave(plan.name, plan.price)}
-                    disabled={saving === plan.name}
-                    className="bg-orange-600 hover:bg-orange-700 transition rounded px-4 py-2 text-white font-semibold disabled:bg-gray-500 disabled:cursor-not-allowed"
-                    >
-                    {saving === plan.name ? "Saving…" : "Save"}
-                    </motion.button>
-                </motion.div>
+                  </div>
                 ))}
+              </div>
             </motion.div>
-            )}
+          ) : (
+            <motion.div
+              key="plans"
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -18 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="min-h-0 flex-1 overflow-y-auto pr-1 scrollbar-hide"
+            >
+              <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-4">
+                {plans.map((plan, index) => (
+                  <motion.div
+                    key={plan.name}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#101014]/80 p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl transition duration-300 hover:-translate-y-1 hover:border-violet-300/35 hover:bg-white/[0.055]"
+                  >
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-400/5" />
+
+                    <div className="relative z-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-500">
+                          Premium Tier
+                        </p>
+                        <div
+                          className="mt-2 text-lg font-extrabold capitalize text-white transition group-hover:text-violet-100"
+                        >
+                          {plan.name.replace("_", " ").toLowerCase()} plan
+                        </div>
+                      </div>
+
+                      <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center md:w-auto">
+                        <div className="relative w-full sm:w-[11rem]">
+                          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-slate-500">
+                            ₹
+                          </span>
+                          <motion.input
+                            type="number"
+                            min={1}
+                            className="w-full rounded-2xl border border-white/10 bg-[#08080C]/55 py-3 pl-8 pr-4 text-sm font-semibold text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
+                            value={plan.price}
+                            onChange={(e) =>
+                              handleChange(
+                                index,
+                                Math.max(1, parseInt(e.target.value) || 1),
+                              )
+                            }
+                            whileFocus={{ scale: 1.01 }}
+                          />
+                        </div>
+
+                        <motion.button
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleSave(plan.name, plan.price)}
+                          disabled={saving === plan.name}
+                          className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 transition duration-300 hover:-translate-y-0.5 hover:shadow-violet-800/30 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                        >
+                          {saving === plan.name ? "Saving…" : "Save"}
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
-    </motion.div>
+      </div>
+    </motion.section>
   );
 }

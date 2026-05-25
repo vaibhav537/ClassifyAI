@@ -1,6 +1,18 @@
 "use client";
 
-import { showErrorMessage, showLoadingMessage, showSuccessMessage } from "@/lib/helper";
+import {
+  showErrorMessage,
+  showLoadingMessage,
+  showSuccessMessage,
+} from "@/lib/helper";
+import {
+  ArrowRight,
+  AtSign,
+  GraduationCap,
+  LockKeyhole,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -22,6 +34,7 @@ const Page = () => {
 
   const handleLogin = async () => {
     showLoadingMessage("Verifying Credentials...");
+
     if (!email || !name) {
       showErrorMessage("Please fill in both fields");
       return;
@@ -35,7 +48,7 @@ const Page = () => {
       body: JSON.stringify({ email, name }),
     });
 
-    const data = await res.json(); 
+    const data = await res.json();
 
     if (res.ok) {
       localStorage.setItem(`${data.user.role.toLowerCase()}Id`, data.user.id);
@@ -57,21 +70,25 @@ const Page = () => {
             clearInterval(interval);
             return prev;
           }
+
           return prev + Math.floor(Math.random() * 5) + 2;
         });
       }, 150);
+
       const campusID = localStorage.getItem("CampusID");
 
       if (campusID) {
         try {
-          // 2. If a slug is found, fetch that campus's data.
           const response = await fetch(
-            `/api/campus/details?campusID=${campusID}`
+            `/api/campus/details?campusID=${campusID}`,
           );
+
           if (response.ok) {
             const data = await response.json();
+
             if (data && data.length > 0) {
               const info = data[0];
+
               setCampusData({
                 name: info.name || defaultCampus.name,
                 logoUrl: info.logoUrl || defaultCampus.logoUrl,
@@ -83,114 +100,216 @@ const Page = () => {
           }
         } catch (error) {
           console.error("Failed to fetch campus data:", error);
-          // If fetch fails, we'll just show the default.
         }
       }
 
-      setIsLoading(false);
+      setProgress(100);
+
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 250);
     };
 
     loadCampusBranding();
   }, []);
 
-  // Show a blank screen while checking localStorage to prevent content flickering
   if (isLoading) {
-    const radius = 60;
-    const stroke = 8;
-    const normalizedRadius = radius - stroke * 0.5;
-    const circumference = 2 * Math.PI * normalizedRadius;
-    const strokeDashoffset = circumference - (progress / 100) * circumference;
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black/5 text-cyan-400">
-        <div className="relative w-36 h-36">
-          {/* Circular progress */}
-          <svg
-            className="w-full h-full transform -rotate-90"
-            viewBox="0 0 36 36"
-          >
-            <circle
-              cx="18"
-              cy="18"
-              r="16"
-              stroke="#1e293b"
-              strokeWidth="3"
-              fill="none"
-            />
-            <circle
-              cx="18"
-              cy="18"
-              r="16"
-              stroke="#06b6d4"
-              strokeWidth="3"
-              strokeLinecap="round"
-              fill="none"
-              strokeDasharray="100"
-              strokeDashoffset={`${100 - progress}`}
-            />
-          </svg>
+      <div className="relative grid min-h-screen place-items-center overflow-hidden bg-[#08080C] px-4 text-white">
+        <div className="pointer-events-none absolute inset-0 app-shell-bg" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/15 blur-3xl" />
 
-          {/* Logo centered absolutely */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <img
+        <div className="relative z-10 flex flex-col items-center">
+          <div className="relative flex h-36 w-36 items-center justify-center rounded-[2rem] border border-white/10 bg-white/[0.04] shadow-2xl shadow-violet-950/40 backdrop-blur-xl">
+            <svg
+              className="absolute inset-0 h-full w-full -rotate-90"
+              viewBox="0 0 144 144"
+            >
+              <circle
+                cx="72"
+                cy="72"
+                r="62"
+                stroke="rgba(255,255,255,0.10)"
+                strokeWidth="8"
+                fill="none"
+              />
+              <circle
+                cx="72"
+                cy="72"
+                r="62"
+                stroke="url(#loginLoaderGradient)"
+                strokeWidth="8"
+                strokeLinecap="round"
+                fill="none"
+                strokeDasharray={`${2 * Math.PI * 62}`}
+                strokeDashoffset={`${
+                  2 * Math.PI * 62 - (progress / 100) * (2 * Math.PI * 62)
+                }`}
+              />
+
+              <defs>
+                <linearGradient
+                  id="loginLoaderGradient"
+                  x1="0"
+                  y1="0"
+                  x2="144"
+                  y2="144"
+                >
+                  <stop offset="0%" stopColor="#7C3AED" />
+                  <stop offset="55%" stopColor="#C084FC" />
+                  <stop offset="100%" stopColor="#22D3EE" />
+                </linearGradient>
+              </defs>
+            </svg>
+
+            <Image
               src="/only-logo.png"
-              alt="ClassifyAI"
-              className="w-16 h-16 object-contain"
+              alt="Classify AI"
+              width={72}
+              height={72}
+              priority
+              className="h-16 w-16 object-contain drop-shadow-[0_0_28px_rgba(34,211,238,0.24)]"
             />
           </div>
-        </div>
 
-        <p className="mt-6 text-xl font-semibold">
-          Loading Campus Details...
-        </p>
-        <p className="text-sm text-cyan-300">{progress}%</p>
+          <p className="mt-7 text-lg font-bold tracking-tight text-white">
+            Loading Campus Details
+          </p>
+          <p className="mt-2 text-sm font-medium text-slate-400">
+            Preparing your workspace · {Math.min(progress, 100)}%
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 text-center">
-      {campusData.logoUrl && (
-        <Image
-          src={campusData.logoUrl}
-          alt={`${campusData.name} Logo`}
-          width={150}
-          height={150}
-          className="invert"
-          priority
-        />
-      )}
-      <h1 className="text-white text-xl sm:text-2xl md:text-3xl font-semibold py-3 leading-tight">
-        {campusData.name.toUpperCase()}
-      </h1>
-      <h6 className="text-white text-sm sm:text-base pb-6 leading-tight">
-        {campusData.hindiName}
-      </h6>
-      <h1 className="text-3xl text-white font-bold pb-4">LOGIN</h1>
+    <section className="relative isolate grid min-h-screen overflow-hidden bg-[#08080C] px-4 py-8 text-white lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="pointer-events-none absolute inset-0 -z-10 app-shell-bg" />
+      <div className="pointer-events-none absolute -left-24 top-16 -z-10 h-80 w-80 rounded-full bg-violet-500/14 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-12 right-10 -z-10 h-72 w-72 rounded-full bg-cyan-400/8 blur-3xl" />
 
-      <div className="flex flex-col space-y-4 w-80">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          autoComplete="off"
-          className="p-2 rounded bg-white/10 text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-cyan-500 transition-all duration-500"
-          onChange={(event) => setEmail(event.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="User Name"
-          value={name}
-          className="p-2 rounded bg-white/10 text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-cyan-500 transition-all duration-500"
-          onChange={(event) => setName(event.target.value)}
-        />
-        <button
-          onClick={handleLogin}
-          className="border-2 border-white rounded p-2 text-white font-medium hover:bg-white hover:text-gray-900 transition-all duration-500"
-        >
-          Login
-        </button>
+      <div className="hidden items-center justify-center p-8 lg:flex">
+        <div className="max-w-xl">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-300 backdrop-blur-xl">
+            <Sparkles className="h-3.5 w-3.5 text-violet-300" />
+            Smart Campus Workspace
+          </div>
+
+          <h1 className="text-5xl font-extrabold leading-tight tracking-tight xl:text-6xl">
+            One intelligent platform for{" "}
+            <span className="text-brand-gradient">every campus role</span>
+          </h1>
+
+          <p className="mt-6 max-w-lg text-base leading-8 text-slate-300">
+            Classify AI connects admins, campus assistants, teachers and
+            students through attendance, exams, resources, analytics and
+            AI-powered learning tools.
+          </p>
+
+          <div className="mt-8 grid max-w-lg gap-4 sm:grid-cols-2">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl">
+              <GraduationCap className="mb-4 h-6 w-6 text-violet-300" />
+              <p className="font-bold text-white">For Learning</p>
+              <p className="mt-2 text-sm leading-6 text-slate-400">
+                Students and teachers get attendance, exams, assignments,
+                resources and smart AI assistance.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl">
+              <LockKeyhole className="mb-4 h-6 w-6 text-cyan-300" />
+              <p className="font-bold text-white">For Operations</p>
+              <p className="mt-2 text-sm leading-6 text-slate-400">
+                Admins and campus assistants manage campus workflows with
+                secure role-based access.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#14141B]/85 p-6 shadow-2xl shadow-black/45 backdrop-blur-2xl sm:p-8">
+          <div className="mb-8 text-center">
+            {campusData.logoUrl && (
+              <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-3 shadow-2xl shadow-violet-950/30">
+                <Image
+                  src={campusData.logoUrl}
+                  alt={`${campusData.name} Logo`}
+                  width={150}
+                  height={150}
+                  className="h-full w-full object-contain drop-shadow-[0_0_24px_rgba(34,211,238,0.18)]"
+                  priority
+                />
+              </div>
+            )}
+
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-violet-300">
+              Welcome Back
+            </p>
+
+            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white">
+              {campusData.name.toUpperCase()}
+            </h1>
+
+            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-400">
+              {campusData.hindiName}
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <label className="block text-left">
+              <span className="mb-2 block text-sm font-semibold text-slate-300">
+                Email Address
+              </span>
+
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 transition focus-within:border-violet-400/60 focus-within:ring-4 focus-within:ring-violet-500/15">
+                <AtSign className="h-5 w-5 text-slate-500" />
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  autoComplete="off"
+                  className="w-full bg-transparent text-sm text-white placeholder:text-slate-500 outline-none"
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </div>
+            </label>
+
+            <label className="block text-left">
+              <span className="mb-2 block text-sm font-semibold text-slate-300">
+                User Name
+              </span>
+
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 transition focus-within:border-violet-400/60 focus-within:ring-4 focus-within:ring-violet-500/15">
+                <UserRound className="h-5 w-5 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Enter your username"
+                  value={name}
+                  className="w-full bg-transparent text-sm text-white placeholder:text-slate-500 outline-none"
+                  onChange={(event) => setName(event.target.value)}
+                />
+              </div>
+            </label>
+
+            <button
+              onClick={handleLogin}
+              className="group mt-2 inline-flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-bold text-white shadow-xl shadow-violet-950/40 transition duration-300 hover:-translate-y-0.5 hover:shadow-violet-800/30"
+            >
+              Login to Workspace
+              <ArrowRight className="h-4 w-4 transition duration-300 group-hover:translate-x-1" />
+            </button>
+          </div>
+
+          <p className="mt-6 text-center text-xs leading-5 text-slate-500">
+            Login is available for admins, campus assistants, teachers and
+            students using their registered credentials.
+          </p>
+        </div>
+      </div>
+    </section>
   );
 };
 

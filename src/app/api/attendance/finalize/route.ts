@@ -3,94 +3,98 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const { token } = await request.json();
+    const { classSessionId } = await request.json();
 
-    if (!token) {
+    if (!classSessionId) {
       return NextResponse.json(
-        { message: "Token is required" },
-        { status: 400 }
+        { message: "Class session ID is required" },
+        { status: 400 },
       );
     }
 
-    const tokenRecord = await prisma.attendanceToken.findUnique({
-      where: { token },
-      include: {
-        student: true,
-        teacher: { include: { user: { select: { campusId: true } } } },
-      },
-    });
-
-    if (!tokenRecord || !tokenRecord.student || !tokenRecord.subjectId) {
-      return NextResponse.json(
-        { message: "Invalid token or session details not found" },
-        { status: 404 }
-      );
-    }
-
-    const sectionId = tokenRecord.student.sectionId;
-    if (!sectionId) {
-      return NextResponse.json(
-        { message: "Student is not assigned to a section." },
-        { status: 400 }
-      );
-    }
-
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const classSession = await prisma.classSession.findFirst({
+    const classSession = await prisma.classSession.findUnique({
       where: {
-        subjectId: tokenRecord.subjectId,
-        teacherId: tokenRecord.professorId,
-        startTime: { gte: startOfDay },
+        id: classSessionId,
       },
     });
-
     if (!classSession) {
       return NextResponse.json(
-        { message: "Corresponding class session for today not found." },
-        { status: 404 }
+        { message: "Invalid token. Token record not found." },
+        { status: 404 },
+      );
+    }
+
+    if (!classSession.sectionId) {
+      return NextResponse.json(
+        { message: "Section ID missing in class session." },
+        { status: 404 },
       );
     }
 
     const allStudentIdsInSection = (
       await prisma.student.findMany({
-        where: { sectionId },
-        select: { id: true },
+        where: {
+          sectionId: classSession.sectionId,
+        },
+        select: {
+          id: true,
+        },
       })
-    ).map((s) => s.id);
+    ).map((student) => student.id);
 
-    const presentStudentIds = (
+    const alreadyMarkedStudentIds = (
       await prisma.attendance.findMany({
-        where: { classSessionId: classSession.id, status: "PRESENT" },
-        select: { studentId: true },
+        where: {
+          classSessionId: classSession.id,
+          studentId: {
+            not: null,
+          },
+        },
+        select: {
+          studentId: true,
+        },
       })
     )
-      .map((a) => a.studentId)
-      .filter((id): id is string => id !== null);
+      .map((attendance) => attendance.studentId)
+      .filter((id): id is string => Boolean(id));
+
+    const markedSet = new Set(alreadyMarkedStudentIds);
 
     const absentStudentIds = allStudentIdsInSection.filter(
-      (id) => !presentStudentIds.includes(id)
+      (studentId) => !markedSet.has(studentId),
     );
-
     if (absentStudentIds.length === 0) {
+      await prisma.classSession.update({
+        where: { id: classSession.id },
+        data: {
+          status: "COMPLETED",
+          attendanceMarked: true,
+        },
+      });
+
       return NextResponse.json({
-        message: "All students are present. No one marked as absent.",
+        message: "All students already have attendance records.",
       });
     }
 
-    const absentData = absentStudentIds.map((studentId) => ({
-      studentId,
-      classSessionId: classSession.id,
-      status: "ABSENT" as const,
-      markedBy: "SYSTEM",
-      markedAt: new Date(),
-      remarks: "Automatically marked absent after session expired.",
-    }));
-
     await prisma.attendance.createMany({
-      data: absentData,
+      data: absentStudentIds.map((studentId) => ({
+        studentId,
+        classSessionId: classSession.id,
+        status: "ABSENT" as const,
+        markedBy: "SYSTEM",
+        markedAt: new Date(),
+        remarks: "Automatically marked absent after session expired.",
+      })),
       skipDuplicates: true,
+    });
+
+    await prisma.classSession.update({
+      where: { id: classSession.id },
+      data: {
+        status: "COMPLETED",
+        attendanceMarked: true,
+      },
     });
 
     return NextResponse.json({
@@ -98,9 +102,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error finalizing attendance:", error);
+
     return NextResponse.json(
       { message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

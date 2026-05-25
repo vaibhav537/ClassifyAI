@@ -1,10 +1,16 @@
 "use client";
 
 import React, { Suspense, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Clock, Users, Calendar, BookOpen } from "lucide-react";
+import {
+  Clock,
+  Users,
+  Calendar,
+  BookOpen,
+  Radio,
+  Sparkles,
+} from "lucide-react";
 import { TeacherClassSession } from "@/lib/types";
-import { showErrorMessage } from "@/lib/helper";
+import { formatTimetableTime, showErrorMessage } from "@/lib/helper";
 import GenerateTokenDialog from "@/components/teacher/GenerateTokenDialog";
 import AttendanceFinalizer from "@/components/teacher/AttendanceFinalizer";
 import { motion } from "framer-motion";
@@ -16,8 +22,6 @@ export default function ClassesPage() {
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [preselectedClass, setPreselectedClass] = useState<any | null>(null);
-
-  const router = useRouter();
 
   useEffect(() => {
     const teacherId = localStorage.getItem("teacherId");
@@ -32,7 +36,10 @@ export default function ClassesPage() {
     const fetchClasses = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/teacher/classes?teacherId=${teacherId}&campusId=${campusId}`);
+
+        const res = await fetch(
+          `/api/teacher/classes?teacherId=${teacherId}&campusId=${campusId}`,
+        );
         const data = await res.json();
 
         if (res.ok) {
@@ -60,96 +67,158 @@ export default function ClassesPage() {
   };
 
   if (loading) {
-    return (
-      <ClassesLoadingSkeleton />
-    );
+    return <ClassesLoadingSkeleton />;
   }
 
   return (
     <>
-      <main className="min-h-screen p-8 bg-transparent text-white">
-        <header className="mb-10 text-start">
-          <h1 className="text-4xl h-11 font-extrabold bg-gradient-to-r from-indigo-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(56,189,248,0.4)]">
-            Your Weekly Schedule
-          </h1>
-          <p className="mt-2 text-gray-400">
-            Manage your classes and take attendance in one place.
-          </p>
-        </header>
+      <main className="relative min-h-full overflow-hidden text-white">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.10),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.05),transparent_30%)]" />
 
-        {classes.length > 0 ? (
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            {classes.map((cls, index) => (
-              <motion.div
-                key={cls.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="group relative p-[1px] rounded-2xl bg-gradient-to-r from-indigo-500/40 via-cyan-500/40 to-blue-500/40"
-              >
-                <div className="rounded-2xl bg-[#0f172a]/80 backdrop-blur-xl p-6 flex flex-col justify-between h-full border border-white/10 shadow-lg group-hover:shadow-cyan-500/30 transition-all duration-300">
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <BookOpen className="text-cyan-400" size={20} />
-                      <h2 className="text-xl font-semibold text-white">
-                        {cls.subject?.name}
-                      </h2>
-                    </div>
-                    <div className="space-y-2 text-sm text-gray-300">
-                      <p className="flex items-center gap-2">
-                        <Users size={14} className="text-indigo-400" />
-                        {cls.semester?.name.includes("Semester")
-                          ? cls.semester?.name
-                          : "Semester " + cls.semester?.name}{" "}
-                        • {cls.section?.name}
-                      </p>
-                      <p className="flex items-center gap-2">
-                        <Calendar size={14} className="text-cyan-400" />{" "}
-                        {cls.weekday}
-                      </p>
-                      <p className="flex items-center gap-2">
-                        <Clock size={14} className="text-blue-400" />
-                        {new Date(cls.startTime).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}{" "}
-                        -{" "}
-                        {new Date(cls.endTime).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                  </div>
+        <div className="relative z-10 flex flex-col gap-6">
+          <header className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl sm:p-6">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/14 via-transparent to-cyan-400/6" />
+            <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-violet-500/12 blur-3xl" />
 
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => handleTakeAttendance(cls)}
-                    className="mt-6 w-full bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-semibold py-2 rounded-xl shadow-lg transition-all"
-                  >
-                    Take Attendance
-                  </motion.button>
+            <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-violet-200">
+                  <Sparkles className="h-3 w-3" />
+                  Class Schedule
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        ) : (
-          <div className="text-center mt-20 space-y-4">
-            <div className="text-6xl">📚</div>
-            <p className="text-gray-500 text-lg">
-              You have not been assigned to any classes yet.
-            </p>
-          </div>
-        )}
+
+                <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                  Your Weekly Schedule
+                </h1>
+
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+                  View assigned classes and start attendance sessions directly
+                  from your schedule.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 sm:min-w-[320px]">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-500">
+                    Assigned
+                  </p>
+                  <p className="mt-1 text-2xl font-extrabold text-white">
+                    {classes.length}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-emerald-300/20 bg-emerald-500/10 px-4 py-3">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-emerald-100/70">
+                    Attendance
+                  </p>
+                  <p className="mt-1 text-sm font-extrabold text-emerald-100">
+                    Ready
+                  </p>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {classes.length > 0 ? (
+            <motion.section
+              className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.35 }}
+            >
+              {classes.map((cls, index) => (
+                <motion.article
+                  key={cls.id}
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.04 }}
+                  className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#14141B]/80 p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl transition duration-300 hover:-translate-y-1 hover:border-violet-300/35 hover:bg-white/[0.055]"
+                >
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-400/5 opacity-0 transition duration-300 group-hover:opacity-100" />
+                  <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-violet-500/10 blur-3xl" />
+
+                  <div className="relative z-10 flex h-full flex-col">
+                    <div className="mb-5 flex items-start gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10">
+                        <BookOpen className="h-5 w-5 text-violet-200" />
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="line-clamp-2 text-xl font-extrabold leading-tight text-white">
+                          {cls.subject?.name}
+                        </p>
+
+                        <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-600">
+                          {cls.weekday}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3">
+                        <Users className="h-4 w-4 shrink-0 text-violet-300" />
+
+                        <p className="min-w-0 text-sm font-semibold text-slate-300">
+                          {cls.semester?.name.includes("Semester")
+                            ? cls.semester?.name
+                            : "Semester " + cls.semester?.name}{" "}
+                          • {cls.section?.name}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3">
+                        <Calendar className="h-4 w-4 shrink-0 text-cyan-300" />
+
+                        <p className="text-sm font-semibold text-slate-300">
+                          {cls.weekday}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3">
+                        <Clock className="h-4 w-4 shrink-0 text-emerald-300" />
+
+                        <p className="text-sm font-semibold text-slate-300">
+                          {formatTimetableTime(cls.startTime)} -{" "}
+                          {formatTimetableTime(cls.endTime)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <motion.button
+                      type="button"
+                      whileHover={{ y: -1 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => handleTakeAttendance(cls)}
+                      className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 transition duration-300 hover:shadow-violet-800/30"
+                    >
+                      <Radio className="h-4 w-4" />
+                      Take Attendance
+                    </motion.button>
+                  </div>
+                </motion.article>
+              ))}
+            </motion.section>
+          ) : (
+            <section className="grid min-h-[420px] place-items-center rounded-[2rem] border border-white/10 bg-[#14141B]/80 p-6 text-center shadow-2xl shadow-black/25 backdrop-blur-2xl">
+              <div className="max-w-md">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10">
+                  <BookOpen className="h-7 w-7 text-violet-200" />
+                </div>
+
+                <h2 className="mt-5 text-2xl font-extrabold text-white">
+                  No classes assigned
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  You have not been assigned to any classes yet. Once assigned,
+                  your weekly schedule will appear here.
+                </p>
+              </div>
+            </section>
+          )}
+        </div>
       </main>
 
-      {/* --- Modals --- */}
       <Suspense fallback={null}>
         <GenerateTokenDialog
           isOpen={isGenerateModalOpen}
@@ -160,9 +229,10 @@ export default function ClassesPage() {
           }}
           preselectedClass={preselectedClass}
         />
+
         {activeSessionId && (
           <AttendanceFinalizer
-            token={activeSessionId}
+            classSessionId={activeSessionId}
             onClose={() => setActiveSessionId(null)}
           />
         )}

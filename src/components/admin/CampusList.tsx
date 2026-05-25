@@ -4,10 +4,7 @@ import useSWR from "swr";
 import Image from "next/image";
 import Link from "next/link";
 
-// A simple fetcher function for useSWR
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-// Define a type for the campus data
 type Campus = {
   id: string;
   name: string;
@@ -16,52 +13,89 @@ type Campus = {
 };
 
 export default function CampusList() {
-  // useSWR handles fetching, caching, loading, and error states automatically
-  const { data: campuses, error, isLoading } = useSWR<Campus[]>('/api/campus', fetcher);
+  const {
+    data: campuses,
+    error,
+    isLoading,
+  } = useSWR<Campus[]>("/api/campus", fetcher);
 
   if (isLoading) {
     return (
-      <div className="text-center">
-        <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-indigo-400 mx-auto"></div>
-        <p className="mt-2 text-sm text-gray-400">Loading Campuses...</p>
+      <div className="grid min-h-[260px] place-items-center text-center">
+        <div>
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-violet-300/20 border-t-violet-300" />
+          <p className="mt-4 text-sm font-bold text-slate-400">
+            Loading Campuses...
+          </p>
+        </div>
       </div>
     );
   }
 
   if (error) {
-    return <p className="text-red-400 text-center">Failed to load campus list.</p>;
+    return (
+      <div className="grid min-h-[260px] place-items-center text-center">
+        <div className="rounded-[1.5rem] border border-red-300/20 bg-red-500/10 px-5 py-4 text-sm font-bold text-red-300">
+          Failed to load campus list.
+        </div>
+      </div>
+    );
   }
 
   if (!campuses || campuses.length === 0) {
-    return <p className="text-gray-400 text-center">No campuses have been created yet.</p>;
+    return (
+      <div className="grid min-h-[260px] place-items-center text-center">
+        <div className="relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-6">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-400/5" />
+          <div className="relative z-10">
+            <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl border border-violet-300/20 bg-violet-500/10 text-lg font-extrabold text-violet-200">
+              0
+            </div>
+            <p className="text-sm font-bold text-slate-300">
+              No campuses have been created yet.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+    <div className="max-h-96 space-y-3 overflow-y-auto pr-2 scrollbar-hide">
       {campuses.map((campus) => (
-        <div 
-          key={campus.id} 
-          className="bg-gray-800 p-4 rounded-lg flex items-center justify-between hover:bg-gray-700 transition-colors"
+        <div
+          key={campus.id}
+          className="group relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#14141B]/80 p-4 shadow-xl shadow-black/20 backdrop-blur-2xl transition duration-300 hover:-translate-y-0.5 hover:border-violet-300/35 hover:bg-white/[0.055]"
         >
-          <div className="flex items-center gap-4">
-            <Image
-              src={campus.logoUrl || "/only-logo.png"} // Fallback to a default logo
-              alt={`${campus.name} Logo`}
-              width={40}
-              height={40}
-              className="rounded-full bg-gray-600 object-contain"
-            />
-            <div>
-              <p className="font-semibold text-white">{campus.name}</p>
-              <p className="text-sm text-gray-400">{campus.city}</p>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-400/5 opacity-70" />
+
+          <div className="relative z-10 flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/10 bg-[#08080C]/55">
+                <Image
+                  src={campus.logoUrl || "/only-logo.png"}
+                  alt={`${campus.name} Logo`}
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-xl object-contain"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <p className="truncate font-extrabold text-white transition group-hover:text-violet-100">
+                  {campus.name}
+                </p>
+                <p className="mt-1 truncate text-sm font-semibold text-slate-500">
+                  {campus.city}
+                </p>
+              </div>
             </div>
+            <Link href={`/dashboard/admin/campuses/${campus.id}`}>
+              <div className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10 px-4 py-2 text-sm font-extrabold text-violet-100 transition duration-300 hover:-translate-y-0.5 hover:border-violet-300/45 hover:bg-violet-500/20">
+                Manage
+              </div>
+            </Link>
           </div>
-          {/* This button can later link to a detailed management page */}
-          <Link href={`/dashboard/admin/campuses/${campus.id}`}>
-            <div className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-1 px-3 rounded-md cursor-pointer">
-              Manage
-            </div>
-          </Link>
         </div>
       ))}
     </div>

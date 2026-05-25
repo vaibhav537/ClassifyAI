@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Send, Paperclip, X, Smile, Sparkles } from "lucide-react";
+import { Send, Paperclip, X, Smile, Sparkles, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import EmojiPicker, { Theme } from "emoji-picker-react";
 import { EMOJI_SHORTCUTS } from "@/lib/helper";
@@ -33,6 +33,7 @@ export default function MessageInput({
   >([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
   const [isImproving, setIsImproving] = useState<boolean>(false);
+
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTypingRef = useRef(false);
 
@@ -47,6 +48,7 @@ export default function MessageInput({
       }
 
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
       typingTimeoutRef.current = setTimeout(() => {
         isTypingRef.current = false;
         onTypingStop();
@@ -97,11 +99,13 @@ export default function MessageInput({
 
   const handleSend = async () => {
     const trimmed = text.trim();
+
     if (!trimmed && attachments.length === 0) return;
 
     setIsSending(true);
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
     isTypingRef.current = false;
     onTypingStop();
 
@@ -110,6 +114,7 @@ export default function MessageInput({
         trimmed,
         attachments.map((a) => a.id),
       );
+
       setText("");
       setAttachments([]);
     } catch (error: any) {
@@ -127,9 +132,11 @@ export default function MessageInput({
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+
     if (!file) return;
 
     const formData = new FormData();
+
     formData.append("file", file);
     formData.append(
       "upload_preset",
@@ -141,6 +148,7 @@ export default function MessageInput({
         `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/auto/upload`,
         { method: "POST", body: formData },
       );
+
       const data = await res.json();
 
       const resourceRes = await fetch("/api/chat/attachments", {
@@ -153,7 +161,9 @@ export default function MessageInput({
           uploadedBy: userId,
         }),
       });
+
       const resource = await resourceRes.json();
+
       setAttachments((prev) => [...prev, { id: resource.id, name: file.name }]);
     } catch (err) {
       console.error("Upload failed:", err);
@@ -164,40 +174,42 @@ export default function MessageInput({
 
   return (
     <motion.div
-      initial={{ y: 40, opacity: 0 }}
+      initial={{ y: 28, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="border-t border-white/10 p-4 bg-white/5 backdrop-blur-xl"
+      transition={{ duration: 0.25 }}
+      className="bg-[#14141B]/85 p-4 backdrop-blur-2xl"
     >
-      {/* Attachments */}
       <AnimatePresence>
         {attachments.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="flex flex-wrap gap-2 mb-3"
+            exit={{ opacity: 0, y: 8 }}
+            className="mb-3 flex flex-wrap gap-2"
           >
             {attachments.map((att) => (
               <motion.div
                 key={att.id}
-                initial={{ scale: 0.8, opacity: 0 }}
+                initial={{ scale: 0.92, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg text-xs text-gray-300 border border-white/10"
+                exit={{ scale: 0.92, opacity: 0 }}
+                className="group flex max-w-full items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.055] px-3 py-2 text-xs font-bold text-slate-300"
               >
-                <span>📎 {att.name}</span>
+                <span className="max-w-[220px] truncate">📎 {att.name}</span>
+
                 <motion.button
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.8 }}
+                  type="button"
+                  whileHover={{ scale: 1.12 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() =>
                     setAttachments((prev) =>
                       prev.filter((a) => a.id !== att.id),
                     )
                   }
-                  className="text-gray-500 hover:text-red-400 transition"
+                  className="text-slate-500 transition hover:text-red-300"
+                  aria-label="Remove attachment"
                 >
-                  <X size={12} />
+                  <X size={13} />
                 </motion.button>
               </motion.div>
             ))}
@@ -205,15 +217,15 @@ export default function MessageInput({
         )}
       </AnimatePresence>
 
-      {/* Input row */}
-      <div className="flex items-end gap-3">
-        {/* Upload */}
+      <div className="flex items-end gap-2 sm:gap-3">
         <motion.label
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="shrink-0 cursor-pointer p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition"
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.94 }}
+          className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-slate-400 transition duration-300 hover:border-violet-300/35 hover:bg-violet-500/15 hover:text-white"
+          title="Attach file"
         >
           <Paperclip size={18} />
+
           <input
             type="file"
             className="hidden"
@@ -222,38 +234,37 @@ export default function MessageInput({
           />
         </motion.label>
 
-        {/* Textarea */}
-        <div className="flex-1 relative">
+        <div className="relative min-w-0 flex-1">
           <textarea
             value={text}
             onChange={(e) => handleTyping(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message... (Enter to send)"
+            placeholder="Type a message... Enter to send"
             rows={1}
-            className="w-full resize-none bg-neutral-900/70 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 transition max-h-32 overflow-y-auto scrollbar-hide"
-            style={{ minHeight: "42px" }}
+            className="max-h-32 min-h-[44px] w-full resize-none rounded-2xl border border-white/10 bg-[#08080C]/55 px-4 py-3 pr-4 text-sm leading-5 text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10"
           />
-
-          {/* subtle glow on focus */}
-          <div className="pointer-events-none absolute inset-0 rounded-xl border border-transparent focus-within:border-indigo-500/30" />
         </div>
+
         <div className="relative shrink-0">
-          <motion.div
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.9 }}
+          <motion.button
+            type="button"
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.94 }}
             onClick={() => setShowEmojiPicker((prev) => !prev)}
-            className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-yellow-400 transition"
+            className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-slate-400 transition duration-300 hover:border-amber-300/35 hover:bg-amber-500/10 hover:text-amber-200"
+            title="Emoji"
           >
             <Smile size={18} />
-          </motion.div>
+          </motion.button>
+
           <AnimatePresence>
             {showEmojiPicker && (
               <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                initial={{ opacity: 0, y: 10, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                exit={{ opacity: 0, y: 10, scale: 0.96 }}
                 transition={{ duration: 0.15 }}
-                className="absolute bottom-14 right-0 z-50"
+                className="absolute bottom-14 right-0 z-50 overflow-hidden rounded-2xl border border-white/10 bg-[#08080C]/95 shadow-2xl shadow-black/60 backdrop-blur-xl"
               >
                 <EmojiPicker
                   onEmojiClick={handleEmojiClick}
@@ -263,37 +274,37 @@ export default function MessageInput({
             )}
           </AnimatePresence>
         </div>
-        {/* Improve with AI */}
+
         <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.9 }}
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.94 }}
           type="button"
           onClick={handleImproveWithAI}
           disabled={isImproving || !text.trim()}
           title="Improve with AI"
-          className="shrink-0 p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-slate-400 transition duration-300 hover:border-violet-300/35 hover:bg-violet-500/15 hover:text-violet-200 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isImproving ? (
-            <motion.span
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-              className="block h-[18px] w-[18px] border-2 border-cyan-400 border-t-transparent rounded-full"
-            />
+            <Loader2 className="h-[18px] w-[18px] animate-spin text-violet-300" />
           ) : (
-            <>
             <Sparkles size={18} />
-            </>
           )}
         </motion.button>
-        {/* Send */}
+
         <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.9 }}
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.94 }}
+          type="button"
           onClick={handleSend}
           disabled={isSending || (!text.trim() && attachments.length === 0)}
-          className="shrink-0 p-2.5 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-lg"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 text-white shadow-lg shadow-violet-950/35 transition duration-300 hover:-translate-y-0.5 hover:shadow-violet-800/30 disabled:cursor-not-allowed disabled:opacity-40"
+          title="Send message"
         >
-          <Send size={18} className="text-white" />
+          {isSending ? (
+            <Loader2 className="h-[18px] w-[18px] animate-spin" />
+          ) : (
+            <Send size={18} />
+          )}
         </motion.button>
       </div>
     </motion.div>

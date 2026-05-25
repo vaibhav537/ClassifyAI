@@ -93,7 +93,7 @@ model Student {
 
 model Semester {
   id        String   @id @default(cuid())
-  name      String   @unique
+  name      String
   number    Int?
   createdAt DateTime @default(now())
   campusId  String
@@ -110,7 +110,7 @@ model Semester {
 
 model Section {
   id        String   @id @default(cuid())
-  name      String   @unique
+  name      String
   createdAt DateTime @default(now())
   campusId  String
   campus    Campus   @relation(fields: [campusId], references: [id])
@@ -176,13 +176,14 @@ model Campus {
   geofenceRadius Int      @default(500)
   wifiBssids     String[]
 
-  users          User[]
-  classSessions  ClassSession[] // Back-relation to ClassSession
-  semesters      Semester[]
-  sections       Section[]
-  subjects       Subject[]
-  events         Event[]
-  TimetableEntry TimetableEntry[]
+  users              User[]
+  classSessions      ClassSession[] // Back-relation to ClassSession
+  semesters          Semester[]
+  sections           Section[]
+  subjects           Subject[]
+  events             Event[]
+  TimetableEntry     TimetableEntry[]
+  TimetableDayConfig TimetableDayConfig[]
 }
 
 model ClassSession {
@@ -219,7 +220,9 @@ model ClassSession {
 }
 
 model TimetableEntry {
-  id        String   @id @default(cuid())
+  id        String             @id @default(cuid())
+  type      TimetableEntryType @default(LECTURE)
+  title     String?
   weekday   Weekday
   startTime DateTime // Stores the time, e.g., 10:00 AM
   endTime   DateTime
@@ -227,17 +230,41 @@ model TimetableEntry {
 
   // Relations
   campusId   String
-  campus     Campus   @relation(fields: [campusId], references: [id])
-  teacherId  String
-  teacher    Teacher  @relation(fields: [teacherId], references: [id])
-  subjectId  String
-  subject    Subject  @relation(fields: [subjectId], references: [id])
-  semesterId String
-  semester   Semester @relation(fields: [semesterId], references: [id])
-  sectionId  String
-  section    Section  @relation(fields: [sectionId], references: [id])
+  campus     Campus    @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  teacherId  String?
+  teacher    Teacher?  @relation(fields: [teacherId], references: [id])
+  subjectId  String?
+  subject    Subject?  @relation(fields: [subjectId], references: [id])
+  semesterId String?
+  semester   Semester? @relation(fields: [semesterId], references: [id])
+  sectionId  String?
+  section    Section?  @relation(fields: [sectionId], references: [id])
+  isActive   Boolean   @default(true)
+  notes      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  @@unique([teacherId, weekday, startTime])
+  @@index([campusId, weekday])
+  @@index([teacherId, weekday])
+  @@index([semesterId, sectionId, weekday])
+  @@index([subjectId])
+}
+
+model TimetableDayConfig {
+  id String @id @default(cuid())
+
+  campusId String
+  campus   Campus @relation(fields: [campusId], references: [id], onDelete: Cascade)
+
+  weekday   Weekday
+  startTime DateTime
+  endTime   DateTime
+  isWorking Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([campusId, weekday])
 }
 
 model Attendance {
@@ -286,6 +313,12 @@ model Session {
   sessionToken String   @unique
   userId       String
   expiresAt    DateTime
+
+  faceVerified  Boolean   @default(false)
+  faceVerifieAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -626,4 +659,16 @@ enum ChannelType {
   SUBJECT
   SECTION
   TEACHER
+}
+
+enum TimetableEntryType {
+  LECTURE
+  LAB
+  TUTORIAL
+  EXTRA_CLASS
+  LUNCH
+  BREAK
+  FREE
+  EXAM
+  EVENT
 }

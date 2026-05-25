@@ -1,16 +1,23 @@
+import { LogoProps } from "@/lib/types";
 import Image from "next/image";
 import React from "react";
 
 const Logo = ({
-  width = 200,
-  height = 100,
-}: {
-  width?: number;
-  height?: number;
-}) => {
+  width = 220,
+  height = 72,
+  className = "",
+  imageClassName = "",
+}: LogoProps) => {
   return (
-    <div>
-      <Image src={"/logo-nobg.png"} alt="logo" className="sm:w-35 2xl:w-[22rem] 2xl:h-[5.8rem] lg:w-[12rem] lg:ml-[1rem] lg:h-[3.5rem] sm:h-10" width={width} height={height} />
+    <div className={`flex items-center ${className}`}>
+      <Image
+        src="/logo-nobg.png"
+        alt="Classify AI"
+        width={width}
+        height={height}
+        priority
+        className={`h-auto w-[150px] object-contain drop-shadow-[0_0_22px_rgba(34,211,238,0.16)] sm:w-[180px] lg:w-[210px] 2xl:w-[260px] ${imageClassName}`}
+      />
     </div>
   );
 };

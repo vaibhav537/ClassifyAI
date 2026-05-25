@@ -1,27 +1,52 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+// prisma/seedPremiumPlans.js
+import { prisma } from "../src/lib/prisma.js"; // adjust path if needed
 
 async function main() {
   const plans = [
-    { name: "PRO_MONTHLY", price: 500 },
-    { name: "PRO_YEARLY", price: 5000 },
-    { name: "ULTIMATE_MONTHLY", price: 1000 },
-    { name: "ULTIMATE_YEARLY", price: 10000 },
+    {
+      name: "STARTER",
+      price: 0,
+      features: [
+        "Basic access",
+        "View your attendance",
+        "View timetable",
+      ],
+    },
+    {
+      name: "PRO",
+      price: 499,
+      features: [
+        "Everything in STARTER",
+        "AI Study Plan",
+        "Advanced analytics",
+      ],
+    },
+    {
+      name: "ULTIMATE",
+      price: 999,
+      features: [
+        "Everything in PRO",
+        "Google Calendar Sync",
+        "Priority support",
+      ],
+    },
   ];
 
   for (const plan of plans) {
     await prisma.planConfig.upsert({
       where: { name: plan.name },
-      update: { price: plan.price },
+      update: {
+        price: plan.price,
+        features: plan.features,
+      },
       create: {
         name: plan.name,
         price: plan.price,
+        features: plan.features,
       },
     });
+    console.log(`Plan ${plan.name} added/updated`);
   }
-
-  console.log("✅ Seeded PlanConfig table with initial plan prices.");
 }
 
 main()
