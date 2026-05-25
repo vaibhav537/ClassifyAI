@@ -358,6 +358,7 @@ The backend validates:
 - Room conflict
 - Teacher-subject assignment validity
 
+#### HOD Timetable UI
 UI capabilities:
 
 - Day timing setup
@@ -406,6 +407,9 @@ Students can also view:
 - Attendance history
 - Subject-wise attendance percentage
 - Attendance statistics
+
+#### Timetable View
+
 
 The timetable is fetched based on:
 
@@ -527,11 +531,6 @@ Real-Time Campus Chat is now implemented as an active communication layer.
   - Admin
 - Role-aware chat experience from the logged-in user’s perspective
 - Server-side session-based identity resolution using `session-token`
-- Current user initialization through:
-
-```txt
-GET /api/auth/me
-```
 
 - Public/private key initialization
 - Encrypted message flow
@@ -759,41 +758,3 @@ Classify AI is built with the vision of creating a secure, intelligent, and mode
 ---
 
 <u>Built with ❤️ for modern education.</u>
-* **[ ]Real-Time Campus Chat (Secure Communication Layer):** A highly secure, real-time messaging system designed specifically for structured academic communication between students, teachers, and campus staff.
-  * **Role-Based Messaging (RBAC):** Controlled communication (Student ↔ Teacher, Teacher ↔ Class, Admin ↔ All).
-  * **End-to-End Encryption (E2EE):** Ensures complete privacy and data protection.
-  * **Smart Channels:** Class-wise, subject-wise, and announcement-based chat rooms.
-  * **Read Receipts & Activity Tracking:** See who has read important academic messages.
-  * **AI Moderation Layer:** Automatically detects spam, abuse, or irrelevant content.
-  * **Pinned Messages & Highlights:** Important notices stay on top.
-  * **Offline Sync & Delivery Queue:**  Messages sync automatically when user reconnects.
-  * **Integration with Modules:** Directly linked with assignments, attendance alerts, and announcements.
-* **[ ]Custom LLM Integration (Campus Intelligence Engine):** A deeply personalized AI system powered by a custom-trained Large Language Model, tailored specifically for each institution’s academic ecosystem.
-  * **Campus-Specific Training:** Model trained on syllabus, notes, previous year papers, and teacher content.
-  * **Context-Aware Responses:** Answers based on your college data, not generic internet knowledge.
-  * **Student Assistant:** Helps in doubt solving, summaries, and concept explanations.
-  * **Teacher Assistant:** Generates assignments, quizzes, and evaluation insights.
-  * **Multi-Language Support:** Supports regional + English explanations for better accessibility.
-  * **Memory Layer:** Remembers student progress, weak areas, and learning patterns.
-  * **Secure Data Isolation:**  Each institution’s data remains completely isolated and private.
-  * **On-Device / Hybrid Inference (Future):** Leveraging Tauri (Rust) for faster and more secure local AI execution.
-  * **Explainability Layer:** AI explains how it derived an answer (important for academics).
-* **[ ]EduReels- Short-Form Learning Engine (Instagram-like Experience):** To make education more engaging and addictive in a productive way, Classify AI will introduce a dedicated short-video content system inspired by platforms like Instagram Reels.
-  * **Separate Content Flow:** A completely independent section focused only on educational short-form videos (no distraction content).
-  * **AI-Curated Feed:** Personalized reels based on student’s syllabus, weak topics, and upcoming exams.
-  * **Micro-Learning Videos:** 30–90 second concept explainers, quick revisions, formulas, and problem-solving tricks.
-  * **Teacher & Verified Creator Uploads:** Only authenticated educators and top students can publish content.
-  * **Gamified Learning:** Likes, saves, streaks, and rewards for consistent learning.
-  * **Smart Revision Mode:**  Before exams, feed automatically shifts to high-priority revision content.
-  * **Offline Sync (Future):** Download reels for low-connectivity environments.
-* **[ ]AI Reel Generator (Notes -> Video Automation):** An advanced AI system that automatically converts study material into engaging short-form educational videos.
-  * **Input Sources:** PDFs, handwritten notes (via OCR), typed content, or syllabus topics.
-  * **AI Script Generation:** Converts raw content into concise, structured micro-learning scripts.
-  * **Auto Voiceover:** Natural AI-generated narration in multiple languages.
-  * **Visual Scene Generation:** Auto-create slides, diagrams, highlights, and key-point animations.
-  * **Smart Segmentation:** Breaks large topics into multiple bite-sized reels.
-  * **Concept Highlighting:**  Focus on formulas, definitions, and frequently asked questions.
-  * **Teacher Control Layer:** Teachers can review, edit, and approve AI-generated reels before publishing.
-  * **Personalized Output**: Generates reels tailored to a student’s weak areas and learning pace.
----
- <u>_Built with ❤️ for modern education._</u>
