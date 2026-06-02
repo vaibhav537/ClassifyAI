@@ -47,16 +47,19 @@ model User {
   sessions         Session[]
   announcements    Announcement[]   @relation("AnnouncementAssistant")
 
-  conversations          ConversationParticipant[] @relation("UserConversations")
-  chatMessagesSent       Message[]                 @relation("ChatMessageSender")
-  createdRiskRules       RiskRule[]                @relation("RiskRuleCreatedBy")
-  acknowledgedRiskEvents RiskEvent[]               @relation("RiskEventAcknowledgedBy")
-  resolvedRiskEvents     RiskEvent[]               @relation("RiskEventResolvedBy")
-  assignedSupportCases   SupportCase[]             @relation("SupportCaseAssignedAssistant")
-  createdSupportCases    SupportCase[]             @relation("SupportCaseCreatedBy")
-  resolvedSupportCases   SupportCase[]             @relation("SupportCaseResolvedBy")
-  messageKeys            MessageKey[]              @relation("UserMessageKeys")
-  MessageReaction        MessageReaction[]
+  conversations             ConversationParticipant[] @relation("UserConversations")
+  chatMessagesSent          Message[]                 @relation("ChatMessageSender")
+  createdRiskRules          RiskRule[]                @relation("RiskRuleCreatedBy")
+  acknowledgedRiskEvents    RiskEvent[]               @relation("RiskEventAcknowledgedBy")
+  resolvedRiskEvents        RiskEvent[]               @relation("RiskEventResolvedBy")
+  assignedSupportCases      SupportCase[]             @relation("SupportCaseAssignedAssistant")
+  createdSupportCases       SupportCase[]             @relation("SupportCaseCreatedBy")
+  resolvedSupportCases      SupportCase[]             @relation("SupportCaseResolvedBy")
+  messageKeys               MessageKey[]              @relation("UserMessageKeys")
+  MessageReaction           MessageReaction[]
+  supportCaseNotes          SupportCaseNote[]         @relation("SupportCaseNoteAuthor")
+  supportCaseActivities     SupportCaseActivityLog[]  @relation("SupportCaseActivityActor")
+  createdCircleOfCareGroups CircleOfCareGroup[]       @relation("CircleOfCareCreatedBy")
 }
 
 model Teacher {
@@ -92,14 +95,15 @@ model Student {
   semester Semester? @relation("StudentSemester", fields: [semesterId], references: [id])
   section  Section?  @relation("StudentSection", fields: [sectionId], references: [id])
 
-  attendances      Attendance[]        @relation("StudentAttendance")
-  submissions      Submission[]
-  grades           Grade[]
-  attendanceTokens AttendanceToken[]
-  riskRuleScopes   RiskRuleScope[]
-  riskEvents       RiskEvent[]
-  riskProfile      StudentRiskProfile?
-  supportCases     SupportCase[]
+  attendances        Attendance[]        @relation("StudentAttendance")
+  submissions        Submission[]
+  grades             Grade[]
+  attendanceTokens   AttendanceToken[]
+  riskRuleScopes     RiskRuleScope[]
+  riskEvents         RiskEvent[]
+  riskProfile        StudentRiskProfile?
+  supportCases       SupportCase[]
+  circleOfCareGroups CircleOfCareGroup[]
 }
 
 model Semester {
@@ -205,6 +209,7 @@ model Campus {
   riskEvents          RiskEvent[]
   studentRiskProfiles StudentRiskProfile[]
   supportCases        SupportCase[]
+  circleOfCareGroups  CircleOfCareGroup[]
 }
 
 model ClassSession {
@@ -695,6 +700,10 @@ model SupportCase {
   resolvedById String?
   resolvedBy   User?   @relation("SupportCaseResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
 
+  notes             SupportCaseNote[]
+  activityLogs      SupportCaseActivityLog[]
+  circleOfCareGroup CircleOfCareGroup?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -705,6 +714,81 @@ model SupportCase {
   @@index([priority])
   @@index([assignedAssistantId])
   @@index([assignedTeacherId])
+}
+
+model SupportCaseNote {
+  id String @id @default(cuid())
+
+  supportCaseId String
+  supportCase   SupportCase @relation(fields: [supportCaseId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?   @relation("SupportCaseNoteAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  note String
+
+  isInternal Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([supportCaseId])
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model SupportCaseActivityLog {
+  id String @id @default(cuid())
+
+  supportCaseId String
+  supportCase   SupportCase @relation(fields: [supportCaseId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation("SupportCaseActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  type SupportCaseActivityType
+
+  title       String
+  description String?
+  metadata    Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([supportCaseId])
+  @@index([actorId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model CircleOfCareGroup {
+  id String @id @default(cuid())
+
+  campusId String
+  campus   Campus @relation(fields: [campusId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  supportCaseId String      @unique
+  supportCase   SupportCase @relation(fields: [supportCaseId], references: [id], onDelete: Cascade)
+
+  conversationId String       @unique
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  reason String?
+
+  status CircleOfCareStatus @default(ACTIVE)
+
+  createdById String?
+  createdBy   User?   @relation("CircleOfCareCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campusId])
+  @@index([studentId])
+  @@index([status])
+  @@index([createdById])
 }
 
 model SupportRequest {
@@ -753,8 +837,9 @@ model Conversation {
   teacherId String?
   teacher   Teacher? @relation(fields: [teacherId], references: [id])
 
-  participants ConversationParticipant[]
-  messages     Message[]                 @relation("ConversationMessages")
+  participants      ConversationParticipant[]
+  messages          Message[]                 @relation("ConversationMessages")
+  circleOfCareGroup CircleOfCareGroup?
 }
 
 model ConversationParticipant {
