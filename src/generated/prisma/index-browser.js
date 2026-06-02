@@ -426,6 +426,130 @@ exports.Prisma.RecentActivityScalarFieldEnum = {
   timestamp: 'timestamp'
 };
 
+exports.Prisma.RiskRuleScalarFieldEnum = {
+  id: 'id',
+  campusId: 'campusId',
+  name: 'name',
+  description: 'description',
+  type: 'type',
+  threshold: 'threshold',
+  severity: 'severity',
+  isActive: 'isActive',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RiskRuleScopeScalarFieldEnum = {
+  id: 'id',
+  ruleId: 'ruleId',
+  scopeType: 'scopeType',
+  campusId: 'campusId',
+  subjectId: 'subjectId',
+  semesterId: 'semesterId',
+  sectionId: 'sectionId',
+  studentId: 'studentId',
+  department: 'department',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RiskEventScalarFieldEnum = {
+  id: 'id',
+  campusId: 'campusId',
+  studentId: 'studentId',
+  ruleId: 'ruleId',
+  subjectId: 'subjectId',
+  classSessionId: 'classSessionId',
+  type: 'type',
+  severity: 'severity',
+  title: 'title',
+  description: 'description',
+  currentValue: 'currentValue',
+  threshold: 'threshold',
+  status: 'status',
+  detectedAt: 'detectedAt',
+  acknowledgedAt: 'acknowledgedAt',
+  resolvedAt: 'resolvedAt',
+  dismissedAt: 'dismissedAt',
+  acknowledgedById: 'acknowledgedById',
+  resolvedById: 'resolvedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.StudentRiskProfileScalarFieldEnum = {
+  id: 'id',
+  campusId: 'campusId',
+  studentId: 'studentId',
+  currentSeverity: 'currentSeverity',
+  totalRiskEvents: 'totalRiskEvents',
+  activeRiskEvents: 'activeRiskEvents',
+  resolvedRiskEvents: 'resolvedRiskEvents',
+  isAtRisk: 'isAtRisk',
+  lastRiskDetectedAt: 'lastRiskDetectedAt',
+  lastResolvedAt: 'lastResolvedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SupportCaseScalarFieldEnum = {
+  id: 'id',
+  campusId: 'campusId',
+  studentId: 'studentId',
+  riskEventId: 'riskEventId',
+  subjectId: 'subjectId',
+  assignedAssistantId: 'assignedAssistantId',
+  assignedTeacherId: 'assignedTeacherId',
+  title: 'title',
+  description: 'description',
+  status: 'status',
+  priority: 'priority',
+  firstNoticeSentAt: 'firstNoticeSentAt',
+  lastFollowUpAt: 'lastFollowUpAt',
+  resolvedAt: 'resolvedAt',
+  closedAt: 'closedAt',
+  internalNote: 'internalNote',
+  createdById: 'createdById',
+  resolvedById: 'resolvedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SupportCaseNoteScalarFieldEnum = {
+  id: 'id',
+  supportCaseId: 'supportCaseId',
+  authorId: 'authorId',
+  note: 'note',
+  isInternal: 'isInternal',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SupportCaseActivityLogScalarFieldEnum = {
+  id: 'id',
+  supportCaseId: 'supportCaseId',
+  actorId: 'actorId',
+  type: 'type',
+  title: 'title',
+  description: 'description',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.CircleOfCareGroupScalarFieldEnum = {
+  id: 'id',
+  campusId: 'campusId',
+  studentId: 'studentId',
+  supportCaseId: 'supportCaseId',
+  conversationId: 'conversationId',
+  reason: 'reason',
+  status: 'status',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SupportRequestScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -582,6 +706,77 @@ exports.ResourceType = exports.$Enums.ResourceType = {
   VIDEO_LINK: 'VIDEO_LINK'
 };
 
+exports.RiskRuleType = exports.$Enums.RiskRuleType = {
+  CONSECUTIVE_ABSENCE: 'CONSECUTIVE_ABSENCE',
+  TOTAL_ABSENCE_IN_SUBJECT: 'TOTAL_ABSENCE_IN_SUBJECT',
+  LOW_ATTENDANCE_PERCENTAGE: 'LOW_ATTENDANCE_PERCENTAGE',
+  GPA_RISK: 'GPA_RISK',
+  VISA_RISK: 'VISA_RISK',
+  MANUAL: 'MANUAL'
+};
+
+exports.RiskSeverity = exports.$Enums.RiskSeverity = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  CRITICAL: 'CRITICAL'
+};
+
+exports.RiskScopeType = exports.$Enums.RiskScopeType = {
+  CAMPUS: 'CAMPUS',
+  SUBJECT: 'SUBJECT',
+  SEMESTER: 'SEMESTER',
+  SECTION: 'SECTION',
+  DEPARTMENT: 'DEPARTMENT',
+  STUDENT: 'STUDENT',
+  INTERNATIONAL_STUDENT: 'INTERNATIONAL_STUDENT'
+};
+
+exports.RiskEventStatus = exports.$Enums.RiskEventStatus = {
+  ACTIVE: 'ACTIVE',
+  ACKNOWLEDGED: 'ACKNOWLEDGED',
+  RESOLVED: 'RESOLVED',
+  DISMISSED: 'DISMISSED'
+};
+
+exports.SupportCaseStatus = exports.$Enums.SupportCaseStatus = {
+  OPEN: 'OPEN',
+  IN_REVIEW: 'IN_REVIEW',
+  CONTACTED_STUDENT: 'CONTACTED_STUDENT',
+  WAITING_FOR_RESPONSE: 'WAITING_FOR_RESPONSE',
+  ESCALATED: 'ESCALATED',
+  RESOLVED: 'RESOLVED',
+  CLOSED: 'CLOSED'
+};
+
+exports.SupportCasePriority = exports.$Enums.SupportCasePriority = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  URGENT: 'URGENT'
+};
+
+exports.SupportCaseActivityType = exports.$Enums.SupportCaseActivityType = {
+  CASE_CREATED: 'CASE_CREATED',
+  CASE_STATUS_CHANGED: 'CASE_STATUS_CHANGED',
+  CASE_PRIORITY_CHANGED: 'CASE_PRIORITY_CHANGED',
+  NOTE_ADDED: 'NOTE_ADDED',
+  RISK_EVENT_LINKED: 'RISK_EVENT_LINKED',
+  CIRCLE_CREATED: 'CIRCLE_CREATED',
+  CONVERSATION_CREATED: 'CONVERSATION_CREATED',
+  PARTICIPANT_ADDED: 'PARTICIPANT_ADDED',
+  NOTICE_SENT: 'NOTICE_SENT',
+  CASE_RESOLVED: 'CASE_RESOLVED',
+  CASE_CLOSED: 'CASE_CLOSED'
+};
+
+exports.CircleOfCareStatus = exports.$Enums.CircleOfCareStatus = {
+  ACTIVE: 'ACTIVE',
+  PAUSED: 'PAUSED',
+  RESOLVED: 'RESOLVED',
+  CLOSED: 'CLOSED'
+};
+
 exports.ConversationType = exports.$Enums.ConversationType = {
   DIRECT: 'DIRECT',
   GROUP: 'GROUP'
@@ -590,7 +785,8 @@ exports.ConversationType = exports.$Enums.ConversationType = {
 exports.ChannelType = exports.$Enums.ChannelType = {
   SUBJECT: 'SUBJECT',
   SECTION: 'SECTION',
-  TEACHER: 'TEACHER'
+  TEACHER: 'TEACHER',
+  CIRCLE_OF_CARE: 'CIRCLE_OF_CARE'
 };
 
 exports.Prisma.ModelName = {
@@ -619,6 +815,14 @@ exports.Prisma.ModelName = {
   PremiumFeature: 'PremiumFeature',
   GoogleToken: 'GoogleToken',
   RecentActivity: 'RecentActivity',
+  RiskRule: 'RiskRule',
+  RiskRuleScope: 'RiskRuleScope',
+  RiskEvent: 'RiskEvent',
+  StudentRiskProfile: 'StudentRiskProfile',
+  SupportCase: 'SupportCase',
+  SupportCaseNote: 'SupportCaseNote',
+  SupportCaseActivityLog: 'SupportCaseActivityLog',
+  CircleOfCareGroup: 'CircleOfCareGroup',
   SupportRequest: 'SupportRequest',
   PlanConfig: 'PlanConfig',
   Conversation: 'Conversation',

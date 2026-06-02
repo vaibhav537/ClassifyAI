@@ -47,10 +47,19 @@ model User {
   sessions         Session[]
   announcements    Announcement[]   @relation("AnnouncementAssistant")
 
-  conversations    ConversationParticipant[] @relation("UserConversations")
-  chatMessagesSent Message[]                 @relation("ChatMessageSender")
-  messageKeys      MessageKey[]              @relation("UserMessageKeys")
-  MessageReaction  MessageReaction[]
+  conversations             ConversationParticipant[] @relation("UserConversations")
+  chatMessagesSent          Message[]                 @relation("ChatMessageSender")
+  createdRiskRules          RiskRule[]                @relation("RiskRuleCreatedBy")
+  acknowledgedRiskEvents    RiskEvent[]               @relation("RiskEventAcknowledgedBy")
+  resolvedRiskEvents        RiskEvent[]               @relation("RiskEventResolvedBy")
+  assignedSupportCases      SupportCase[]             @relation("SupportCaseAssignedAssistant")
+  createdSupportCases       SupportCase[]             @relation("SupportCaseCreatedBy")
+  resolvedSupportCases      SupportCase[]             @relation("SupportCaseResolvedBy")
+  messageKeys               MessageKey[]              @relation("UserMessageKeys")
+  MessageReaction           MessageReaction[]
+  supportCaseNotes          SupportCaseNote[]         @relation("SupportCaseNoteAuthor")
+  supportCaseActivities     SupportCaseActivityLog[]  @relation("SupportCaseActivityActor")
+  createdCircleOfCareGroups CircleOfCareGroup[]       @relation("CircleOfCareCreatedBy")
 }
 
 model Teacher {
@@ -63,13 +72,14 @@ model Teacher {
   updatedAt   DateTime @updatedAt
 
   // relations
-  teacherSubjects  TeacherSubject[]
-  classSessions    ClassSession[]
-  attendanceTokens AttendanceToken[]
-  announcements    Announcement[]    @relation("AnnouncementAuthor")
-  assignments      Assignment[]
-  TimetableEntry   TimetableEntry[]
-  Conversation     Conversation[]
+  teacherSubjects      TeacherSubject[]
+  classSessions        ClassSession[]
+  attendanceTokens     AttendanceToken[]
+  announcements        Announcement[]    @relation("AnnouncementAuthor")
+  assignedSupportCases SupportCase[]
+  assignments          Assignment[]
+  TimetableEntry       TimetableEntry[]
+  Conversation         Conversation[]
 }
 
 model Student {
@@ -85,10 +95,15 @@ model Student {
   semester Semester? @relation("StudentSemester", fields: [semesterId], references: [id])
   section  Section?  @relation("StudentSection", fields: [sectionId], references: [id])
 
-  attendances      Attendance[]      @relation("StudentAttendance")
-  submissions      Submission[]
-  grades           Grade[]
-  attendanceTokens AttendanceToken[]
+  attendances        Attendance[]        @relation("StudentAttendance")
+  submissions        Submission[]
+  grades             Grade[]
+  attendanceTokens   AttendanceToken[]
+  riskRuleScopes     RiskRuleScope[]
+  riskEvents         RiskEvent[]
+  riskProfile        StudentRiskProfile?
+  supportCases       SupportCase[]
+  circleOfCareGroups CircleOfCareGroup[]
 }
 
 model Semester {
@@ -104,6 +119,7 @@ model Semester {
   students        Student[]        @relation("StudentSemester")
   TimetableEntry  TimetableEntry[]
   Conversation    Conversation[]
+  riskRuleScopes  RiskRuleScope[]
 
   @@unique([name, campusId]) // A semester name should be unique within a campus
 }
@@ -120,6 +136,7 @@ model Section {
   students        Student[]        @relation("StudentSection")
   TimetableEntry  TimetableEntry[]
   Conversation    Conversation[]
+  riskRuleScopes  RiskRuleScope[]
 
   @@unique([name, campusId])
 }
@@ -142,6 +159,9 @@ model Subject {
   attendanceTokens AttendanceToken[]
   TimetableEntry   TimetableEntry[]
   Conversation     Conversation[]
+  riskRuleScopes   RiskRuleScope[]
+  riskEvents       RiskEvent[]
+  supportCases     SupportCase[]
 
   @@unique([code, campusId])
 }
@@ -176,14 +196,20 @@ model Campus {
   geofenceRadius Int      @default(500)
   wifiBssids     String[]
 
-  users              User[]
-  classSessions      ClassSession[] // Back-relation to ClassSession
-  semesters          Semester[]
-  sections           Section[]
-  subjects           Subject[]
-  events             Event[]
-  TimetableEntry     TimetableEntry[]
-  TimetableDayConfig TimetableDayConfig[]
+  users               User[]
+  classSessions       ClassSession[] // Back-relation to ClassSession
+  semesters           Semester[]
+  sections            Section[]
+  subjects            Subject[]
+  events              Event[]
+  TimetableEntry      TimetableEntry[]
+  TimetableDayConfig  TimetableDayConfig[]
+  riskRules           RiskRule[]
+  riskRuleScopes      RiskRuleScope[]
+  riskEvents          RiskEvent[]
+  studentRiskProfiles StudentRiskProfile[]
+  supportCases        SupportCase[]
+  circleOfCareGroups  CircleOfCareGroup[]
 }
 
 model ClassSession {
@@ -214,9 +240,15 @@ model ClassSession {
   sectionId   String?
   sectionRel  Section?     @relation("SectionSessions", fields: [sectionId], references: [id], map: "fk_classsession_section")
   attendances Attendance[] @relation("ClassSessionAttendance")
+  riskEvents  RiskEvent[]
 
   @@unique([teacherId, subjectId, sectionId, date])
   @@index([teacherId, weekday, semester], map: "idx_classsession_teacher_weekday_semester")
+  @@index([subjectId], map: "idx_classsession_subject")
+  @@index([campusId], map: "idx_classsession_campus")
+  @@index([date], map: "idx_classsession_date")
+  @@index([subjectId, date], map: "idx_classsession_subject_date")
+  @@index([semesterId, sectionId], map: "idx_classsession_semester_section")
 }
 
 model TimetableEntry {
@@ -289,6 +321,9 @@ model Attendance {
 
   @@unique([classSessionId, studentId], map: "uq_attendance_session_student")
   @@index([classSessionId], map: "idx_attendance_classsession")
+  @@index([studentId], map: "idx_attendance_student")
+  @@index([status], map: "idx_attendance_status")
+  @@index([studentId, status], map: "idx_attendance_student_status")
 }
 
 model AttendanceToken {
@@ -486,6 +521,284 @@ model RecentActivity {
   timestamp DateTime @default(now())
 }
 
+model RiskRule {
+  id String @id @default(cuid())
+
+  campusId String
+  campus   Campus @relation(fields: [campusId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+
+  type      RiskRuleType
+  threshold Int
+  severity  RiskSeverity @default(MEDIUM)
+
+  isActive Boolean @default(true)
+
+  createdById String?
+  createdBy   User?   @relation("RiskRuleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  scopes RiskRuleScope[]
+  events RiskEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campusId])
+  @@index([type])
+  @@index([isActive])
+}
+
+model RiskRuleScope {
+  id String @id @default(cuid())
+
+  ruleId String
+  rule   RiskRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  scopeType RiskScopeType
+
+  campusId String?
+  campus   Campus? @relation(fields: [campusId], references: [id], onDelete: Cascade)
+
+  subjectId String?
+  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  semesterId String?
+  semester   Semester? @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+
+  sectionId String?
+  section   Section? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  studentId String?
+  student   Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  department String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ruleId])
+  @@index([scopeType])
+  @@index([campusId])
+  @@index([subjectId])
+  @@index([semesterId])
+  @@index([sectionId])
+  @@index([studentId])
+}
+
+model RiskEvent {
+  id String @id @default(cuid())
+
+  campusId String
+  campus   Campus @relation(fields: [campusId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  ruleId String?
+  rule   RiskRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+
+  subjectId String?
+  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  classSessionId String?
+  classSession   ClassSession? @relation(fields: [classSessionId], references: [id], onDelete: SetNull)
+
+  type     RiskRuleType
+  severity RiskSeverity @default(MEDIUM)
+
+  title       String
+  description String?
+
+  currentValue Int?
+  threshold    Int?
+
+  status RiskEventStatus @default(ACTIVE)
+
+  detectedAt     DateTime  @default(now())
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+  dismissedAt    DateTime?
+
+  acknowledgedById String?
+  acknowledgedBy   User?   @relation("RiskEventAcknowledgedBy", fields: [acknowledgedById], references: [id], onDelete: SetNull)
+
+  resolvedById String?
+  resolvedBy   User?   @relation("RiskEventResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  supportCase SupportCase?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campusId])
+  @@index([studentId])
+  @@index([subjectId])
+  @@index([ruleId])
+  @@index([status])
+  @@index([detectedAt])
+}
+
+model StudentRiskProfile {
+  id String @id @default(cuid())
+
+  campusId String
+  campus   Campus @relation(fields: [campusId], references: [id], onDelete: Cascade)
+
+  studentId String  @unique
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  currentSeverity RiskSeverity @default(LOW)
+
+  totalRiskEvents    Int @default(0)
+  activeRiskEvents   Int @default(0)
+  resolvedRiskEvents Int @default(0)
+
+  isAtRisk Boolean @default(false)
+
+  lastRiskDetectedAt DateTime?
+  lastResolvedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campusId])
+  @@index([isAtRisk])
+  @@index([currentSeverity])
+}
+
+model SupportCase {
+  id String @id @default(cuid())
+
+  campusId String
+  campus   Campus @relation(fields: [campusId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  riskEventId String    @unique
+  riskEvent   RiskEvent @relation(fields: [riskEventId], references: [id], onDelete: Cascade)
+
+  subjectId String?
+  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  assignedAssistantId String?
+  assignedAssistant   User?   @relation("SupportCaseAssignedAssistant", fields: [assignedAssistantId], references: [id], onDelete: SetNull)
+
+  assignedTeacherId String?
+  assignedTeacher   Teacher? @relation(fields: [assignedTeacherId], references: [id], onDelete: SetNull)
+
+  title       String
+  description String?
+
+  status   SupportCaseStatus   @default(OPEN)
+  priority SupportCasePriority @default(MEDIUM)
+
+  firstNoticeSentAt DateTime?
+  lastFollowUpAt    DateTime?
+  resolvedAt        DateTime?
+  closedAt          DateTime?
+
+  internalNote String?
+
+  createdById String?
+  createdBy   User?   @relation("SupportCaseCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  resolvedById String?
+  resolvedBy   User?   @relation("SupportCaseResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  notes             SupportCaseNote[]
+  activityLogs      SupportCaseActivityLog[]
+  circleOfCareGroup CircleOfCareGroup?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campusId])
+  @@index([studentId])
+  @@index([subjectId])
+  @@index([status])
+  @@index([priority])
+  @@index([assignedAssistantId])
+  @@index([assignedTeacherId])
+}
+
+model SupportCaseNote {
+  id String @id @default(cuid())
+
+  supportCaseId String
+  supportCase   SupportCase @relation(fields: [supportCaseId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?   @relation("SupportCaseNoteAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  note String
+
+  isInternal Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([supportCaseId])
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model SupportCaseActivityLog {
+  id String @id @default(cuid())
+
+  supportCaseId String
+  supportCase   SupportCase @relation(fields: [supportCaseId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation("SupportCaseActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  type SupportCaseActivityType
+
+  title       String
+  description String?
+  metadata    Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([supportCaseId])
+  @@index([actorId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model CircleOfCareGroup {
+  id String @id @default(cuid())
+
+  campusId String
+  campus   Campus @relation(fields: [campusId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  supportCaseId String      @unique
+  supportCase   SupportCase @relation(fields: [supportCaseId], references: [id], onDelete: Cascade)
+
+  conversationId String       @unique
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  reason String?
+
+  status CircleOfCareStatus @default(ACTIVE)
+
+  createdById String?
+  createdBy   User?   @relation("CircleOfCareCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campusId])
+  @@index([studentId])
+  @@index([status])
+  @@index([createdById])
+}
+
 model SupportRequest {
   id        String   @id @default(cuid())
   userId    String?
@@ -532,8 +845,16 @@ model Conversation {
   teacherId String?
   teacher   Teacher? @relation(fields: [teacherId], references: [id])
 
-  participants ConversationParticipant[]
-  messages     Message[]                 @relation("ConversationMessages")
+  participants      ConversationParticipant[]
+  messages          Message[]                 @relation("ConversationMessages")
+  circleOfCareGroup CircleOfCareGroup?
+
+  @@index([campusId])
+  @@index([systemType])
+  @@index([subjectId])
+  @@index([semesterId])
+  @@index([sectionId])
+  @@index([teacherId])
 }
 
 model ConversationParticipant {
@@ -659,6 +980,7 @@ enum ChannelType {
   SUBJECT
   SECTION
   TEACHER
+  CIRCLE_OF_CARE
 }
 
 enum TimetableEntryType {
@@ -671,4 +993,75 @@ enum TimetableEntryType {
   FREE
   EXAM
   EVENT
+}
+
+enum RiskRuleType {
+  CONSECUTIVE_ABSENCE
+  TOTAL_ABSENCE_IN_SUBJECT
+  LOW_ATTENDANCE_PERCENTAGE
+  GPA_RISK
+  VISA_RISK
+  MANUAL
+}
+
+enum RiskScopeType {
+  CAMPUS
+  SUBJECT
+  SEMESTER
+  SECTION
+  DEPARTMENT
+  STUDENT
+  INTERNATIONAL_STUDENT
+}
+
+enum RiskSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RiskEventStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  RESOLVED
+  DISMISSED
+}
+
+enum SupportCaseStatus {
+  OPEN
+  IN_REVIEW
+  CONTACTED_STUDENT
+  WAITING_FOR_RESPONSE
+  ESCALATED
+  RESOLVED
+  CLOSED
+}
+
+enum SupportCasePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SupportCaseActivityType {
+  CASE_CREATED
+  CASE_STATUS_CHANGED
+  CASE_PRIORITY_CHANGED
+  NOTE_ADDED
+  RISK_EVENT_LINKED
+  CIRCLE_CREATED
+  CONVERSATION_CREATED
+  PARTICIPANT_ADDED
+  NOTICE_SENT
+  CASE_RESOLVED
+  CASE_CLOSED
+}
+
+enum CircleOfCareStatus {
+  ACTIVE
+  PAUSED
+  RESOLVED
+  CLOSED
 }
