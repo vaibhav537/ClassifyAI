@@ -7,9 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "tsx prisma/seed.ts",
     "export": "next export"
   },
+  "prisma": {
+  "seed": "tsx prisma/seed.ts"
+},
   "dependencies": {
     "@aws-sdk/client-rekognition": "^3.895.0",
     "@cyntler/react-doc-viewer": "^1.17.1",
