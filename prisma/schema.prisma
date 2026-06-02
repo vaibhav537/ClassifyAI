@@ -244,6 +244,11 @@ model ClassSession {
 
   @@unique([teacherId, subjectId, sectionId, date])
   @@index([teacherId, weekday, semester], map: "idx_classsession_teacher_weekday_semester")
+  @@index([subjectId], map: "idx_classsession_subject")
+  @@index([campusId], map: "idx_classsession_campus")
+  @@index([date], map: "idx_classsession_date")
+  @@index([subjectId, date], map: "idx_classsession_subject_date")
+  @@index([semesterId, sectionId], map: "idx_classsession_semester_section")
 }
 
 model TimetableEntry {
@@ -316,6 +321,9 @@ model Attendance {
 
   @@unique([classSessionId, studentId], map: "uq_attendance_session_student")
   @@index([classSessionId], map: "idx_attendance_classsession")
+  @@index([studentId], map: "idx_attendance_student")
+  @@index([status], map: "idx_attendance_status")
+  @@index([studentId, status], map: "idx_attendance_student_status")
 }
 
 model AttendanceToken {
@@ -840,6 +848,13 @@ model Conversation {
   participants      ConversationParticipant[]
   messages          Message[]                 @relation("ConversationMessages")
   circleOfCareGroup CircleOfCareGroup?
+
+  @@index([campusId])
+  @@index([systemType])
+  @@index([subjectId])
+  @@index([semesterId])
+  @@index([sectionId])
+  @@index([teacherId])
 }
 
 model ConversationParticipant {
@@ -965,6 +980,7 @@ enum ChannelType {
   SUBJECT
   SECTION
   TEACHER
+  CIRCLE_OF_CARE
 }
 
 enum TimetableEntryType {
