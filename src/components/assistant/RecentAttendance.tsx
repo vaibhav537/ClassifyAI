@@ -106,7 +106,7 @@ const RecentAttendancePage = ({ expanded }: { expanded: boolean }) => {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="w-full overflow-y-auto pr-1 outline-none scrollbar-hide"
       style={{
-        maxHeight: expanded ? "30rem" : "12rem",
+        maxHeight: expanded ? "30rem" : "22rem",
       }}
     >
       <ul className="space-y-3 outline-none">

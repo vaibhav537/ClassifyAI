@@ -68,12 +68,12 @@ export async function PATCH(req: NextRequest) {
                 code: true,
               },
             },
-            semester: {
+            semesterRel: {
               select: {
                 name: true,
               },
             },
-            section: {
+            sectionRel: {
               select: {
                 name: true,
               },
@@ -115,10 +115,10 @@ export async function PATCH(req: NextRequest) {
           "Unknown Subject";
 
       const semesterName =
-        attendanceRecord.classSession?.semester?.name || "Unknown Semester";
+        attendanceRecord.classSession?.semesterRel?.name || "Unknown Semester";
 
       const sectionName =
-        attendanceRecord.classSession?.section?.name || "Unknown Section";
+        attendanceRecord.classSession?.sectionRel?.name || "Unknown Section";
 
       await logActivity(
         teacherProfile.user.id,

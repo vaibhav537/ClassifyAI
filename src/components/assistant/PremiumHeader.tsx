@@ -48,7 +48,7 @@ const PremiumHeader = ({
         },
         body: JSON.stringify({
           campusId: campus,
-          adminId: assistant,
+          assistantId: assistant,
         }),
       });
 

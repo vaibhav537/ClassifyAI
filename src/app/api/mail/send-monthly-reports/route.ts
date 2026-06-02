@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         { success: false, error: validation.error.flatten().fieldErrors },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const { campusId, assitantId } = validation.data;
@@ -31,30 +31,34 @@ export async function POST(req: NextRequest) {
     if (!assistantUser) {
       return NextResponse.json(
         { success: false, error: "Admin not authorized for this campus." },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     // 2. FETCH USERS: The query is now scoped to the provided campusId.
-    const proUsers = await prisma.user.findMany({
+    const proStudents = await prisma.student.findMany({
       where: {
-        campusId: campusId, // <-- This is the crucial multi-tenant filter
-        role: "STUDENT", // Ensure we are only emailing students
-        premiumExpiresAt: {
-          gt: new Date(),
+        user: {
+          campusId,
+          role: "STUDENT",
+          premiumExpiresAt: { gt: new Date() },
         },
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
 
-    if (proUsers.length === 0) {
+    if (proStudents.length === 0) {
       return NextResponse.json({
         success: true,
-        message: "No active premium users found for this campus.",
+        message: "No active premium students found for this campus.",
       });
     }
 
@@ -69,19 +73,23 @@ export async function POST(req: NextRequest) {
     });
 
     let reportsSent = 0;
-    for (const user of proUsers) {
+    for (const student of proStudents) {
       const fromDate = new Date();
       fromDate.setMonth(fromDate.getMonth() - 1);
 
-      // This query is now implicitly scoped because 'user.id' is from the campus-filtered list.
+      // This query is now implicitly scoped because 'student.id' is from the campus-filtered list.
       const attendance = await prisma.attendance.findMany({
         where: {
-          studentId: user.id, // This needs to be the Student Profile ID, not the User ID.
+          studentId: student.id,
           markedAt: { gte: fromDate },
         },
         include: {
           classSession: {
-            select: { subjectRel: { select: { name: true } } },
+            select: {
+              subjectRel: {
+                select: { name: true },
+              },
+            },
           },
         },
       });
@@ -99,9 +107,9 @@ export async function POST(req: NextRequest) {
 
       if (Object.keys(stats).length === 0) {
         await logActivity(
-          user.id,
-          user.name,
-          `No attendance data for ${user.name} - skipped monthly report`
+          student.user.id,
+          student.user.name,
+          `No attendance data for ${student.user.name} - skipped monthly report`,
         );
         continue;
       }
@@ -118,22 +126,25 @@ export async function POST(req: NextRequest) {
       try {
         await transporter.sendMail({
           from: `"ClassifyAI" <${process.env.SMTP_USER}>`,
-          to: user.email,
+          to: student.user.email,
           subject: `Your Monthly Attendance Report`,
           html,
         });
         reportsSent++;
         await logActivity(
-          user.id,
-          user.name,
-          `Sent monthly report to ${user.name}`
+          student.user.id,
+          student.user.name,
+          `Sent monthly report to ${student.user.name}`,
         );
       } catch (emailError) {
-        console.error(`Failed to send email to ${user.email}:`, emailError);
+        console.error(
+          `Failed to send email to ${student.user.email}:`,
+          emailError,
+        );
         await logActivity(
-          user.id,
-          user.name,
-          `Failed to send monthly report to ${user.name}`
+          student.user.id,
+          student.user.name,
+          `Failed to send monthly report to ${student.user.name}`,
         );
       }
     }

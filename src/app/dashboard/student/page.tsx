@@ -40,6 +40,7 @@ import DashboardLoader from "@/components/student/DashboardLoader";
 import NotificationBell from "@/components/student/NotificationBell";
 import {
   faBookOpen,
+  faBoxesStacked,
   faBullhorn,
   faCalendarDays,
   faMessage,
@@ -553,7 +554,7 @@ export default function StudentDashboard() {
                     link="/dashboard/student/announcements"
                   />
                   <SideButtons
-                    faIcon={faBookOpen}
+                    faIcon={faBoxesStacked}
                     title="View Resources"
                     link="/dashboard/student/resources"
                   />

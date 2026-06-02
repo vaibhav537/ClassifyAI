@@ -15,8 +15,15 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 // import "highlight.js/styles/github-dark.css";
 import { useRouter } from "next/navigation";
+import ClassifyNexusUnderDevelopment from "@/components/ui/ClassifyNexusUnderDevelopment";
 
 const Page = () => {
+  const isClassifyNexusUnderDev =
+    process.env.NEXT_PUBLIC_CLASSIFY_NEXUS_UNDER_DEV === "true";
+
+  if (isClassifyNexusUnderDev) {
+    return <ClassifyNexusUnderDevelopment />;
+  }
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Hi! I'm here to help with your doubts." },
   ]);
