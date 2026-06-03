@@ -1,5 +1,22 @@
 import { prisma } from "@/lib/prisma";
+import { evaluateAttendanceRiskAfterMarking } from "@/lib/risk";
 import { NextRequest, NextResponse } from "next/server";
+
+async function runRiskEvaluationSafely(input: {
+  attendanceId: string;
+  triggeredByUserId?: string | null;
+}) {
+  try {
+    const result = await evaluateAttendanceRiskAfterMarking({
+      attendanceId: input.attendanceId,
+      triggeredByUserId: input.triggeredByUserId ?? null,
+    });
+
+    console.log("[CircleOfCareRisk] Evaluation result:", result);
+  } catch (error) {
+    console.error("[CircleOfCareRisk] Evaluation failed:", error);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -88,6 +105,24 @@ export async function POST(request: NextRequest) {
       })),
       skipDuplicates: true,
     });
+
+    const absentAttendanceRecords = await prisma.attendance.findMany({
+      where: {
+        classSessionId: classSession.id,
+        studentId: {
+          in: absentStudentIds,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+    
+    for (const attendance of absentAttendanceRecords) {
+      await runRiskEvaluationSafely({
+        attendanceId: attendance.id,
+      });
+    }
 
     await prisma.classSession.update({
       where: { id: classSession.id },

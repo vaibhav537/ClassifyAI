@@ -197,25 +197,24 @@ export async function evaluateAttendanceRiskAfterMarking(
     const subjectName =
       attendance.classSession.subjectRel?.name ?? "selected subject";
 
-    const riskEvent = await prisma.riskEvent.create({
-      data: {
-        campusId: attendance.classSession.campusId,
-        studentId: attendance.studentId,
-        ruleId: rule.id,
-        subjectId: attendance.classSession.subjectId,
-        classSessionId: attendance.classSessionId,
-        type: rule.type,
-        severity: rule.severity,
-        title: result.title,
-        description:
-          result.description ||
-          `Student crossed attendance risk threshold in ${subjectName}.`,
-        currentValue: result.consecutiveAbsences,
-        threshold: result.threshold,
-        status: RiskEventStatus.ACTIVE,
-        acknowledgedById: triggeredByUserId ?? null,
-      },
-    });
+const riskEvent = await prisma.riskEvent.create({
+  data: {
+    campusId: attendance.classSession.campusId,
+    studentId: attendance.studentId,
+    ruleId: rule.id,
+    subjectId: attendance.classSession.subjectId,
+    classSessionId: attendance.classSessionId,
+    type: rule.type,
+    severity: rule.severity,
+    title: result.title,
+    description:
+      result.description ||
+      `Student crossed attendance risk threshold in ${subjectName}.`,
+    currentValue: result.consecutiveAbsences,
+    threshold: result.threshold,
+    status: RiskEventStatus.ACTIVE,
+  },
+});
 
     await refreshStudentRiskProfile({
       campusId: attendance.classSession.campusId,

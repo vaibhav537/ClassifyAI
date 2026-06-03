@@ -6,6 +6,24 @@ import {
   haversineDistance,
   logActivity,
 } from "@/lib/helper";
+import { evaluateAttendanceRiskAfterMarking } from "@/lib/risk";
+
+
+async function runRiskEvaluationSafely(input: {
+  attendanceId: string;
+  triggeredByUserId?: string | null;
+}) {
+  try {
+    const result = await evaluateAttendanceRiskAfterMarking({
+      attendanceId: input.attendanceId,
+      triggeredByUserId: input.triggeredByUserId ?? null,
+    });
+
+    console.log("[CircleOfCareRisk] Evaluation result:", result);
+  } catch (error) {
+    console.error("[CircleOfCareRisk] Evaluation failed:", error);
+  }
+}
 
 // --- CONFIGURATION ---
 const MAX_ATTENDANCE_PER_DAY = 1;

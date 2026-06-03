@@ -2,12 +2,29 @@ import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/helper";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { evaluateAttendanceRiskAfterMarking } from "@/lib/risk";
 
 const editAttendanceSchema = z.object({
   attendanceId: z.string().cuid(),
   teacherId: z.string().cuid(), // teacher userId
   newStatus: z.enum(["PRESENT", "ABSENT", "LATE", "PENDING"]),
 });
+
+async function runRiskEvaluationSafely(input: {
+  attendanceId: string;
+  triggeredByUserId?: string | null;
+}) {
+  try {
+    const result = await evaluateAttendanceRiskAfterMarking({
+      attendanceId: input.attendanceId,
+      triggeredByUserId: input.triggeredByUserId ?? null,
+    });
+
+    console.log("[CircleOfCareRisk] Evaluation result:", result);
+  } catch (error) {
+    console.error("[CircleOfCareRisk] Evaluation failed:", error);
+  }
+}
 
 export async function PATCH(req: NextRequest) {
   try {
@@ -98,6 +115,11 @@ export async function PATCH(req: NextRequest) {
     const updatedAttendance = await prisma.attendance.update({
       where: { id: attendanceId },
       data: { status: newStatus },
+    });
+
+    await runRiskEvaluationSafely({
+      attendanceId: updatedAttendance.id,
+      triggeredByUserId: teacherId,
     });
 
     try {
