@@ -5,6 +5,7 @@ import {
   SupportCaseStatus,
 } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
+import { createCircleOfCareForSupportCase } from "./circle-of-care";
 
 function mapRiskSeverityToCasePriority(severity: string): SupportCasePriority {
   switch (severity) {
@@ -106,7 +107,7 @@ export async function createSupportCaseForRiskEvent(input: {
 
   const subjectName = riskEvent.subject?.code
     ? `${riskEvent.subject.name} (${riskEvent.subject.code})`
-    : riskEvent.subject?.name ?? "Unknown Subject";
+    : (riskEvent.subject?.name ?? "Unknown Subject");
 
   const studentName = riskEvent.student.user.name ?? "Student";
 
@@ -159,9 +160,18 @@ export async function createSupportCaseForRiskEvent(input: {
     },
   });
 
+  const circleResult = await createCircleOfCareForSupportCase({
+    supportCaseId: supportCase.id,
+    actorId: actorId ?? null,
+  });
+
+  console.log("[CircleOfCareRisk] Circle group result:", circleResult);
+
   return {
     created: true,
     reason: "Support case created.",
     supportCaseId: supportCase.id,
+    circleOfCareGroupId: circleResult.circleOfCareGroupId,
+    conversationId: circleResult.conversationId,
   };
 }
