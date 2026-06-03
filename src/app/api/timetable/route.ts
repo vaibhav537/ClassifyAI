@@ -96,8 +96,8 @@ export async function GET(req: NextRequest) {
       endTime: entry.endTime,
       room: entry.room,
       subject: entry.subject,
-      section: entry.section.name,
-      semester: entry.semester.name,
+      section: entry.section?.name ?? null,
+      semester: entry.semester?.name ?? null,
     }));
 
     return NextResponse.json({ success: true, sessions: formattedEntries });

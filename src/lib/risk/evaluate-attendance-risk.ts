@@ -6,6 +6,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { checkConsecutiveAbsenceRisk } from "./consecutive-absence";
 import { refreshStudentRiskProfile } from "./risk-profile";
+import { createSupportCaseForRiskEvent } from "./support-case";
 
 type EvaluateAttendanceRiskAfterMarkingInput = {
   attendanceId: string;
@@ -17,10 +18,11 @@ type EvaluateAttendanceRiskResult = {
   reason?: string;
   riskEventCreated: boolean;
   riskEventId?: string;
+  supportCaseId?: string | null;
 };
 
 export async function evaluateAttendanceRiskAfterMarking(
-  input: EvaluateAttendanceRiskAfterMarkingInput
+  input: EvaluateAttendanceRiskAfterMarkingInput,
 ): Promise<EvaluateAttendanceRiskResult> {
   const { attendanceId, triggeredByUserId } = input;
 
@@ -197,24 +199,31 @@ export async function evaluateAttendanceRiskAfterMarking(
     const subjectName =
       attendance.classSession.subjectRel?.name ?? "selected subject";
 
-const riskEvent = await prisma.riskEvent.create({
-  data: {
-    campusId: attendance.classSession.campusId,
-    studentId: attendance.studentId,
-    ruleId: rule.id,
-    subjectId: attendance.classSession.subjectId,
-    classSessionId: attendance.classSessionId,
-    type: rule.type,
-    severity: rule.severity,
-    title: result.title,
-    description:
-      result.description ||
-      `Student crossed attendance risk threshold in ${subjectName}.`,
-    currentValue: result.consecutiveAbsences,
-    threshold: result.threshold,
-    status: RiskEventStatus.ACTIVE,
-  },
-});
+    const riskEvent = await prisma.riskEvent.create({
+      data: {
+        campusId: attendance.classSession.campusId,
+        studentId: attendance.studentId,
+        ruleId: rule.id,
+        subjectId: attendance.classSession.subjectId,
+        classSessionId: attendance.classSessionId,
+        type: rule.type,
+        severity: rule.severity,
+        title: result.title,
+        description:
+          result.description ||
+          `Student crossed attendance risk threshold in ${subjectName}.`,
+        currentValue: result.consecutiveAbsences,
+        threshold: result.threshold,
+        status: RiskEventStatus.ACTIVE,
+      },
+    });
+
+    const supportCaseResult = await createSupportCaseForRiskEvent({
+      riskEventId: riskEvent.id,
+      actorId: triggeredByUserId ?? null,
+    });
+
+    console.log("[CircleOfCareRisk] Support case result:", supportCaseResult);
 
     await refreshStudentRiskProfile({
       campusId: attendance.classSession.campusId,
@@ -225,6 +234,7 @@ const riskEvent = await prisma.riskEvent.create({
       skipped: false,
       riskEventCreated: true,
       riskEventId: riskEvent.id,
+      supportCaseId: supportCaseResult.supportCaseId,
     };
   }
 

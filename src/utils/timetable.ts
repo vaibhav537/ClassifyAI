@@ -3,7 +3,7 @@ import {
   TimetableEntryType,
   TimetableFormState,
   Weekday,
-} from "./types";
+} from "../lib/types";
 
 export const WEEKDAYS: Weekday[] = [
   "MONDAY",

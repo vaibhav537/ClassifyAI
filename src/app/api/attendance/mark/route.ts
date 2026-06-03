@@ -8,7 +8,6 @@ import {
 } from "@/lib/helper";
 import { evaluateAttendanceRiskAfterMarking } from "@/lib/risk";
 
-
 async function runRiskEvaluationSafely(input: {
   attendanceId: string;
   triggeredByUserId?: string | null;
@@ -35,7 +34,7 @@ export async function POST(req: NextRequest) {
     if (!token || !studentId) {
       return NextResponse.json(
         { message: "Missing token or student ID" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -55,13 +54,13 @@ export async function POST(req: NextRequest) {
     if (!tokenRecord) {
       return NextResponse.json(
         { message: "Invalid or expired token" },
-        { status: 404 }
+        { status: 404 },
       );
     }
     if (!studentUser || !studentUser.studentProfile) {
       return NextResponse.json(
         { message: "Student profile not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -69,13 +68,13 @@ export async function POST(req: NextRequest) {
     if (new Date(tokenRecord.expiresAt).getTime() <= now.getTime()) {
       return NextResponse.json(
         { message: "Token has expired" },
-        { status: 410 }
+        { status: 410 },
       );
     }
     if (tokenRecord.used) {
       return NextResponse.json(
         { message: "This QR code has already been used" },
-        { status: 410 }
+        { status: 410 },
       );
     }
 
@@ -83,7 +82,7 @@ export async function POST(req: NextRequest) {
     if (tokenRecord.studentId !== studentUser.studentProfile.id) {
       return NextResponse.json(
         { message: "This QR code is not valid for you." },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -92,35 +91,66 @@ export async function POST(req: NextRequest) {
     // =================================================================
     if (tokenRecord.mode === "OFFLINE") {
       if (!studentUser.campus) {
-        return NextResponse.json({ message: "Campus details not found for offline verification." }, { status: 404 });
+        return NextResponse.json(
+          { message: "Campus details not found for offline verification." },
+          { status: 404 },
+        );
       }
       const campus = studentUser.campus;
 
       // Layer 1: Geofence Check
       if (!location?.latitude || !location?.longitude) {
-        return NextResponse.json({ message: "Location data is required for offline attendance." }, { status: 400 });
+        return NextResponse.json(
+          { message: "Location data is required for offline attendance." },
+          { status: 400 },
+        );
       }
-      const distance = haversineDistance(tokenRecord.latitude!, tokenRecord.longitude!, location.latitude, location.longitude);
+      const distance = haversineDistance(
+        tokenRecord.latitude!,
+        tokenRecord.longitude!,
+        location.latitude,
+        location.longitude,
+      );
       if (distance > 50) {
-        return NextResponse.json({ message: `Geofence check failed. You are ~${Math.round(distance)}m away.` }, { status: 403 });
+        return NextResponse.json(
+          {
+            message: `Geofence check failed. You are ~${Math.round(distance)}m away.`,
+          },
+          { status: 403 },
+        );
       }
 
       // Layer 2 & 3: Network Verification
       if (wifiBssid) {
         if (!campus.wifiBssids.includes(wifiBssid)) {
-          return NextResponse.json({ message: "Wi-Fi check failed. Connect to an official campus network." }, { status: 403 });
+          return NextResponse.json(
+            {
+              message:
+                "Wi-Fi check failed. Connect to an official campus network.",
+            },
+            { status: 403 },
+          );
         }
       } else {
-        const ip = req.headers.get('x-forwarded-for') || 'unknown';
+        const ip = req.headers.get("x-forwarded-for") || "unknown";
         const ipCity = await getCityfromIp(ip);
         if (ipCity !== campus.city) {
-          return NextResponse.json({ message: `IP check failed. Connection appears to be from ${ipCity}.` }, { status: 403 });
+          return NextResponse.json(
+            {
+              message: `IP check failed. Connection appears to be from ${ipCity}.`,
+            },
+            { status: 403 },
+          );
         }
       }
     }
     // --- END OF SECURITY BLOCK ---
 
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
     const attendanceCount = await prisma.attendance.count({
       where: {
         studentId: studentUser.studentProfile.id,
@@ -131,14 +161,21 @@ export async function POST(req: NextRequest) {
 
     if (attendanceCount >= MAX_ATTENDANCE_PER_DAY) {
       return NextResponse.json(
-        { message: `Attendance limit of ${MAX_ATTENDANCE_PER_DAY} for this subject has been reached today.` },
-        { status: 409 }
+        {
+          message: `Attendance limit of ${MAX_ATTENDANCE_PER_DAY} for this subject has been reached today.`,
+        },
+        { status: 409 },
       );
     }
 
-    const teacherProfile = await prisma.teacher.findUnique({ where: { id: tokenRecord.professorId } });
+    const teacherProfile = await prisma.teacher.findUnique({
+      where: { id: tokenRecord.professorId },
+    });
     if (!teacherProfile) {
-      return NextResponse.json({ message: "Could not identify the teacher for this session" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Could not identify the teacher for this session" },
+        { status: 404 },
+      );
     }
 
     const classSession = await prisma.classSession.findFirst({
@@ -150,7 +187,10 @@ export async function POST(req: NextRequest) {
     });
 
     if (!classSession) {
-      return NextResponse.json({ message: "No active class session found for this attendance token." }, { status: 404 });
+      return NextResponse.json(
+        { message: "No active class session found for this attendance token." },
+        { status: 404 },
+      );
     }
 
     const attendance = await prisma.attendance.create({
@@ -165,13 +205,21 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await prisma.attendanceToken.update({ where: { token }, data: { used: true } });
+    await runRiskEvaluationSafely({
+      attendanceId: attendance.id,
+      triggeredByUserId: studentId,
+    });
+
+    await prisma.attendanceToken.update({
+      where: { token },
+      data: { used: true },
+    });
     await logActivity(
       studentId,
       studentUser.name,
-      `Marked attendance for ${tokenRecord.subject?.name}`
+      `Marked attendance for ${tokenRecord.subject?.name}`,
     );
-    
+
     return NextResponse.json(
       {
         message: "Attendance marked successfully!",
@@ -181,17 +229,19 @@ export async function POST(req: NextRequest) {
           markedAt: attendance.markedAt,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: unknown) {
     console.error("Error marking attendance:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
     return NextResponse.json(
       {
         message: "Internal Server Error",
-        error: process.env.NODE_ENV === "development" ? errorMessage : undefined,
+        error:
+          process.env.NODE_ENV === "development" ? errorMessage : undefined,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
