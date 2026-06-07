@@ -318,12 +318,12 @@ export async function PATCH(request: NextRequest) {
         };
 
         action = `Support case ${supportCase.title} resolved by ${actorName}.`;
-        
+
         await tx.supportCaseActivityLog.create({
           data: {
             supportCaseId: supportCase.id,
             actorId: actorId ?? null,
-            type: "CASE_RESOLVED",
+            type: SupportCaseActivityType.CASE_RESOLVED,
             title: "Support case resolved.",
             description: `Support case was resolved by ${actorName}.`,
             metadata: {
@@ -343,7 +343,7 @@ export async function PATCH(request: NextRequest) {
           },
         });
       }
-      if (updateData.status === SupportCaseStatus.CLOSED) {
+      if (status === SupportCaseStatus.CLOSED) {
         updateData = {
           ...updateData,
           closedAt: timeNow,
@@ -356,7 +356,7 @@ export async function PATCH(request: NextRequest) {
           data: {
             supportCaseId: supportCase.id,
             actorId: actorId ?? null,
-            type: "CASE_CLOSED",
+            type: SupportCaseActivityType.CASE_CLOSED,
             title: "Support case closed.",
             description: `Support case was closed by ${actorName}.`,
             metadata: {
@@ -387,7 +387,7 @@ export async function PATCH(request: NextRequest) {
           data: {
             supportCaseId: supportCase.id,
             actorId: actorId ?? null,
-            type: "NOTE_ADDED",
+            type: SupportCaseActivityType.NOTE_ADDED,
             title: "Support note added",
             description: `${actorName} added a support note.`,
             metadata: {
@@ -398,10 +398,10 @@ export async function PATCH(request: NextRequest) {
         });
       }
     });
-
-    const campusId = supportCase.campusId;
-    const studentId = supportCase.studentId;
-    await refreshStudentRiskProfile({ campusId, studentId });
+    await refreshStudentRiskProfile({
+      campusId: supportCase.campusId,
+      studentId: supportCase.studentId,
+    });
 
     if (actorId) {
       await logActivity(actorId, actorName, action);
