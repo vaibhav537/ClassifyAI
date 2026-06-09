@@ -1,6 +1,6 @@
 "use client";
 
-import { SupportCaseDrawerProps } from "@/lib/types";
+import { SupportCaseDetail, SupportCaseDrawerProps } from "@/lib/types";
 import { useEffect, useState } from "react";
 import {
   Activity,
@@ -12,8 +12,6 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-
-type SupportCaseDetail = any;
 
 function formatDate(value?: string | Date | null) {
   if (!value) return "N/A";
@@ -42,37 +40,80 @@ const SupportCaseDrawer = ({
   onClose,
   open,
 }: SupportCaseDrawerProps) => {
+  const [noteText, setNoteText] = useState<string>("");
+  const [isInternalNote, setIsInternalNote] = useState<boolean>(true);
+  const [isAddingNote, setIsAddingNote] = useState<boolean>(false);
   const [caseDetail, setCaseDetail] = useState<SupportCaseDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [actionError, setActionError] = useState("");
   const [error, setError] = useState("");
+
+  const fetchCaseDetail = async () => {
+    try {
+      setCaseDetail(null);
+      setIsLoading(true);
+      setError("");
+
+      const res = await fetch(`/api/support/cases/detail?caseId=${caseId}`);
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        throw new Error(
+          result.error || result.message || "Failed to load case detail",
+        );
+      }
+
+      setCaseDetail(result.data);
+    } catch (error) {
+      console.error(error);
+      setError("Unable to load support case detail.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!caseId || !noteText.trim()) return;
+
+    try {
+      setIsAddingNote(true);
+      setActionError("");
+
+      const actorId = localStorage.getItem("UserID");
+
+      const res = await fetch("/api/support/cases/notes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          caseId,
+          actorId,
+          note: noteText.trim(),
+          isInternalNote,
+        }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        throw new Error(result.message || result.error || "Failed to add note");
+      }
+
+      setNoteText("");
+
+      // refresh drawer detail after note add
+      await fetchCaseDetail();
+    } catch (error) {
+      console.error(error);
+      setActionError("Unable to add support note.");
+    } finally {
+      setIsAddingNote(false);
+    }
+  };
 
   useEffect(() => {
     if (!open || !caseId) return;
-
-    const fetchCaseDetail = async () => {
-      try {
-        setCaseDetail(null);
-        setIsLoading(true);
-        setError("");
-
-        const res = await fetch(`/api/support/cases/detail?caseId=${caseId}`);
-        const result = await res.json();
-
-        if (!res.ok || !result.success) {
-          throw new Error(
-            result.error || result.message || "Failed to load case detail",
-          );
-        }
-
-        setCaseDetail(result.data);
-      } catch (error) {
-        console.error(error);
-        setError("Unable to load support case detail.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchCaseDetail();
   }, [open, caseId]);
 
@@ -281,7 +322,8 @@ const SupportCaseDrawer = ({
                     </div>
 
                     <p className="mt-3 text-xs text-slate-600">
-                      Detected at: {formatDate(caseDetail.riskEvent?.detectedAt)}
+                      Detected at:{" "}
+                      {formatDate(caseDetail.riskEvent?.detectedAt)}
                     </p>
                   </div>
                 </section>
@@ -400,6 +442,26 @@ const SupportCaseDrawer = ({
                       </div>
 
                       <div>
+                        <div className="mb-3 space-y-3">
+                          <textarea
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            placeholder="Write a follow-up note..."
+                            className="min-h-24 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-300/40"
+                          />
+
+                          <label className="flex items-center gap-2 text-xs text-slate-400">
+                            <input
+                              type="checkbox"
+                              checked={isInternalNote}
+                              onChange={(e) =>
+                                setIsInternalNote(e.target.checked)
+                              }
+                              className="h-4 w-4"
+                            />
+                            Internal support note
+                          </label>
+                        </div>
                         <h3 className="text-base font-extrabold text-white">
                           Notes
                         </h3>

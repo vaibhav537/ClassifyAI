@@ -678,3 +678,4 @@ export type SupportCaseDrawerProps = {
   onClose: () => void;
 };
 
+export type SupportCaseDetail = any;
