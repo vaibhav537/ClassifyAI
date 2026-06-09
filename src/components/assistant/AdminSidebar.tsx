@@ -12,7 +12,9 @@ import {
   faArrowRightFromBracket,
   faChartSimple,
   faBullhorn,
+  faHandshakeAngle,
 } from "@fortawesome/free-solid-svg-icons";
+import { icon } from "@fortawesome/fontawesome-svg-core";
 
 // --- NAVIGATION LINKS ---
 const links = [
@@ -30,6 +32,11 @@ const links = [
     label: "Announcements",
   },
   { href: "/dashboard/assistant/settings", icon: faGear, label: "Settings" },
+  {
+    href: "/dashboard/assistant/support-center",
+    icon: faHandshakeAngle,
+    label: "Support Center",
+  },
   {
     href: "/dashboard/assistant/logout",
     icon: faArrowRightFromBracket,
@@ -95,7 +102,9 @@ const AssistantSidebar = () => {
                 >
                   <span
                     className={`pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-400/5 transition duration-300 ${
-                      isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                      isActive
+                        ? "opacity-100"
+                        : "opacity-0 group-hover:opacity-100"
                     }`}
                   />
 

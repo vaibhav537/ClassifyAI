@@ -80,7 +80,7 @@ export default function AdminLayout({
 
                 <div className="relative z-10 flex items-center justify-between gap-4">
                   <div>
-                    <span className="inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-violet-200">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[9px] font-extrabold uppercase tracking-[0.18em] text-violet-200">
                       AI Desk
                     </span>
                     <p className="mt-2 text-sm font-extrabold text-white">

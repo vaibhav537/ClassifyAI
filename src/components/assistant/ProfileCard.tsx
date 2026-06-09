@@ -22,7 +22,7 @@ const ProfileCard = () => {
             alt="App Logo"
             width={44}
             height={44}
-            className="h-7 w-auto invert lg:h-8"
+            className="h-7 w-auto lg:h-8"
           />
         </div>
 

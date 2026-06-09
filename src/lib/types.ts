@@ -616,3 +616,65 @@ export type StudentTimetableEntry = {
     name: string;
   } | null;
 };
+
+export type SupportStats = {
+  openCases: number;
+  highPriorityCases: number;
+  escalatedCases: number;
+  resolvedThisWeek: number;
+  atRiskStudents: number;
+};
+
+export type SupportStateProps = {
+  stats: SupportStats;
+};
+
+export type SupportCaseRow = {
+  id: string;
+  studentName: string;
+  rollNumber: string;
+  subject: string;
+  risk: string;
+  priority: string;
+  status: string;
+  lastFollowUp: string;
+  conversationId: string;
+};
+
+
+export type SupportCaseRowProps = {
+  cases: SupportCaseRow[];
+  onViewCase: (caseId: string) => void;
+};
+
+export type RiskEvent = {
+  id: string;
+  studentName: string;
+  subject: string;
+  severity: string;
+  title: string;
+  time: string;
+};
+
+export type RiskEventProps = {
+  events: RiskEvent[];
+};
+
+export type SupportActivity = {
+  id: string;
+  title: string;
+  caseTitle: string;
+  actor: string;
+  time: string;
+};
+
+export type SupportActivityProps = {
+  activities: SupportActivity[];
+};
+
+export type SupportCaseDrawerProps = {
+  caseId: string | null;
+  open: boolean;
+  onClose: () => void;
+};
+
