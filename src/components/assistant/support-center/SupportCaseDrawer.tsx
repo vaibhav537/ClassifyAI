@@ -1,10 +1,12 @@
 "use client";
 
 import { SupportCaseDetail, SupportCaseDrawerProps } from "@/lib/types";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Activity,
+  AlertCircle,
   HeartHandshake,
+  Loader2,
   MessageCircle,
   NotebookPen,
   PlusCircle,
@@ -35,6 +37,95 @@ function getSubjectName(caseDetail: SupportCaseDetail) {
   return caseDetail?.subject?.name || "Unknown Subject";
 }
 
+const InfoCard = ({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: React.ReactNode;
+  tone?: "default" | "violet" | "amber" | "red" | "emerald";
+}) => {
+  const toneClass =
+    tone === "violet"
+      ? "text-violet-200"
+      : tone === "amber"
+        ? "text-amber-200"
+        : tone === "red"
+          ? "text-red-200"
+          : tone === "emerald"
+            ? "text-emerald-200"
+            : "text-slate-200";
+
+  return (
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+      <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </p>
+      <p className={`mt-1 truncate text-sm font-extrabold ${toneClass}`}>
+        {value}
+      </p>
+    </div>
+  );
+};
+
+const SectionCard = ({
+  icon,
+  title,
+  subtitle,
+  children,
+  glow = "violet",
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+  glow?: "violet" | "red" | "emerald" | "amber";
+}) => {
+  const iconTone =
+    glow === "red"
+      ? "border-red-300/20 bg-red-500/10"
+      : glow === "emerald"
+        ? "border-emerald-300/20 bg-emerald-500/10"
+        : glow === "amber"
+          ? "border-amber-300/20 bg-amber-500/10"
+          : "border-violet-300/20 bg-violet-500/10";
+
+  const gradient =
+    glow === "red"
+      ? "from-red-500/8 via-transparent to-violet-500/8"
+      : glow === "emerald"
+        ? "from-emerald-500/8 via-transparent to-violet-500/8"
+        : glow === "amber"
+          ? "from-amber-500/8 via-transparent to-violet-500/8"
+          : "from-violet-500/10 via-transparent to-cyan-400/5";
+
+  return (
+    <section className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-5 shadow-xl shadow-black/15">
+      <div
+        className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${gradient}`}
+      />
+
+      <div className="relative z-10">
+        <div className="mb-4 flex items-center gap-3">
+          <div
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${iconTone}`}
+          >
+            {icon}
+          </div>
+
+          <div className="min-w-0">
+            <h3 className="text-base font-extrabold text-white">{title}</h3>
+            <p className="text-xs leading-5 text-slate-500">{subtitle}</p>
+          </div>
+        </div>
+
+        {children}
+      </div>
+    </section>
+  );
+};
+
 const SupportCaseDrawer = ({
   caseId,
   onClose,
@@ -46,31 +137,42 @@ const SupportCaseDrawer = ({
   const [caseDetail, setCaseDetail] = useState<SupportCaseDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [actionSuccess, setActionSuccess] = useState("");
   const [error, setError] = useState("");
 
-  const fetchCaseDetail = async () => {
-    try {
-      setCaseDetail(null);
-      setIsLoading(true);
-      setError("");
+  const fetchCaseDetail = useCallback(
+    async (silent = false) => {
+      if (!caseId) return;
 
-      const res = await fetch(`/api/support/cases/detail?caseId=${caseId}`);
-      const result = await res.json();
+      try {
+        if (!silent) {
+          setCaseDetail(null);
+          setIsLoading(true);
+        }
 
-      if (!res.ok || !result.success) {
-        throw new Error(
-          result.error || result.message || "Failed to load case detail",
-        );
+        setError("");
+
+        const res = await fetch(`/api/support/cases/detail?caseId=${caseId}`);
+        const result = await res.json();
+
+        if (!res.ok || !result.success) {
+          throw new Error(
+            result.error || result.message || "Failed to load case detail",
+          );
+        }
+
+        setCaseDetail(result.data);
+      } catch (error) {
+        console.error(error);
+        setError("Unable to load support case detail.");
+      } finally {
+        if (!silent) {
+          setIsLoading(false);
+        }
       }
-
-      setCaseDetail(result.data);
-    } catch (error) {
-      console.error(error);
-      setError("Unable to load support case detail.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [caseId],
+  );
 
   const handleAddNote = async () => {
     if (!caseId || !noteText.trim()) return;
@@ -78,8 +180,13 @@ const SupportCaseDrawer = ({
     try {
       setIsAddingNote(true);
       setActionError("");
+      setActionSuccess("");
 
-      const actorId = localStorage.getItem("UserID");
+      const actorId =
+        localStorage.getItem("UserID") ||
+        localStorage.getItem("AssistantID") ||
+        localStorage.getItem("assistantId") ||
+        localStorage.getItem("userId");
 
       const res = await fetch("/api/support/cases/notes", {
         method: "POST",
@@ -88,7 +195,7 @@ const SupportCaseDrawer = ({
         },
         body: JSON.stringify({
           caseId,
-          actorId,
+          actorId: actorId || null,
           note: noteText.trim(),
           isInternalNote,
         }),
@@ -101,9 +208,9 @@ const SupportCaseDrawer = ({
       }
 
       setNoteText("");
+      setActionSuccess("Support note added successfully.");
 
-      // refresh drawer detail after note add
-      await fetchCaseDetail();
+      await fetchCaseDetail(true);
     } catch (error) {
       console.error(error);
       setActionError("Unable to add support note.");
@@ -114,8 +221,14 @@ const SupportCaseDrawer = ({
 
   useEffect(() => {
     if (!open || !caseId) return;
+
+    setNoteText("");
+    setActionError("");
+    setActionSuccess("");
+    setIsInternalNote(true);
+
     fetchCaseDetail();
-  }, [open, caseId]);
+  }, [open, caseId, fetchCaseDetail]);
 
   if (!open) return null;
 
@@ -130,411 +243,355 @@ const SupportCaseDrawer = ({
         className="absolute inset-0 cursor-default"
       />
 
-      <aside className="relative z-10 h-full w-full max-w-xl overflow-hidden border-l border-white/10 bg-[#14141B]/95 text-white shadow-2xl shadow-black/60 backdrop-blur-2xl">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/16 via-fuchsia-500/7 to-amber-400/6" />
+      <aside className="relative z-10 h-full w-full max-w-2xl overflow-hidden border-l border-white/10 bg-[#14141B]/95 text-white shadow-2xl shadow-black/60 backdrop-blur-2xl">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/16 via-fuchsia-500/7 to-cyan-400/6" />
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-500/15 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-amber-400/8 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-cyan-400/8 blur-3xl" />
 
         <div className="relative z-10 flex h-full flex-col">
-          <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-5 sm:px-6">
-            <div className="min-w-0">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-violet-200">
-                <HeartHandshake className="h-3.5 w-3.5" />
-                Case Detail
+          <div className="shrink-0 border-b border-white/10 bg-[#14141B]/85 px-5 py-5 backdrop-blur-2xl sm:px-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-violet-200">
+                  <HeartHandshake className="h-3.5 w-3.5" />
+                  Circle of Care Detail
+                </div>
+
+                <h2 className="text-2xl font-extrabold tracking-tight text-white">
+                  Support Case Overview
+                </h2>
+
+                <p className="mt-2 max-w-md truncate text-sm leading-6 text-slate-500">
+                  Case ID:{" "}
+                  <span className="font-bold text-violet-200">
+                    {caseId || "N/A"}
+                  </span>
+                </p>
               </div>
 
-              <h2 className="text-2xl font-extrabold tracking-tight text-white">
-                Support Case Overview
-              </h2>
-
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                Case ID:{" "}
-                <span className="font-bold text-violet-200">
-                  {caseId || "N/A"}
-                </span>
-              </p>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-red-300/20 bg-red-500/10 text-red-200 transition hover:bg-red-500/20"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-red-300/20 bg-red-500/10 text-red-200 transition hover:bg-red-500/20"
-            >
-              <X className="h-5 w-5" />
-            </button>
           </div>
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5 scrollbar-hide sm:px-6">
             {isLoading && (
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 text-sm text-zinc-400">
-                Loading case details...
+              <div className="grid min-h-[320px] place-items-center rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-6 text-center">
+                <div>
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10">
+                    <Loader2 className="h-6 w-6 animate-spin text-violet-300" />
+                  </div>
+                  <p className="mt-4 text-sm font-extrabold text-white">
+                    Loading case details...
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    Fetching student, risk event and Circle of Care data.
+                  </p>
+                </div>
               </div>
             )}
 
             {error && (
-              <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-300">
-                {error}
+              <div className="rounded-[1.75rem] border border-red-300/20 bg-red-500/10 p-5">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
+                  <div>
+                    <p className="text-sm font-extrabold text-red-200">
+                      Unable to load case
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-red-100/70">
+                      {error}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
             {!isLoading && !error && !caseDetail && (
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 text-sm text-zinc-400">
+              <div className="rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-5 text-sm text-slate-500">
                 No case details found.
               </div>
             )}
 
             {!isLoading && !error && caseDetail && (
               <>
-                <section className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-5">
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-amber-400/5" />
-
-                  <div className="relative z-10">
-                    <div className="mb-4 flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10">
-                        <UserRound className="h-5 w-5 text-violet-200" />
-                      </div>
-
-                      <div>
-                        <h3 className="text-base font-extrabold text-white">
-                          Student & Case Summary
-                        </h3>
-                        <p className="text-xs text-slate-500">
-                          Profile, case status and subject context
-                        </p>
-                      </div>
+                <SectionCard
+                  icon={<UserRound className="h-5 w-5 text-violet-200" />}
+                  title="Student & Case Summary"
+                  subtitle="Profile, case status and subject context"
+                >
+                  <div className="space-y-4">
+                    <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-4">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                        Student
+                      </p>
+                      <p className="mt-2 text-lg font-extrabold text-white">
+                        {getStudentName(caseDetail)}
+                      </p>
+                      <p className="mt-1 break-words text-xs leading-5 text-slate-500">
+                        {caseDetail.student?.user?.email || "No email found"}
+                      </p>
                     </div>
 
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-slate-500">
-                          Student
-                        </p>
-                        <p className="mt-1 text-lg font-extrabold text-white">
-                          {getStudentName(caseDetail)}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {caseDetail.student?.user?.email || "No email found"}
-                        </p>
-                      </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <InfoCard
+                        label="Roll No"
+                        value={caseDetail.student?.rollNumber || "N/A"}
+                      />
+                      <InfoCard
+                        label="Subject"
+                        value={getSubjectName(caseDetail)}
+                      />
+                      <InfoCard
+                        label="Priority"
+                        value={caseDetail.priority || "N/A"}
+                        tone="amber"
+                      />
+                      <InfoCard
+                        label="Status"
+                        value={statusText(caseDetail.status)}
+                        tone="violet"
+                      />
+                    </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-                          <p className="text-xs text-slate-500">Roll No</p>
-                          <p className="mt-1 font-semibold text-slate-200">
-                            {caseDetail.student?.rollNumber || "N/A"}
-                          </p>
-                        </div>
-
-                        <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-                          <p className="text-xs text-slate-500">Subject</p>
-                          <p className="mt-1 font-semibold text-slate-200">
-                            {getSubjectName(caseDetail)}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-                          <p className="text-xs text-slate-500">Priority</p>
-                          <p className="mt-1 font-semibold text-amber-200">
-                            {caseDetail.priority || "N/A"}
-                          </p>
-                        </div>
-
-                        <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-                          <p className="text-xs text-slate-500">Status</p>
-                          <p className="mt-1 font-semibold text-violet-200">
-                            {statusText(caseDetail.status)}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-                        <p className="text-xs text-slate-500">Case Title</p>
-                        <p className="mt-1 text-sm font-semibold leading-6 text-slate-200">
-                          {caseDetail.title || "Support case"}
-                        </p>
-                      </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                        Case Title
+                      </p>
+                      <p className="mt-1 text-sm font-semibold leading-6 text-slate-200">
+                        {caseDetail.title || "Support case"}
+                      </p>
                     </div>
                   </div>
-                </section>
+                </SectionCard>
 
-                <section className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-5">
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-red-500/8 via-transparent to-amber-400/5" />
+                <SectionCard
+                  icon={<ShieldAlert className="h-5 w-5 text-red-300" />}
+                  title="Risk Event"
+                  subtitle="Attendance signal that created this support case"
+                  glow="red"
+                >
+                  <div className="space-y-4">
+                    <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-4">
+                      <p className="text-sm font-extrabold text-white">
+                        {caseDetail.riskEvent?.title ||
+                          caseDetail.title ||
+                          "Attendance risk detected"}
+                      </p>
 
-                  <div className="relative z-10">
-                    <div className="mb-4 flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-red-300/20 bg-red-500/10">
-                        <ShieldAlert className="h-5 w-5 text-red-300" />
-                      </div>
-
-                      <div>
-                        <h3 className="text-base font-extrabold text-white">
-                          Risk Event
-                        </h3>
-                        <p className="text-xs text-slate-500">
-                          Attendance signal that created this support case
-                        </p>
-                      </div>
+                      <p className="mt-2 text-sm leading-6 text-slate-400">
+                        {caseDetail.riskEvent?.description ||
+                          "No detailed risk description available."}
+                      </p>
                     </div>
 
-                    <p className="text-sm font-bold text-white">
-                      {caseDetail.riskEvent?.title ||
-                        caseDetail.title ||
-                        "Attendance risk detected"}
-                    </p>
-
-                    <p className="mt-2 text-sm leading-6 text-slate-400">
-                      {caseDetail.riskEvent?.description ||
-                        "No detailed risk description available."}
-                    </p>
-
-                    <div className="mt-4 grid grid-cols-2 gap-3">
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-                        <p className="text-xs text-slate-500">Severity</p>
-                        <p className="mt-1 font-semibold text-red-200">
-                          {caseDetail.riskEvent?.severity || "N/A"}
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-                        <p className="text-xs text-slate-500">Risk Status</p>
-                        <p className="mt-1 font-semibold text-slate-200">
-                          {statusText(caseDetail.riskEvent?.status)}
-                        </p>
-                      </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <InfoCard
+                        label="Severity"
+                        value={caseDetail.riskEvent?.severity || "N/A"}
+                        tone="red"
+                      />
+                      <InfoCard
+                        label="Risk Status"
+                        value={statusText(caseDetail.riskEvent?.status)}
+                      />
+                      <InfoCard
+                        label="Value"
+                        value={caseDetail.riskEvent?.currentValue ?? "N/A"}
+                      />
+                      <InfoCard
+                        label="Threshold"
+                        value={caseDetail.riskEvent?.threshold ?? "N/A"}
+                      />
                     </div>
 
-                    <div className="mt-3 grid grid-cols-2 gap-3">
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-                        <p className="text-xs text-slate-500">Value</p>
-                        <p className="mt-1 font-semibold text-slate-200">
-                          {caseDetail.riskEvent?.currentValue ?? "N/A"}
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-                        <p className="text-xs text-slate-500">Threshold</p>
-                        <p className="mt-1 font-semibold text-slate-200">
-                          {caseDetail.riskEvent?.threshold ?? "N/A"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <p className="mt-3 text-xs text-slate-600">
+                    <p className="text-xs leading-5 text-slate-600">
                       Detected at:{" "}
-                      {formatDate(caseDetail.riskEvent?.detectedAt)}
+                      <span className="font-bold text-slate-500">
+                        {formatDate(caseDetail.riskEvent?.detectedAt)}
+                      </span>
                     </p>
                   </div>
-                </section>
+                </SectionCard>
 
-                <section className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-5">
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/8 via-transparent to-violet-500/8" />
-
-                  <div className="relative z-10">
-                    <div className="mb-4 flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-500/10">
-                        <HeartHandshake className="h-5 w-5 text-emerald-300" />
+                <SectionCard
+                  icon={<HeartHandshake className="h-5 w-5 text-emerald-300" />}
+                  title="Circle of Care"
+                  subtitle="Support group created for intervention workflow"
+                  glow="emerald"
+                >
+                  {caseDetail.circleOfCareGroup ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <InfoCard
+                          label="Group Status"
+                          value={statusText(
+                            caseDetail.circleOfCareGroup.status,
+                          )}
+                          tone="emerald"
+                        />
+                        <InfoCard
+                          label="Conversation"
+                          value={conversationId || "N/A"}
+                        />
                       </div>
 
-                      <div>
-                        <h3 className="text-base font-extrabold text-white">
-                          Circle of Care
-                        </h3>
-                        <p className="text-xs text-slate-500">
-                          Support group created for intervention workflow
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                        <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                          Reason
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-300">
+                          {caseDetail.circleOfCareGroup.reason ||
+                            "No reason available."}
                         </p>
                       </div>
                     </div>
+                  ) : (
+                    <p className="rounded-2xl border border-dashed border-white/10 bg-white/[0.035] p-4 text-sm text-slate-500">
+                      No Circle of Care group linked yet.
+                    </p>
+                  )}
+                </SectionCard>
 
-                    {caseDetail.circleOfCareGroup ? (
-                      <div className="space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-                            <p className="text-xs text-slate-500">
-                              Group Status
-                            </p>
-                            <p className="mt-1 font-semibold text-emerald-200">
-                              {statusText(caseDetail.circleOfCareGroup.status)}
-                            </p>
-                          </div>
-
-                          <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-                            <p className="text-xs text-slate-500">
-                              Conversation
-                            </p>
-                            <p className="mt-1 truncate font-semibold text-slate-200">
-                              {conversationId || "N/A"}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-                          <p className="text-xs text-slate-500">Reason</p>
-                          <p className="mt-1 text-sm leading-6 text-slate-300">
-                            {caseDetail.circleOfCareGroup.reason ||
-                              "No reason available."}
+                <SectionCard
+                  icon={<Activity className="h-5 w-5 text-emerald-300" />}
+                  title="Timeline"
+                  subtitle="Follow-up actions and case progress"
+                  glow="emerald"
+                >
+                  <div className="space-y-3">
+                    {caseDetail.activityLogs?.length ? (
+                      caseDetail.activityLogs.map((log: any) => (
+                        <div
+                          key={log.id}
+                          className="rounded-2xl border border-white/10 bg-white/[0.035] p-4"
+                        >
+                          <p className="text-sm font-extrabold text-white">
+                            {log.title || "Activity"}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {log.actor?.name || "SYSTEM"} ·{" "}
+                            {formatDate(log.createdAt)}
+                          </p>
+                          <p className="mt-2 text-sm leading-6 text-slate-400">
+                            {log.description || "No description available."}
                           </p>
                         </div>
-                      </div>
+                      ))
                     ) : (
                       <p className="rounded-2xl border border-dashed border-white/10 bg-white/[0.035] p-4 text-sm text-slate-500">
-                        No Circle of Care group linked yet.
+                        No activity logs yet.
                       </p>
                     )}
                   </div>
-                </section>
+                </SectionCard>
 
-                <section className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-5">
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/8 via-transparent to-violet-500/8" />
+                <SectionCard
+                  icon={<NotebookPen className="h-5 w-5 text-amber-300" />}
+                  title="Notes"
+                  subtitle="Support comments and follow-up notes"
+                  glow="amber"
+                >
+                  <div className="mb-4 space-y-3">
+                    <textarea
+                      value={noteText}
+                      onChange={(e) => setNoteText(e.target.value)}
+                      placeholder="Write a follow-up note..."
+                      disabled={isAddingNote || isLoading}
+                      className="min-h-28 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
 
-                  <div className="relative z-10">
-                    <div className="mb-4 flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-500/10">
-                        <Activity className="h-5 w-5 text-emerald-300" />
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-400">
+                      <input
+                        type="checkbox"
+                        checked={isInternalNote}
+                        disabled={isAddingNote || isLoading}
+                        onChange={(e) => setIsInternalNote(e.target.checked)}
+                        className="h-4 w-4 cursor-pointer rounded border-white/20 bg-[#08080C] text-violet-500 focus:ring-violet-500 disabled:cursor-not-allowed"
+                      />
+                      Internal support note
+                    </label>
+
+                    {actionError && (
+                      <div className="rounded-2xl border border-red-300/20 bg-red-500/10 p-3 text-xs font-bold text-red-300">
+                        {actionError}
                       </div>
+                    )}
 
-                      <div>
-                        <h3 className="text-base font-extrabold text-white">
-                          Timeline
-                        </h3>
-                        <p className="text-xs text-slate-500">
-                          Follow-up actions and case progress
-                        </p>
+                    {actionSuccess && (
+                      <div className="rounded-2xl border border-emerald-300/20 bg-emerald-500/10 p-3 text-xs font-bold text-emerald-300">
+                        {actionSuccess}
                       </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      {caseDetail.activityLogs?.length ? (
-                        caseDetail.activityLogs.map((log: any) => (
-                          <div
-                            key={log.id}
-                            className="rounded-2xl border border-white/10 bg-white/[0.035] p-4"
-                          >
-                            <p className="text-sm font-bold text-white">
-                              {log.title || "Activity"}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              {log.actor?.name || "SYSTEM"} ·{" "}
-                              {formatDate(log.createdAt)}
-                            </p>
-                            <p className="mt-2 text-sm leading-6 text-slate-400">
-                              {log.description || "No description available."}
-                            </p>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="rounded-2xl border border-dashed border-white/10 bg-white/[0.035] p-4 text-sm text-slate-500">
-                          No activity logs yet.
-                        </p>
-                      )}
-                    </div>
+                    )}
                   </div>
-                </section>
 
-                <section className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-5">
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-500/8 via-transparent to-violet-500/8" />
-
-                  <div className="relative z-10">
-                    <div className="mb-4 flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-300/20 bg-amber-500/10">
-                        <NotebookPen className="h-5 w-5 text-amber-300" />
-                      </div>
-
-                      <div>
-                        <div className="mb-3 space-y-3">
-                          <textarea
-                            value={noteText}
-                            onChange={(e) => setNoteText(e.target.value)}
-                            placeholder="Write a follow-up note..."
-                            className="min-h-24 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-300/40"
-                          />
-
-                          <label className="flex items-center gap-2 text-xs text-slate-400">
-                            <input
-                              type="checkbox"
-                              checked={isInternalNote}
-                              onChange={(e) =>
-                                setIsInternalNote(e.target.checked)
-                              }
-                              className="h-4 w-4"
-                            />
-                            Internal support note
-                          </label>
+                  <div className="space-y-3">
+                    {caseDetail.notes?.length ? (
+                      caseDetail.notes.map((note: any) => (
+                        <div
+                          key={note.id}
+                          className="rounded-2xl border border-white/10 bg-white/[0.035] p-4"
+                        >
+                          <p className="text-sm leading-6 text-slate-300">
+                            {note.note}
+                          </p>
+                          <p className="mt-2 text-xs text-slate-500">
+                            {note.author?.name || "SYSTEM"} ·{" "}
+                            {formatDate(note.createdAt)}
+                          </p>
+                          {note.isInternal && (
+                            <span className="mt-3 inline-flex rounded-full border border-amber-300/20 bg-amber-500/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-amber-200">
+                              Internal
+                            </span>
+                          )}
                         </div>
-                        <h3 className="text-base font-extrabold text-white">
-                          Notes
-                        </h3>
-                        <p className="text-xs text-slate-500">
-                          Support comments and follow-up notes
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      {caseDetail.notes?.length ? (
-                        caseDetail.notes.map((note: any) => (
-                          <div
-                            key={note.id}
-                            className="rounded-2xl border border-white/10 bg-white/[0.035] p-4"
-                          >
-                            <p className="text-sm leading-6 text-slate-300">
-                              {note.note}
-                            </p>
-                            <p className="mt-2 text-xs text-slate-500">
-                              {note.author?.name || "SYSTEM"} ·{" "}
-                              {formatDate(note.createdAt)}
-                            </p>
-                            {note.isInternal && (
-                              <span className="mt-3 inline-flex rounded-full border border-amber-300/20 bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-200">
-                                Internal
-                              </span>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <p className="rounded-2xl border border-dashed border-white/10 bg-white/[0.035] p-4 text-sm text-slate-500">
-                          No support notes yet.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </section>
-
-                <section className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-5">
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-red-500/8 via-transparent to-amber-400/5" />
-
-                  <div className="relative z-10 flex items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-red-300/20 bg-red-500/10">
-                      <ShieldAlert className="h-5 w-5 text-red-300" />
-                    </div>
-
-                    <div>
-                      <h3 className="text-base font-extrabold text-white">
-                        Intervention Context
-                      </h3>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        This case is part of the attendance-triggered Circle of
-                        Care workflow. Support center can review attendance
-                        risk, add follow-up notes, and coordinate with the
-                        assigned teacher before the issue becomes too late.
+                      ))
+                    ) : (
+                      <p className="rounded-2xl border border-dashed border-white/10 bg-white/[0.035] p-4 text-sm text-slate-500">
+                        No support notes yet.
                       </p>
-                    </div>
+                    )}
                   </div>
-                </section>
+                </SectionCard>
+
+                <SectionCard
+                  icon={<ShieldAlert className="h-5 w-5 text-red-300" />}
+                  title="Intervention Context"
+                  subtitle="Attendance-triggered support action"
+                  glow="red"
+                >
+                  <p className="text-sm leading-7 text-slate-500">
+                    This case is part of the attendance-triggered Circle of Care
+                    workflow. Support center can review attendance risk, add
+                    follow-up notes, and coordinate with the assigned teacher
+                    before the issue becomes too late.
+                  </p>
+                </SectionCard>
               </>
             )}
           </div>
 
-          <div className="border-t border-white/10 bg-[#14141B]/90 px-5 py-5 backdrop-blur-2xl sm:px-6">
+          <div className="shrink-0 border-t border-white/10 bg-[#14141B]/90 px-5 py-5 backdrop-blur-2xl sm:px-6">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                disabled={!caseDetail || isLoading}
+                disabled={
+                  !caseDetail || isLoading || isAddingNote || !noteText.trim()
+                }
+                onClick={handleAddNote}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 transition hover:-translate-y-0.5 hover:shadow-violet-800/30 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
               >
-                <PlusCircle className="h-4 w-4" />
-                Add Note
+                {isAddingNote ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <PlusCircle className="h-4 w-4" />
+                )}
+                {isAddingNote ? "Adding..." : "Add Note"}
               </button>
 
               <button
