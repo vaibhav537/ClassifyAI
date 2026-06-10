@@ -14,123 +14,24 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-
-function formatDate(value?: string | Date | null) {
-  if (!value) return "N/A";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "N/A";
-
-  return date.toLocaleString();
-}
-
-function statusText(value?: string | null) {
-  if (!value) return "N/A";
-  return value.replaceAll("_", " ");
-}
-
-function getStudentName(caseDetail: SupportCaseDetail) {
-  return caseDetail?.student?.user?.name || "Unknown Student";
-}
-
-function getSubjectName(caseDetail: SupportCaseDetail) {
-  return caseDetail?.subject?.name || "Unknown Subject";
-}
-
-const InfoCard = ({
-  label,
-  value,
-  tone = "default",
-}: {
-  label: string;
-  value: React.ReactNode;
-  tone?: "default" | "violet" | "amber" | "red" | "emerald";
-}) => {
-  const toneClass =
-    tone === "violet"
-      ? "text-violet-200"
-      : tone === "amber"
-        ? "text-amber-200"
-        : tone === "red"
-          ? "text-red-200"
-          : tone === "emerald"
-            ? "text-emerald-200"
-            : "text-slate-200";
-
-  return (
-    <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
-        {label}
-      </p>
-      <p className={`mt-1 truncate text-sm font-extrabold ${toneClass}`}>
-        {value}
-      </p>
-    </div>
-  );
-};
-
-const SectionCard = ({
-  icon,
-  title,
-  subtitle,
-  children,
-  glow = "violet",
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-  children: React.ReactNode;
-  glow?: "violet" | "red" | "emerald" | "amber";
-}) => {
-  const iconTone =
-    glow === "red"
-      ? "border-red-300/20 bg-red-500/10"
-      : glow === "emerald"
-        ? "border-emerald-300/20 bg-emerald-500/10"
-        : glow === "amber"
-          ? "border-amber-300/20 bg-amber-500/10"
-          : "border-violet-300/20 bg-violet-500/10";
-
-  const gradient =
-    glow === "red"
-      ? "from-red-500/8 via-transparent to-violet-500/8"
-      : glow === "emerald"
-        ? "from-emerald-500/8 via-transparent to-violet-500/8"
-        : glow === "amber"
-          ? "from-amber-500/8 via-transparent to-violet-500/8"
-          : "from-violet-500/10 via-transparent to-cyan-400/5";
-
-  return (
-    <section className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-5 shadow-xl shadow-black/15">
-      <div
-        className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${gradient}`}
-      />
-
-      <div className="relative z-10">
-        <div className="mb-4 flex items-center gap-3">
-          <div
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${iconTone}`}
-          >
-            {icon}
-          </div>
-
-          <div className="min-w-0">
-            <h3 className="text-base font-extrabold text-white">{title}</h3>
-            <p className="text-xs leading-5 text-slate-500">{subtitle}</p>
-          </div>
-        </div>
-
-        {children}
-      </div>
-    </section>
-  );
-};
+import {
+  formatDate,
+  getStudentName,
+  getSubjectName,
+  statusText,
+  SUPPORT_CASE_STATUSES,
+} from "@/lib/helper";
+import { InfoCard } from "./InfoCard";
+import { SectionCard } from "./SectionCard";
 
 const SupportCaseDrawer = ({
   caseId,
   onClose,
   open,
 }: SupportCaseDrawerProps) => {
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [statusNote, setStatusNote] = useState("");
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [noteText, setNoteText] = useState<string>("");
   const [isInternalNote, setIsInternalNote] = useState<boolean>(true);
   const [isAddingNote, setIsAddingNote] = useState<boolean>(false);
@@ -173,6 +74,55 @@ const SupportCaseDrawer = ({
     },
     [caseId],
   );
+
+  const handleUpdateStatus = async () => {
+    if (!caseId || !selectedStatus) return;
+
+    try {
+      setIsUpdatingStatus(true);
+      setActionError("");
+      setActionSuccess("");
+
+      const actorId =
+        localStorage.getItem("UserID") ||
+        localStorage.getItem("AssistantID") ||
+        localStorage.getItem("assistantId") ||
+        localStorage.getItem("userId");
+
+      const res = await fetch("/api/support/cases", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          caseId,
+          status: selectedStatus,
+          actorId: actorId || null,
+          note: statusNote.trim() || null,
+          isInternalNote: true,
+        }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        throw new Error(
+          result.message || result.error || "Failed to update case status",
+        );
+      }
+
+      setStatusNote("");
+      setSelectedStatus("");
+      setActionSuccess("Support case status updated successfully.");
+
+      await fetchCaseDetail(true);
+    } catch (error) {
+      console.error(error);
+      setActionError("Unable to update support case status.");
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
 
   const handleAddNote = async () => {
     if (!caseId || !noteText.trim()) return;
@@ -226,6 +176,8 @@ const SupportCaseDrawer = ({
     setActionError("");
     setActionSuccess("");
     setIsInternalNote(true);
+    setSelectedStatus("");
+    setStatusNote("");
 
     fetchCaseDetail();
   }, [open, caseId, fetchCaseDetail]);
@@ -233,6 +185,28 @@ const SupportCaseDrawer = ({
   if (!open) return null;
 
   const conversationId = caseDetail?.circleOfCareGroup?.conversationId;
+  const isCaseClosed = caseDetail?.status === "CLOSED";
+  const isCaseResolved = caseDetail?.status === "RESOLVED";
+
+  const isStatusOptionDisabled = (status: string) => {
+    if (!caseDetail) return true;
+    if (status === caseDetail.status) return true;
+    if (isCaseClosed) return true;
+    if (
+      isCaseResolved &&
+      [
+        "OPEN",
+        "IN_REVIEW",
+        "CONTACTED_STUDENT",
+        "WAITING_FOR_RESPONSE",
+        "ESCALATED",
+      ].includes(status)
+    ) {
+      return true;
+    }
+
+    return false;
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] flex justify-end bg-black/80 backdrop-blur-md">
@@ -500,9 +474,17 @@ const SupportCaseDrawer = ({
                   <div className="mb-4 space-y-3">
                     <textarea
                       value={noteText}
-                      onChange={(e) => setNoteText(e.target.value)}
-                      placeholder="Write a follow-up note..."
-                      disabled={isAddingNote || isLoading}
+                      onChange={(e) => {
+                        setNoteText(e.target.value);
+                        setActionSuccess("");
+                        setActionError("");
+                      }}
+                      placeholder={
+                        isCaseClosed
+                          ? "Closed cases cannot receive new notes."
+                          : "Write a follow-up note..."
+                      }
+                      disabled={isAddingNote || isLoading || isCaseClosed}
                       className="min-h-28 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                     />
 
@@ -510,7 +492,7 @@ const SupportCaseDrawer = ({
                       <input
                         type="checkbox"
                         checked={isInternalNote}
-                        disabled={isAddingNote || isLoading}
+                        disabled={isAddingNote || isLoading || isCaseClosed}
                         onChange={(e) => setIsInternalNote(e.target.checked)}
                         className="h-4 w-4 cursor-pointer rounded border-white/20 bg-[#08080C] text-violet-500 focus:ring-violet-500 disabled:cursor-not-allowed"
                       />
@@ -559,6 +541,83 @@ const SupportCaseDrawer = ({
                   </div>
                 </SectionCard>
 
+                <section className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#08080C]/45 p-5">
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/8 via-transparent to-amber-400/5" />
+
+                  <div className="relative z-10">
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10">
+                        <Activity className="h-5 w-5 text-violet-200" />
+                      </div>
+
+                      <div>
+                        <h3 className="text-base font-extrabold text-white">
+                          Status Actions
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Update support case progress and resolution state
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <select
+                        value={selectedStatus}
+                        disabled={isUpdatingStatus || isLoading || isCaseClosed}
+                        onChange={(e) => {
+                          setSelectedStatus(e.target.value);
+                          setActionSuccess("");
+                          setActionError("");
+                        }}
+                        className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none focus:border-violet-300/40 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <option className="bg-zinc-950" value="">
+                          Select new status
+                        </option>
+
+                        {SUPPORT_CASE_STATUSES.map((status) => (
+                          <option
+                            className="bg-zinc-950"
+                            key={status}
+                            value={status}
+                            disabled={isStatusOptionDisabled(status)}
+                          >
+                            {statusText(status)}
+                          </option>
+                        ))}
+                      </select>
+
+                      <textarea
+                        value={statusNote}
+                        disabled={isUpdatingStatus || isLoading}
+                        onChange={(e) => {
+                          setStatusNote(e.target.value);
+                          setActionSuccess("");
+                          setActionError("");
+                        }}
+                        placeholder="Optional status update note..."
+                        className="min-h-20 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-300/40 disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={handleUpdateStatus}
+                        disabled={
+                          !caseDetail ||
+                          isLoading ||
+                          isUpdatingStatus ||
+                          isCaseClosed ||
+                          !selectedStatus ||
+                          selectedStatus === caseDetail.status
+                        }
+                        className="w-full rounded-2xl border border-violet-300/20 bg-violet-500/10 px-5 py-3 text-sm font-extrabold text-violet-100 transition hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isUpdatingStatus ? "Updating..." : "Update Status"}
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
                 <SectionCard
                   icon={<ShieldAlert className="h-5 w-5 text-red-300" />}
                   title="Intervention Context"
@@ -581,7 +640,11 @@ const SupportCaseDrawer = ({
               <button
                 type="button"
                 disabled={
-                  !caseDetail || isLoading || isAddingNote || !noteText.trim()
+                  !caseDetail ||
+                  isLoading ||
+                  isAddingNote ||
+                  isCaseClosed ||
+                  !noteText.trim()
                 }
                 onClick={handleAddNote}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 px-5 py-3 text-sm font-extrabold text-white shadow-xl shadow-violet-950/40 transition hover:-translate-y-0.5 hover:shadow-violet-800/30 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"

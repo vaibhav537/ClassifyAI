@@ -13,6 +13,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import React from "react";
+import { SupportCaseDetail } from "./types";
 
 export const logActivity = async (
   userId: string,
@@ -284,8 +285,7 @@ export const teacherNavLinks = [
     icon: Megaphone,
   },
   { label: "Resources", href: "/dashboard/teacher/resources", icon: Upload },
-  {label: "Campus Chat", href: "/chat", icon: MessageCircle}
-  
+  { label: "Campus Chat", href: "/chat", icon: MessageCircle },
 ];
 
 // --- NEWLY IMPLEMENTED FUNCTION ---
@@ -583,18 +583,13 @@ export function getTimeAgo(dateString: string) {
   return "Just now";
 }
 
-export const transformUsername = async (
-  prefix = "USR",
-): Promise<string> => {
+export const transformUsername = async (prefix = "USR"): Promise<string> => {
   while (true) {
     const year = new Date().getFullYear();
 
     const number = crypto.randomInt(1000, 10000);
 
-    const code = crypto
-      .randomBytes(2)
-      .toString("hex")
-      .toUpperCase();
+    const code = crypto.randomBytes(2).toString("hex").toUpperCase();
 
     const username = `${prefix}-${year}-${number}-${code}`;
 
@@ -694,7 +689,38 @@ export const formatAttendanceDate = (value?: string | Date | null) => {
   });
 };
 
-
 export function formatWeekday(value: string) {
   return value.charAt(0) + value.slice(1).toLowerCase();
+}
+
+export const SUPPORT_CASE_STATUSES = [
+  "OPEN",
+  "IN_REVIEW",
+  "CONTACTED_STUDENT",
+  "WAITING_FOR_RESPONSE",
+  "ESCALATED",
+  "RESOLVED",
+  "CLOSED",
+] as const;
+
+export function formatDate(value?: string | Date | null) {
+  if (!value) return "N/A";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "N/A";
+
+  return date.toLocaleString();
+}
+
+export function statusText(value?: string | null) {
+  if (!value) return "N/A";
+  return value.replaceAll("_", " ");
+}
+
+export function getStudentName(caseDetail: SupportCaseDetail) {
+  return caseDetail?.student?.user?.name || "Unknown Student";
+}
+
+export function getSubjectName(caseDetail: SupportCaseDetail) {
+  return caseDetail?.subject?.name || "Unknown Subject";
 }
