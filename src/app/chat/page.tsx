@@ -6,7 +6,7 @@ import { initUserKeys } from "@/lib/init-keys";
 import { motion } from "framer-motion";
 import { Loader2, LockKeyhole, MessageCircle, ShieldCheck } from "lucide-react";
 import { CurrentUser } from "@/lib/types";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function ChatPage() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
@@ -14,6 +14,8 @@ export default function ChatPage() {
   const [error, setError] = useState("");
   const [isReady, setIsReady] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialConversationId = searchParams.get("conversationId");
 
   useEffect(() => {
     const init = async () => {
@@ -112,7 +114,13 @@ export default function ChatPage() {
       transition={{ duration: 0.3 }}
       className="min-h-[100dvh] bg-[#08080C] text-white"
     >
-      <ChatLayout userId={currentUser.id} privateKey={privateKey} campusId={currentUser.campusId|| ""} currentUser={currentUser} />
+      <ChatLayout
+        userId={currentUser.id}
+        privateKey={privateKey}
+        campusId={currentUser.campusId || ""}
+        currentUser={currentUser}
+        initialConversationId={initialConversationId}
+      />
     </motion.div>
   );
 }

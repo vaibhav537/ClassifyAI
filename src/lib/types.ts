@@ -556,6 +556,7 @@ export interface ChatLayoutProps {
   userId: string;
   privateKey: string;
   campusId: string;
+  initialConversationId?: string | null;
   currentUser: {
     id: string;
     name: string;

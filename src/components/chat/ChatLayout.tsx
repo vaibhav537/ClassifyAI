@@ -21,11 +21,13 @@ export default function ChatLayout({
   privateKey,
   campusId,
   currentUser,
+  initialConversationId
 }: ChatLayoutProps) {
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
-  >(null);
+  >(initialConversationId || null);
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
+
 
   const router = useRouter();
 
