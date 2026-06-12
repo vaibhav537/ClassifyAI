@@ -23,6 +23,7 @@ import {
 } from "@/lib/helper";
 import { InfoCard } from "./InfoCard";
 import { SectionCard } from "./SectionCard";
+import { useRouter } from "next/navigation";
 
 const SupportCaseDrawer = ({
   caseId,
@@ -74,6 +75,8 @@ const SupportCaseDrawer = ({
     },
     [caseId],
   );
+
+  const router = useRouter();
 
   const handleUpdateStatus = async () => {
     if (!caseId || !selectedStatus) return;
@@ -186,6 +189,13 @@ const SupportCaseDrawer = ({
 
   const conversationId = caseDetail?.circleOfCareGroup?.conversationId;
   const isCaseClosed = caseDetail?.status === "CLOSED";
+
+  const handleOpenCircleChat = () => {
+    if (!conversationId) return;
+
+    router.push(`/chat?conversationId=${conversationId}`);
+  };
+
   const isCaseResolved = caseDetail?.status === "RESOLVED";
 
   const isStatusOptionDisabled = (status: string) => {
@@ -424,6 +434,42 @@ const SupportCaseDrawer = ({
                             "No reason available."}
                         </p>
                       </div>
+                      {caseDetail.circleOfCareGroup?.conversation?.participants
+                        ?.length ? (
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                          <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                            Participants
+                          </p>
+
+                          <div className="mt-3 space-y-2">
+                            {caseDetail.circleOfCareGroup.conversation.participants.map(
+                              (participant: any) => (
+                                <div
+                                  key={participant.id}
+                                  className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-2"
+                                >
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-bold text-white">
+                                      {participant.user?.name || "Unknown User"}
+                                    </p>
+                                    <p className="truncate text-xs text-slate-500">
+                                      {participant.user?.email || "No email"}
+                                    </p>
+                                  </div>
+
+                                  <span className="shrink-0 rounded-full border border-emerald-300/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-emerald-200">
+                                    {participant.user?.role || "USER"}
+                                  </span>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.035] p-3 text-sm text-slate-500">
+                          No participants found in this Circle of Care group.
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <p className="rounded-2xl border border-dashed border-white/10 bg-white/[0.035] p-4 text-sm text-slate-500">
@@ -659,6 +705,7 @@ const SupportCaseDrawer = ({
 
               <button
                 type="button"
+                onClick={handleOpenCircleChat}
                 disabled={!conversationId || isLoading}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-300/20 bg-emerald-500/10 px-5 py-3 text-sm font-extrabold text-emerald-100 transition hover:-translate-y-0.5 hover:border-emerald-300/45 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
               >
