@@ -1,11 +1,27 @@
 import { logActivity } from "@/lib/helper";
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 
-export async function POST(req: Request) {
-  const { email, name } = await req.json();
+export async function POST(req: NextRequest) {
+  const rawBody = await req.text();
+  console.log("LOGIN RAW BODY:", rawBody);
+  console.log("LOGIN RAW BODY LENGTH:", rawBody.length);
+  if (!rawBody) {
+    return NextResponse.json(
+      { message: "Empty request body" },
+      { status: 400 },
+    );
+  }
+  let body: { email?: string; name?: string };
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ message: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const { email, name } = body;
   if (!email || !name) {
     return NextResponse.json({ message: "Missing Fields" }, { status: 400 });
   }
@@ -51,7 +67,7 @@ export async function POST(req: Request) {
       user.name,
       `${user.name} (${user.role}) logged in to the ClassifyAI.`,
     );
-    return NextResponse.json({ user }, { status: 200 });
+    return NextResponse.json({ user, sessionToken }, { status: 200 });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ message: "Server Error" }, { status: 500 });

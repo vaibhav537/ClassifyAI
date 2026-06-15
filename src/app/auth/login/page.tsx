@@ -39,18 +39,21 @@ const Page = () => {
       showErrorMessage("Please fill in both fields");
       return;
     }
-
+    const payload = JSON.stringify({ email, name });
+    console.log("LOGIN PAYLOAD BEFORE FETCH:", payload);
+    console.log("LOGIN PAYLOAD LENGTH:", payload.length);
     const res = await fetch(`/api/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, name }),
+      body: payload,
     });
 
     const data = await res.json();
 
     if (res.ok) {
+      localStorage.setItem("sessionToken", data.sessionToken);
       localStorage.setItem(`${data.user.role.toLowerCase()}Id`, data.user.id);
       localStorage.setItem("CampusID", data.user.campusId || "");
       localStorage.setItem("userRole", data.user.role);
@@ -221,8 +224,8 @@ const Page = () => {
               <LockKeyhole className="mb-4 h-6 w-6 text-cyan-300" />
               <p className="font-bold text-white">For Operations</p>
               <p className="mt-2 text-sm leading-6 text-slate-400">
-                Admins and campus assistants manage campus workflows with
-                secure role-based access.
+                Admins and campus assistants manage campus workflows with secure
+                role-based access.
               </p>
             </div>
           </div>

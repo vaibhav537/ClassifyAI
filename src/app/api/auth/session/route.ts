@@ -3,8 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
-    // 1. Get the session token directly from the incoming request's cookies.
-    const sessionToken = request.cookies.get("session-token")?.value;
+    const cookieToken = request.cookies.get("session-token")?.value;
+    const authHeader = request.headers.get("authorization");
+    const bearerToken = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : null;
+
+    const sessionToken = cookieToken || bearerToken;
 
     if (!sessionToken) {
       return NextResponse.json(

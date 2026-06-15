@@ -4,10 +4,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import ClientNavBlocker from "@/components/apps/ClientNavBlocker";
-import RazorpayScriptLoader from "@/components/apps/RazorpayScriptLoader";
 import RouteLoader from "@/components/apps/RouteLoader";
 import NetworkListener from "@/components/apps/NetworkListener";
-import RootBackground from "@/components/apps/RootBackground";
+import { TauriMobileFetchBridge } from "@/components/apps/TauriMobileFetchBridge";
 import AppVersionCard from "@/components/apps/AppVersionCard";
 import NotificationPortal from "@/components/ui/NotificationPortal";
 
@@ -35,7 +34,7 @@ export default function RootLayout({
 
       <body className="scrollbar-hide min-h-screen overflow-x-hidden bg-[#08080C] font-sans text-slate-100 antialiased selection:bg-violet-500/30 selection:text-white">
         <NotificationPortal />
-        {/* <RootBackground /> */}
+        <TauriMobileFetchBridge />
         <ClientNavBlocker />
         {/* <RazorpayScriptLoader /> */}
         <RouteLoader />
