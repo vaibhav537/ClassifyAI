@@ -4,11 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "export": "next export",
-    "tauri": "npx tauri"
+    "tauri": "npx tauri",
+    "migrate:prod": "prisma migrate deploy",
+    "seed:prod-test": "tsx prisma/seedProductionTest.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
