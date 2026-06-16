@@ -26,6 +26,15 @@ export default function FaceVerificationModal({
   const [feedback, setFeedback] = useState("Loading AI models...");
   const [isModelsLoaded, setIsModelsLoaded] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [isCameraStarted, setIsCameraStarted] = useState(false);
+  const [isCameraReady, setIsCameraReady] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+
+  const startCamera = async () => {
+    setCameraError("");
+    setFeedback("Requesting camera permission...");
+    setIsCameraStarted(true);
+  };
 
   // Load AI models from /public/models
   useEffect(() => {
@@ -52,6 +61,15 @@ export default function FaceVerificationModal({
   }, []);
 
   const handleVerify = useCallback(async () => {
+    console.log("VERIFY STATE:", {
+      isCameraStarted,
+      isCameraReady,
+      webcam: Boolean(webcamRef.current),
+    });
+    if (!isCameraStarted || !isCameraReady) {
+      showErrorMessage("Please start camera first.");
+      return;
+    }
     if (!isModelsLoaded || isVerified || !webcamRef.current) return;
 
     setIsLoading(true);
@@ -103,7 +121,14 @@ export default function FaceVerificationModal({
     } finally {
       setIsLoading(false);
     }
-  }, [isModelsLoaded, isVerified, avatarUrl, onSuccess]);
+  }, [
+    isCameraStarted,
+    isCameraReady,
+    isModelsLoaded,
+    isVerified,
+    avatarUrl,
+    onSuccess,
+  ]);
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center overflow-hidden bg-black/80 p-4 text-white backdrop-blur-md">
@@ -154,13 +179,41 @@ export default function FaceVerificationModal({
             >
               <div className="pointer-events-none absolute inset-0 z-10 rounded-full ring-1 ring-inset ring-white/10" />
 
-              <Webcam
-                ref={webcamRef}
-                audio={false}
-                screenshotFormat="image/jpeg"
-                className="h-full w-full object-cover"
-                videoConstraints={{ facingMode: "user" }}
-              />
+              {isCameraStarted ? (
+                <Webcam
+                  ref={webcamRef}
+                  audio={false}
+                  screenshotFormat="image/jpeg"
+                  className="h-full w-full object-cover"
+                  mirrored
+                  videoConstraints={{
+                    facingMode: "user",
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                  }}
+                  onUserMedia={() => {
+                    console.log("Camera permission granted");
+                    setIsCameraReady(true);
+                    setIsCameraStarted(true);
+                    setCameraError("");
+                    setFeedback("Align your face in the circle.");
+                  }}
+                  onUserMediaError={(error) => {
+                    console.error("Camera permission/error:", error);
+                    setIsCameraReady(false);
+                    setCameraError("Camera permission denied or unavailable.");
+                    setFeedback("Camera permission denied or unavailable.");
+                    showErrorMessage(
+                      "Camera permission denied or unavailable.",
+                    );
+                  }}
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-black/40 text-center text-sm text-slate-300">
+                  Allow camera access and click "Start Camera" to begin
+                  verification.
+                </div>
+              )}
 
               <div className="pointer-events-none absolute inset-x-10 top-8 z-10 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent" />
               <div className="pointer-events-none absolute inset-x-10 bottom-8 z-10 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent" />
@@ -189,8 +242,13 @@ export default function FaceVerificationModal({
 
           <button
             type="button"
-            onClick={handleVerify}
-            disabled={isLoading || !isModelsLoaded || isVerified}
+            onClick={isCameraStarted ? handleVerify : startCamera}
+            disabled={
+              isLoading ||
+              !isModelsLoaded ||
+              isVerified ||
+              (isCameraStarted && !isCameraReady)
+            }
             className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-sm font-extrabold transition duration-300 ${
               isVerified
                 ? "cursor-default border border-emerald-300/20 bg-emerald-500/15 text-emerald-200"
@@ -205,7 +263,13 @@ export default function FaceVerificationModal({
               <ScanFace className="h-4 w-4" />
             )}
 
-            {isLoading ? feedback : isVerified ? "Verified!" : "Verify Face"}
+            {isLoading
+              ? feedback
+              : isVerified
+                ? "Verified!"
+                : !isCameraStarted
+                  ? "Start Camera"
+                  : "Verify Face"}
           </button>
         </div>
       </div>

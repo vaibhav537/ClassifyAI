@@ -3,7 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(request: NextRequest) {
   try {
-    const sessionToken = request.cookies.get("session-token")?.value;
+    const cookieToken = request.cookies.get("session-token")?.value;
+
+    const authHeader = request.headers.get("authorization");
+    const bearerToken = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : null;
+
+    const sessionToken = cookieToken || bearerToken;
 
     if (!sessionToken) {
       return NextResponse.json(
