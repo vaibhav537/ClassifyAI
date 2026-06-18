@@ -23,6 +23,7 @@ function getRedisClient() {
 }
 
 type RedisExpiryMode = "EX" | "PX" | "ex" | "px";
+type RedisCondition = "NX" | "XX" | "nx" | "xx";
 
 export const redis = {
   async setex(key: string, seconds: number, value: string) {
@@ -33,18 +34,34 @@ export const redis = {
     key: string,
     value: string,
     mode?: RedisExpiryMode,
-    ttl?: number
+    ttl?: number,
+    condition?: RedisCondition
   ) {
-    if (mode && ttl) {
-      const normalizedMode = mode.toUpperCase();
+    const normalizedMode = mode?.toUpperCase();
+    const normalizedCondition = condition?.toUpperCase();
 
-      if (normalizedMode === "EX") {
-        return getRedisClient().set(key, value, { ex: ttl });
+    if (normalizedMode === "EX" && typeof ttl === "number") {
+      if (normalizedCondition === "NX") {
+        return getRedisClient().set(key, value, { ex: ttl, nx: true });
       }
 
-      if (normalizedMode === "PX") {
-        return getRedisClient().set(key, value, { px: ttl });
+      if (normalizedCondition === "XX") {
+        return getRedisClient().set(key, value, { ex: ttl, xx: true });
       }
+
+      return getRedisClient().set(key, value, { ex: ttl });
+    }
+
+    if (normalizedMode === "PX" && typeof ttl === "number") {
+      if (normalizedCondition === "NX") {
+        return getRedisClient().set(key, value, { px: ttl, nx: true });
+      }
+
+      if (normalizedCondition === "XX") {
+        return getRedisClient().set(key, value, { px: ttl, xx: true });
+      }
+
+      return getRedisClient().set(key, value, { px: ttl });
     }
 
     return getRedisClient().set(key, value);
