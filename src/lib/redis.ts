@@ -4,21 +4,50 @@ let client: Redis | null = null;
 
 function getRedisClient() {
   if (client) return client;
+
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
   if (!url || !token) {
-    throw new Error("Redis Token is missing");
+    throw new Error(
+      "UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN is missing"
+    );
   }
+
   client = new Redis({
     url,
     token,
   });
+
   return client;
 }
+
+type RedisExpiryMode = "EX" | "PX" | "ex" | "px";
 
 export const redis = {
   async setex(key: string, seconds: number, value: string) {
     return getRedisClient().set(key, value, { ex: seconds });
+  },
+
+  async set(
+    key: string,
+    value: string,
+    mode?: RedisExpiryMode,
+    ttl?: number
+  ) {
+    if (mode && ttl) {
+      const normalizedMode = mode.toUpperCase();
+
+      if (normalizedMode === "EX") {
+        return getRedisClient().set(key, value, { ex: ttl });
+      }
+
+      if (normalizedMode === "PX") {
+        return getRedisClient().set(key, value, { px: ttl });
+      }
+    }
+
+    return getRedisClient().set(key, value);
   },
 
   async get<T = string>(key: string) {
