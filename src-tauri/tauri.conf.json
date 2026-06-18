@@ -4,10 +4,8 @@
   "version": "2.3.2",
   "identifier": "com.vaibhav.classifyai",
   "build": {
-    "frontendDist": "../out",
-    "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
+    "frontendDist": "../tauri-wrapper",
+    "devUrl": "https://classify-ai-five.vercel.app"
   },
   "app": {
     "windows": [
@@ -21,7 +19,6 @@
     "security": {
       "csp": null
     }
-    
   },
   "bundle": {
     "active": true,
