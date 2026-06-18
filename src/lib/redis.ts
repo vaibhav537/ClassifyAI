@@ -1,39 +1,31 @@
-import Redis from "ioredis";
+import { Redis } from "@upstash/redis";
 
-const redisUrl = process.env.REDIS_URL;
+let client: Redis | null = null;
 
-const globalForRedis = globalThis as unknown as {
-  redis?: Redis;
-};
-
-function createRedisClient() {
-  if (!redisUrl) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("REDIS_URL is not set in production environment");
-    }
-
-    return new Redis("redis://127.0.0.1:6379", {
-      lazyConnect: true,
-      maxRetriesPerRequest: 2,
-      enableReadyCheck: false,
-    });
+function getRedisClient() {
+  if (client) return client;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) {
+    throw new Error("Redis Token is missing");
   }
-
-  const client = new Redis(redisUrl, {
-    lazyConnect: true,
-    maxRetriesPerRequest: 2,
-    enableReadyCheck: false,
+  client = new Redis({
+    url,
+    token,
   });
-
-  client.on("error", (error) => {
-    console.error("[Redis Error]", error.message);
-  });
-
   return client;
 }
 
-export const redis = globalForRedis.redis ?? createRedisClient();
+export const redis = {
+  async setex(key: string, seconds: number, value: string) {
+    return getRedisClient().set(key, value, { ex: seconds });
+  },
 
-if (process.env.NODE_ENV !== "production") {
-  globalForRedis.redis = redis;
-}
+  async get<T = string>(key: string) {
+    return getRedisClient().get<T>(key);
+  },
+
+  async del(key: string) {
+    return getRedisClient().del(key);
+  },
+};

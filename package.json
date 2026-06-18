@@ -36,6 +36,7 @@
     "@tauri-apps/plugin-notification": "^2.3.1",
     "@tauri-apps/plugin-shell": "^2.3.5",
     "@tauri-apps/plugin-store": "^2.4.3",
+    "@upstash/redis": "^1.38.0",
     "anthropic": "^0.0.0",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
