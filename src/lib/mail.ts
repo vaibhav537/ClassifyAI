@@ -1,15 +1,101 @@
-// app/lib/mailer.ts
 import nodemailer from "nodemailer";
 
-// Create a reusable transporter object (this is more efficient than creating it in every function)
+const smtpPort = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT || 587);
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
+  port: smtpPort,
+  secure: smtpPort === 465,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
 });
+
+function getFromAddress() {
+  const rawFrom =
+    process.env.SMTP_FROM || process.env.EMAIL_FROM || process.env.SMTP_USER;
+
+  if (!rawFrom) {
+    return "Classify AI";
+  }
+
+  if (rawFrom.includes("<")) {
+    return rawFrom;
+  }
+
+  return `Classify AI <${rawFrom}>`;
+}
+
+export const sendOtpEmail = async (to: string, otp: string) => {
+  const html = `
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Classify AI OTP</title>
+</head>
+<body style="margin:0;padding:0;background:#08080C;font-family:Arial,sans-serif;color:#ffffff;">
+  <div style="max-width:620px;margin:0 auto;padding:28px 14px;">
+    <div style="overflow:hidden;border-radius:30px;background:#14141B;border:1px solid rgba(255,255,255,0.10);box-shadow:0 24px 70px rgba(0,0,0,0.45);">
+      
+      <div style="padding:34px 28px;text-align:center;background:linear-gradient(135deg,rgba(124,58,237,0.32),rgba(217,70,239,0.20),rgba(34,211,238,0.10));border-bottom:1px solid rgba(255,255,255,0.10);">
+        <img src="https://res.cloudinary.com/dd2bczbdo/image/upload/v1758565130/only-logo_omdz9x.png" width="58" height="58" alt="Classify AI" style="border-radius:18px;margin-bottom:16px;" />
+        <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(139,92,246,0.16);border:1px solid rgba(196,181,253,0.24);color:#ddd6fe;font-size:10px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;">
+          Secure Verification
+        </div>
+        <h1 style="margin:16px 0 0;color:#ffffff;font-size:27px;line-height:1.25;">Verify Your Email</h1>
+        <p style="margin:10px 0 0;color:#a1a1aa;font-size:14px;line-height:1.6;">
+          Use this one-time code to continue on Classify AI.
+        </p>
+      </div>
+
+      <div style="padding:30px 28px;text-align:center;background:#14141B;">
+        <p style="margin:0;color:#ffffff;font-size:17px;font-weight:800;">Hello 👋</p>
+        <p style="margin:12px auto 0;max-width:500px;color:#a1a1aa;font-size:14px;line-height:1.75;">
+          Please enter the OTP below to verify your email address.
+        </p>
+
+        <div style="margin:28px auto;padding:18px 22px;max-width:280px;border-radius:22px;background:#08080C;border:1px solid rgba(255,255,255,0.12);box-shadow:0 18px 40px rgba(0,0,0,0.35);">
+          <div style="color:#c4b5fd;font-size:34px;font-weight:900;letter-spacing:0.28em;line-height:1.2;">
+            ${otp}
+          </div>
+        </div>
+
+        <div style="display:inline-block;padding:9px 14px;border-radius:999px;background:rgba(245,158,11,0.12);border:1px solid rgba(252,211,77,0.22);color:#fde68a;font-size:12px;font-weight:800;">
+          Valid for 5 minutes
+        </div>
+
+        <p style="margin:24px 0 0;color:#71717a;font-size:12px;line-height:1.7;">
+          If you did not request this OTP, you can safely ignore this email.
+        </p>
+      </div>
+
+      <div style="padding:22px 28px;text-align:center;background:#101014;border-top:1px solid rgba(255,255,255,0.10);">
+        <p style="margin:0;color:#ffffff;font-size:13px;font-weight:800;">Classify AI</p>
+        <p style="margin:8px 0 0;color:#71717a;font-size:12px;line-height:1.6;">
+          AI Smart Attendance & College Community App
+        </p>
+        <p style="margin:8px 0 0;color:#71717a;font-size:12px;">
+          &copy; ${new Date().getFullYear()} Classify AI. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+  return transporter.sendMail({
+    from: getFromAddress(),
+    to,
+    subject: "Your Classify AI OTP Code",
+    text: `Your OTP code is ${otp}. It is valid for 5 minutes.`,
+    html,
+  });
+};
+
 export const sendMail = async (to: string, subject: string, code: string) => {
   const html = `<!doctype html>
 <html lang="en">
@@ -456,77 +542,119 @@ export const sendWelcomeEmail = async (
   name: string,
   username: string,
 ) => {
+  return sendUserWelcomeEmail(email, name, username, "ASSISTANT");
+};
+
+export const sendUserWelcomeEmail = async (
+  email: string,
+  name: string,
+  username: string,
+  role: "STUDENT" | "TEACHER" | "ASSISTANT",
+) => {
+  const roleLabel =
+    role === "STUDENT"
+      ? "Student"
+      : role === "TEACHER"
+        ? "Teacher"
+        : "Campus Assistant";
+
   const htmlContent = `
- <<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Campus Assistant Account Created</title>
-  <style>
-    body { margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; background-color:#f5f7fb; }
-    .container { max-width:600px; margin:28px auto; padding:20px; }
-    .card { background:#ffffff; border-radius:12px; box-shadow:0 6px 24px rgba(20,30,60,0.08); overflow:hidden; }
-    .hero { background:linear-gradient(120deg,#16a085 0%,#f4d03f 100%); padding:28px; text-align:center; color:#fff; }
-    .hero h1 { margin:0; font-size:24px; font-weight:700; }
-    .content { padding:28px 32px; color:#0f1724; }
-    .lead { font-size:15px; margin:0 0 18px; line-height:1.45; }
-    .info-box { background:#f9fafc; border:1px dashed rgba(15,23,36,0.1); padding:18px; border-radius:10px; margin:18px 0; }
-    .info-box strong { color:#16a085; }
-    .small { font-size:12px; color:#6b7280; margin-top:18px; }
-    .footer { background:#FFF;  border-top:1px solid rgba(224,224,224);  padding:18px; font-size:12px; color:#9aa3b2; text-align:center; }
-    .muted { color:#7b8794; }
-    @media (max-width:420px) {
-      .container { padding:12px; }
-      .content { padding:20px; }
-      .hero { padding:20px; }
-    }
-  </style>
+  <title>Welcome to Classify AI</title>
 </head>
-<body>
-  <div class="container">
-    <div class="card">
-      <!-- HEADER -->
-      <div class="hero">
-        <h1>Welcome to ClassifyAI</h1>
-        <p style="margin-top:6px; font-size:13px; opacity:0.95;">Your Campus Assistant account has been created</p>
-      </div>
+<body style="margin:0;padding:0;background:#08080C;font-family:Arial,sans-serif;color:#ffffff;">
+  <div style="max-width:640px;margin:0 auto;padding:28px 14px;">
+    <div style="overflow:hidden;border-radius:30px;background:#14141B;border:1px solid rgba(255,255,255,0.10);box-shadow:0 24px 70px rgba(0,0,0,0.45);">
+      
+      <div style="padding:34px 28px;text-align:center;background:linear-gradient(135deg,rgba(124,58,237,0.32),rgba(217,70,239,0.20),rgba(34,211,238,0.10));border-bottom:1px solid rgba(255,255,255,0.10);">
+        <img src="https://res.cloudinary.com/dd2bczbdo/image/upload/v1758565130/only-logo_omdz9x.png" width="60" height="60" alt="Classify AI" style="border-radius:18px;margin-bottom:16px;" />
 
-      <!-- BODY -->
-      <div class="content">
-        <p class="lead">Hello ${name},</p>
-        <p>We’re excited to let you know that a <b>Campus Assistant account</b> has been created for you on the ClassifyAI platform.</p>
-        
-        <!-- INFO BOX -->
-        <div class="info-box">
-          <p style="margin:0;"><strong>Registered Email:</strong> ${email}</p>
-          <p style="margin:0;"><strong>Username:</strong> ${username}</p>
+        <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(139,92,246,0.16);border:1px solid rgba(196,181,253,0.24);color:#ddd6fe;font-size:10px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;">
+          ${roleLabel} Account Created
         </div>
 
-        <p>To log in, please visit the ClassifyAI login page and enter your registered email address.  
-        A secure one-time code will be sent to your inbox for verification every time you sign in.</p>
+        <h1 style="margin:16px 0 0;color:#ffffff;font-size:28px;line-height:1.25;">
+          Welcome to Classify AI
+        </h1>
 
-        <p class="small">If you did not expect this email, please ignore it or contact ClassifyAI support.</p>
-
-        <p style="margin-top:22px" class="small">Thanks —<br/>The ClassifyAI Team</p>
+        <p style="margin:10px 0 0;color:#a1a1aa;font-size:14px;line-height:1.6;">
+          Your ${roleLabel.toLowerCase()} account is ready to use.
+        </p>
       </div>
 
-      <!-- FOOTER -->
-      <div class="footer">
-        <div>ClassifyAI • <span class="muted">AI Smart Attendance & College Community App</span></div>
-        <div style="margin-top:12px">&copy; 2025 ClassifyAI. All rights reserved.</div>
+      <div style="padding:30px 28px;background:#14141B;">
+        <p style="margin:0;color:#ffffff;font-size:17px;font-weight:800;">
+          Hello ${name},
+        </p>
+
+        <p style="margin:14px 0 0;color:#a1a1aa;font-size:14px;line-height:1.75;">
+          Your account has been created on the Classify AI platform. Use your registered email to log in and complete OTP verification.
+        </p>
+
+        <div style="margin:24px 0;padding:18px;border-radius:22px;background:#08080C;border:1px solid rgba(255,255,255,0.10);">
+          <p style="margin:0 0 8px;color:#71717a;font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;">
+            Registered Email
+          </p>
+          <p style="margin:0 0 20px;color:#ffffff;font-size:15px;font-weight:800;word-break:break-word;">
+            ${email}
+          </p>
+
+          <p style="margin:0 0 8px;color:#71717a;font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;">
+            Username
+          </p>
+          <p style="margin:0;color:#c4b5fd;font-size:24px;font-weight:900;letter-spacing:0.12em;word-break:break-word;">
+            ${username}
+          </p>
+        </div>
+
+        <div style="padding:15px 16px;border-radius:20px;background:rgba(34,211,238,0.07);border:1px solid rgba(34,211,238,0.16);">
+          <p style="margin:0;color:#bae6fd;font-size:13px;line-height:1.7;font-weight:700;">
+            Login instruction
+          </p>
+          <p style="margin:6px 0 0;color:#a1a1aa;font-size:13px;line-height:1.7;">
+            Open Classify AI, enter your registered email, and verify using the OTP sent to your inbox.
+          </p>
+        </div>
+
+        <p style="margin:24px 0 0;color:#a1a1aa;font-size:13px;line-height:1.7;">
+          Thanks,<br/>
+          <strong style="color:#ffffff;">The Classify AI Team</strong>
+        </p>
+      </div>
+
+      <div style="padding:22px 28px;text-align:center;background:#101014;border-top:1px solid rgba(255,255,255,0.10);">
+        <p style="margin:0;color:#ffffff;font-size:13px;font-weight:800;">Classify AI</p>
+        <p style="margin:8px 0 0;color:#71717a;font-size:12px;line-height:1.6;">
+          AI Smart Attendance & College Community App
+        </p>
+        <p style="margin:8px 0 0;color:#71717a;font-size:12px;">
+          &copy; ${new Date().getFullYear()} Classify AI. All rights reserved.
+        </p>
       </div>
     </div>
   </div>
 </body>
 </html>
-  `;
-  const mailOptions = {
-    from: `Classify AI <${process.env.EMAIL_FROM}>`,
-    to: email,
-    subject: "Welcome to Classify AI! Your Account is Ready.",
-    html: htmlContent,
-  };
+`;
 
-  await transporter.sendMail(mailOptions);
+  const info = await transporter.sendMail({
+    from: getFromAddress(),
+    to: email,
+    subject: `Welcome to Classify AI! Your ${roleLabel} Account is Ready.`,
+    html: htmlContent,
+  });
+
+  console.log("User welcome mail result", {
+    role,
+    acceptedCount: info.accepted?.length || 0,
+    rejectedCount: info.rejected?.length || 0,
+    messageId: info.messageId,
+    response: info.response,
+  });
+
+  return info;
 };

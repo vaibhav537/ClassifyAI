@@ -1,6 +1,7 @@
 // /api/admin/signup/route.ts
 
 import { logActivity, transformUsername } from "@/lib/helper";
+import { sendUserWelcomeEmail } from "@/lib/mail";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -265,6 +266,18 @@ export async function POST(req: NextRequest) {
             sectionId: sectionRecord?.id,
           },
         });
+      }
+
+      // ==================== SEND WELCOME EMAIL ====================
+      try {
+        await sendUserWelcomeEmail(
+          newUser.email,
+          newUser.name,
+          newUser.username,
+          newUser.role as "STUDENT" | "TEACHER",
+        );
+      } catch (error) {
+        console.error("User welcome email failed:", error);
       }
 
       // ==================== LOG ====================
