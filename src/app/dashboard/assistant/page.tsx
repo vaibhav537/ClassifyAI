@@ -324,6 +324,21 @@ export default function AdminDashboardPage() {
   >("verifying");
 
   useEffect(() => {
+    if (verificationStatus !== "complete") {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, [verificationStatus]);
+
+  useEffect(() => {
     const assistantID = localStorage.getItem("assistantId");
 
     if (!assistantID) {
@@ -335,7 +350,9 @@ export default function AdminDashboardPage() {
       try {
         const response = await fetch(
           `/api/assistant/details?assistantId=${assistantID}`,
+          { cache: "no-store" }
         );
+
         const data = await response.json();
 
         if (!response.ok) {
@@ -343,15 +360,23 @@ export default function AdminDashboardPage() {
             router.replace("/auth/login");
             return;
           }
-          throw new Error(data.error || "Failed to verify admin status.");
+
+          throw new Error(data.error || "Failed to verify assistant status.");
         }
+
         const isNotConfigured = !data?.campus?.logoUrl;
+
         if (!data?.campusId || isNotConfigured) {
+          if (data?.campusId) {
+            localStorage.setItem("CampusID", data.campusId);
+          }
+
           setVerificationStatus("needs_setup");
-        } else {
-          localStorage.setItem("CampusID", data.campusId);
-          setVerificationStatus("complete");
+          return;
         }
+
+        localStorage.setItem("CampusID", data.campusId);
+        setVerificationStatus("complete");
       } catch (err: any) {
         setVerificationStatus("error");
         console.error(err.message);
@@ -361,18 +386,17 @@ export default function AdminDashboardPage() {
     checkAssistantSetup();
   }, [router]);
 
-  return (
-    <>
-      {verificationStatus === "complete" && <DashboardContent />}
-
-      <AnimatePresence>
-        {verificationStatus !== "complete" && (
-          <VerificationGatekeeper
-            status={verificationStatus}
-            onRedirect={() => router.push("/setup/assistant")}
-          />
-        )}
+  if (verificationStatus !== "complete") {
+    return (
+      <AnimatePresence mode="wait">
+        <VerificationGatekeeper
+          key={verificationStatus}
+          status={verificationStatus}
+          onRedirect={() => router.replace("/setup/assistant")}
+        />
       </AnimatePresence>
-    </>
-  );
+    );
+  }
+
+  return <DashboardContent />;
 }

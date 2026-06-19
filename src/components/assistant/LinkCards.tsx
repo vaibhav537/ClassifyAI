@@ -106,24 +106,33 @@ const LinkCards = ({
   );
 
   const handleSendOtp = async () => {
-    if (!formData.email) {
+    const normalizedEmail = formData.email.trim().toLowerCase();
+    if (!normalizedEmail) {
       setMessage({ type: "error", text: "Please enter email" });
       return;
     }
 
     setLoading(true);
+    setMessage(null);
 
     const res = await fetch("/api/mail/send-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: formData.email }),
+      body: JSON.stringify({ email: normalizedEmail }),
     });
 
     if (res.ok) {
+      setFormData((prev) => ({ ...prev, email: normalizedEmail }));
       setStep("otp");
-      setMessage({ type: "success", text: "OTP sent to your email" });
+      setMessage({
+        type: "success",
+        text: "OTP sent. Please check Inbox, Spam, Promotions, or Updates folder.",
+      });
     } else {
-      setMessage({ type: "error", text: "Failed to send OTP" });
+      setMessage({
+        type: "error",
+        text: "Failed to send OTP. Please try again after a few seconds.",
+      });
     }
 
     setLoading(false);
@@ -725,9 +734,7 @@ const LinkCards = ({
 
                                     <button
                                       type="button"
-                                      onClick={() =>
-                                        handleRemoveSubject(index)
-                                      }
+                                      onClick={() => handleRemoveSubject(index)}
                                       className="shrink-0 rounded-xl border border-red-300/20 bg-red-500/10 px-2 py-1 text-red-300 transition hover:bg-red-500/20"
                                     >
                                       ×
@@ -748,15 +755,40 @@ const LinkCards = ({
                     )}
 
                   {isAddMode && step === "otp" && (
-                    <input
-                      type="text"
-                      placeholder="Enter OTP"
-                      autoComplete="off"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      className={`${inputClass} mt-4`}
-                      disabled={loading}
-                    />
+                    <div className="mt-4 rounded-[1.5rem] border border-violet-300/20 bg-violet-500/10 p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-500/10">
+                          <Mail className="h-4 w-4 text-violet-200" />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-extrabold text-white">
+                            OTP sent to {formData.email}
+                          </p>
+
+                          <p className="mt-1 text-xs leading-5 text-slate-400">
+                            Please check your inbox. If you don’t see it, check{" "}
+                            <span className="font-extrabold text-amber-200">
+                              Spam
+                            </span>{" "}
+                            folder too.
+                          </p>
+                        </div>
+                      </div>
+
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Enter OTP"
+                        autoComplete="one-time-code"
+                        value={otp}
+                        onChange={(e) =>
+                          setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                        }
+                        className={`${inputClass} mt-4 tracking-[0.35em]`}
+                        disabled={loading}
+                      />
+                    </div>
                   )}
 
                   {message && (
