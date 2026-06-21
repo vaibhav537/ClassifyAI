@@ -21,19 +21,32 @@ export default function ChatLayout({
   privateKey,
   campusId,
   currentUser,
-  initialConversationId
+  initialConversationId,
 }: ChatLayoutProps) {
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(initialConversationId || null);
-  const [isNewChatOpen, setIsNewChatOpen] = useState(false);
 
+  const [isMobileThreadOpen, setIsMobileThreadOpen] = useState(
+    Boolean(initialConversationId),
+  );
+
+  const [isNewChatOpen, setIsNewChatOpen] = useState(false);
 
   const router = useRouter();
 
   const handleBack = () => {
     const rolePath = currentUser.role.toLowerCase();
     router.push(`/dashboard/${rolePath}`);
+  };
+
+  const handleConversationSelect = (conversationId: string) => {
+    setSelectedConversationId(conversationId);
+    setIsMobileThreadOpen(true);
+  };
+
+  const handleMobileBackToList = () => {
+    setIsMobileThreadOpen(false);
   };
 
   return (
@@ -51,9 +64,11 @@ export default function ChatLayout({
         initial={{ x: -32, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
-        className="relative z-10 flex w-[340px] shrink-0 flex-col border-r border-white/10 bg-[#14141B]/80 shadow-2xl shadow-black/35 backdrop-blur-2xl"
+        className={`relative z-10 w-full shrink-0 flex-col border-r border-white/10 bg-[#14141B]/80 shadow-2xl shadow-black/35 backdrop-blur-2xl md:flex md:w-[340px] ${
+          isMobileThreadOpen ? "hidden" : "flex"
+        }`}
       >
-        <div className="border-b border-white/10 p-4">
+        <div className="shrink-0 border-b border-white/10 p-4">
           <div className="mb-4 flex items-center justify-between gap-3">
             <button
               type="button"
@@ -96,12 +111,36 @@ export default function ChatLayout({
           <ConversationList
             userId={userId}
             selectedId={selectedConversationId}
-            onSelect={setSelectedConversationId}
+            onSelect={handleConversationSelect}
           />
         </div>
       </motion.aside>
 
-      <main className="relative z-10 flex min-w-0 flex-1 flex-col">
+      <main
+        className={`relative z-10 min-w-0 flex-1 flex-col md:flex ${
+          isMobileThreadOpen ? "flex" : "hidden"
+        }`}
+      >
+        {selectedConversationId && (
+          <div className="flex shrink-0 items-center gap-3 border-b border-white/10 bg-[#14141B]/90 px-3 py-3 backdrop-blur-2xl md:hidden">
+            <button
+              type="button"
+              onClick={handleMobileBackToList}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-slate-300"
+              aria-label="Back to conversations"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+
+            <div className="min-w-0">
+              <p className="text-sm font-extrabold text-white">Chat</p>
+              <p className="truncate text-xs text-slate-500">
+                Secure campus conversation
+              </p>
+            </div>
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           {selectedConversationId ? (
             <motion.div
@@ -110,7 +149,7 @@ export default function ChatLayout({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25 }}
-              className="flex h-full min-h-0 flex-col bg-[#08080C]/35 backdrop-blur-xl"
+              className="flex min-h-0 flex-1 flex-col bg-[#08080C]/35 backdrop-blur-xl"
             >
               <MessageThread
                 userId={userId}
@@ -125,7 +164,7 @@ export default function ChatLayout({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.28 }}
-              className="grid h-full place-items-center p-6"
+              className="hidden h-full place-items-center p-6 md:grid"
             >
               <div className="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-[#14141B]/85 p-8 text-center shadow-2xl shadow-black/40 backdrop-blur-2xl">
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/16 via-fuchsia-500/8 to-cyan-400/8" />
@@ -181,6 +220,7 @@ export default function ChatLayout({
         campusId={campusId}
         onCreated={(id) => {
           setSelectedConversationId(id);
+          setIsMobileThreadOpen(true);
           setIsNewChatOpen(false);
         }}
       />

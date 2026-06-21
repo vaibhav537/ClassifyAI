@@ -275,6 +275,7 @@ exports.Prisma.AttendanceTokenScalarFieldEnum = {
   studentId: 'studentId',
   subjectId: 'subjectId',
   professorId: 'professorId',
+  classSessionId: 'classSessionId',
   issuedAt: 'issuedAt',
   expiresAt: 'expiresAt',
   used: 'used',

@@ -115,8 +115,8 @@ function AnswerModal({
                 Generating Answer...
               </p>
               <p className="text-gray-400 text-sm">
-                Scanning notes for{" "}
-                <span className="text-cyan-400">"{topic}"</span>
+                Scanning notes for
+                <span className="text-cyan-400">&quot;{topic}&quot;</span>
               </p>
             </div>
           </div>
@@ -145,7 +145,7 @@ function AnswerModal({
                   <>
                     <FileSearch size={12} /> Notes Used
                   </>
-                ) : ( 
+                ) : (
                   <>
                     <WifiOff size={12} /> AI Generated
                   </>

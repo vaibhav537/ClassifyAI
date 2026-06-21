@@ -1,6 +1,12 @@
 import nodemailer from "nodemailer";
 
 const smtpPort = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT || 587);
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.NEXT_PUBLIC_BASE_URL ||
+  "https://classify-ai-five.vercel.app";
+
+const LOGO_URL = `${APP_URL}/only-logo.png`;
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -41,7 +47,7 @@ export const sendOtpEmail = async (to: string, otp: string) => {
     <div style="overflow:hidden;border-radius:30px;background:#14141B;border:1px solid rgba(255,255,255,0.10);box-shadow:0 24px 70px rgba(0,0,0,0.45);">
       
       <div style="padding:34px 28px;text-align:center;background:linear-gradient(135deg,rgba(124,58,237,0.32),rgba(217,70,239,0.20),rgba(34,211,238,0.10));border-bottom:1px solid rgba(255,255,255,0.10);">
-        <img src="https://res.cloudinary.com/dd2bczbdo/image/upload/v1758565130/only-logo_omdz9x.png" width="58" height="58" alt="Classify AI" style="border-radius:18px;margin-bottom:16px;" />
+        <img src="${LOGO_URL}" width="58" height="58" alt="Classify AI" style="border-radius:18px;margin-bottom:16px;" />
         <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(139,92,246,0.16);border:1px solid rgba(196,181,253,0.24);color:#ddd6fe;font-size:10px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;">
           Secure Verification
         </div>
@@ -134,7 +140,7 @@ export const sendMail = async (to: string, subject: string, code: string) => {
     <div class="card" role="presentation">
       <!-- HERO / HEADER -->
       <div class="hero" role="presentation" aria-hidden="false">
-        <div class="logo" aria-hidden="true"><img src="https://res.cloudinary.com/dd2bczbdo/image/upload/v1758565130/only-logo_omdz9x.png" class="logo-img" alt="LOGO"></div>
+        <div class="logo" aria-hidden="true"><img src="${LOGO_URL}" class="logo-img" alt="LOGO"></div>
         <h1 class="title">Verify your email</h1>
         <p class="subtitle">One quick step to secure your ClassifyAI account</p>
       </div>
@@ -460,7 +466,7 @@ export const sendAttendanceQrEmail = async (
       <div class="card" role="presentation">
         <div class="hero" role="presentation">
           <div class="logo-wrap" aria-hidden="true">
-            <img src="https://res.cloudinary.com/dd2bczbdo/image/upload/v1758565130/only-logo_omdz9x.png" width="52" height="52" alt="ClassifyAI Logo">
+            <img src="${LOGO_URL}" width="52" height="52" alt="ClassifyAI Logo">
           </div>
 
           <div class="badge">Classify AI Attendance</div>
@@ -571,7 +577,7 @@ export const sendUserWelcomeEmail = async (
     <div style="overflow:hidden;border-radius:30px;background:#14141B;border:1px solid rgba(255,255,255,0.10);box-shadow:0 24px 70px rgba(0,0,0,0.45);">
       
       <div style="padding:34px 28px;text-align:center;background:linear-gradient(135deg,rgba(124,58,237,0.32),rgba(217,70,239,0.20),rgba(34,211,238,0.10));border-bottom:1px solid rgba(255,255,255,0.10);">
-        <img src="https://res.cloudinary.com/dd2bczbdo/image/upload/v1758565130/only-logo_omdz9x.png" width="60" height="60" alt="Classify AI" style="border-radius:18px;margin-bottom:16px;" />
+        <img src="${LOGO_URL}" width="60" height="60" alt="Classify AI" style="border-radius:18px;margin-bottom:16px;" />
 
         <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:rgba(139,92,246,0.16);border:1px solid rgba(196,181,253,0.24);color:#ddd6fe;font-size:10px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;">
           ${roleLabel} Account Created

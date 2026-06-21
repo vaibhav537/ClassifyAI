@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.1.2"
+version = "2.4.0"
 description = "A Tauri App"
 authors = ["you"]
 license = ""
@@ -26,3 +26,4 @@ tauri-plugin-log = "2.0.0-rc"
 tauri-plugin-shell = "2.3.5"
 tauri-plugin-notification = "2.3.3"
 tauri-plugin-store="2"
+tauri-plugin-geolocation = "2.3.2"

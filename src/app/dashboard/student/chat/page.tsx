@@ -17,13 +17,17 @@ import rehypeHighlight from "rehype-highlight";
 import { useRouter } from "next/navigation";
 import ClassifyNexusUnderDevelopment from "@/components/ui/ClassifyNexusUnderDevelopment";
 
-const Page = () => {
+export default function Page() {
   const isClassifyNexusUnderDev =
     process.env.NEXT_PUBLIC_CLASSIFY_NEXUS_UNDER_DEV === "true";
 
   if (isClassifyNexusUnderDev) {
     return <ClassifyNexusUnderDevelopment />;
   }
+  return <StudentAIChatPage />;
+}
+
+function StudentAIChatPage() {
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Hi! I'm here to help with your doubts." },
   ]);
@@ -124,8 +128,12 @@ const Page = () => {
                 }
                 className="appearance-none bg-transparent text-sm font-bold text-white outline-none"
               >
-                <option className="bg-[#14141B] text-white">GPT-3.5</option>
-                <option className="bg-[#14141B] text-white">Claude</option>
+                <option value="openai" className="bg-[#14141B] text-white">
+                  GPT-3.5
+                </option>
+                <option value="claude" className="bg-[#14141B] text-white">
+                  Claude
+                </option>
               </select>
             </div>
           </div>
@@ -235,6 +243,4 @@ const Page = () => {
       </div>
     </section>
   );
-};
-
-export default Page;
+}

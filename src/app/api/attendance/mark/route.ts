@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import {
-  getCityfromIp,
-  getCurrentWeekday,
-  haversineDistance,
-  logActivity,
-} from "@/lib/helper";
+import { getCityfromIp, haversineDistance, logActivity } from "@/lib/helper";
 import { evaluateAttendanceRiskAfterMarking } from "@/lib/risk";
 
 async function runRiskEvaluationSafely(input: {
@@ -24,9 +19,6 @@ async function runRiskEvaluationSafely(input: {
   }
 }
 
-// --- CONFIGURATION ---
-const MAX_ATTENDANCE_PER_DAY = 1;
-
 export async function POST(req: NextRequest) {
   try {
     const { token, studentId, location, wifiBssid } = await req.json();
@@ -42,7 +34,10 @@ export async function POST(req: NextRequest) {
     const [tokenRecord, studentUser] = await Promise.all([
       prisma.attendanceToken.findUnique({
         where: { token },
-        include: { subject: { select: { name: true, id: true } } },
+        include: {
+          subject: { select: { name: true, id: true } },
+          classSession: true,
+        },
       }),
       prisma.user.findUnique({
         where: { id: studentId },
@@ -86,6 +81,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!tokenRecord.classSessionId || !tokenRecord.classSession) {
+      return NextResponse.json(
+        { message: "This QR code is not linked to an active class session." },
+        { status: 404 },
+      );
+    }
+
+    const classSession = tokenRecord.classSession;
+
     // =================================================================
     // --- "SMART CHECK" SECURITY BLOCK with ONLINE/OFFLINE mode ---
     // =================================================================
@@ -96,6 +100,7 @@ export async function POST(req: NextRequest) {
           { status: 404 },
         );
       }
+
       const campus = studentUser.campus;
 
       // Layer 1: Geofence Check
@@ -105,6 +110,7 @@ export async function POST(req: NextRequest) {
           { status: 400 },
         );
       }
+
       const distance = haversineDistance(
         tokenRecord.latitude!,
         tokenRecord.longitude!,
@@ -146,31 +152,10 @@ export async function POST(req: NextRequest) {
     }
     // --- END OF SECURITY BLOCK ---
 
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-    );
-    const attendanceCount = await prisma.attendance.count({
-      where: {
-        studentId: studentUser.studentProfile.id,
-        markedAt: { gte: startOfDay },
-        classSession: { subjectId: tokenRecord.subjectId },
-      },
-    });
-
-    if (attendanceCount >= MAX_ATTENDANCE_PER_DAY) {
-      return NextResponse.json(
-        {
-          message: `Attendance limit of ${MAX_ATTENDANCE_PER_DAY} for this subject has been reached today.`,
-        },
-        { status: 409 },
-      );
-    }
-
     const teacherProfile = await prisma.teacher.findUnique({
       where: { id: tokenRecord.professorId },
     });
+
     if (!teacherProfile) {
       return NextResponse.json(
         { message: "Could not identify the teacher for this session" },
@@ -178,18 +163,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const classSession = await prisma.classSession.findFirst({
+    const existingAttendance = await prisma.attendance.findFirst({
       where: {
-        subjectId: tokenRecord.subjectId,
-        teacherId: teacherProfile.id,
-        date: startOfDay,
+        studentId: studentUser.studentProfile.id,
+        classSessionId: classSession.id,
       },
     });
 
-    if (!classSession) {
+    if (existingAttendance) {
       return NextResponse.json(
-        { message: "No active class session found for this attendance token." },
-        { status: 404 },
+        {
+          message: `Attendance already recorded for this session as ${existingAttendance.status}.`,
+        },
+        { status: 409 },
       );
     }
 
@@ -201,7 +187,7 @@ export async function POST(req: NextRequest) {
         status: "PRESENT",
         markedBy: teacherProfile.id,
         markedAt: now,
-        remarks: `Marked via QR code.`,
+        remarks: "Marked via QR code.",
       },
     });
 
@@ -214,6 +200,7 @@ export async function POST(req: NextRequest) {
       where: { token },
       data: { used: true },
     });
+
     await logActivity(
       studentId,
       studentUser.name,

@@ -30,9 +30,7 @@ export default function SuperAdminDashboardPage() {
                   Super Admin Console
                 </div>
 
-                <h1
-                  className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl md:text-5xl"
-                >
+                <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl md:text-5xl">
                   Admin Dashboard
                 </h1>
 
@@ -73,7 +71,7 @@ export default function SuperAdminDashboardPage() {
                     Create the first administrator account for a new college.
                     This account will be assigned the{" "}
                     <span className="font-extrabold text-violet-200">
-                      'ASSISTANT'
+                      &apos;ASSISTANT&apos;
                     </span>{" "}
                     role.
                   </p>

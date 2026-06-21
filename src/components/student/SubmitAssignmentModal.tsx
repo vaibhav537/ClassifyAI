@@ -187,7 +187,7 @@ export default function SubmitAssignmentModal({
                     <p className="font-extrabold">The due date has passed!</p>
                     <p className="mt-1 text-sm leading-6 text-red-100/70">
                       You can still submit, but your work will be marked as
-                      "Late" to your teacher.
+                      &quot;Late&quot; to your teacher.
                     </p>
                   </div>
                 </div>

@@ -227,23 +227,24 @@ model ClassSession {
   updatedAt              DateTime      @updatedAt
 
   // Relations
-  subjectId   String?
-  subjectRel  Subject?     @relation("ClassSessionSubject", fields: [subjectId], references: [id], map: "fk_classsession_subject")
-  subject     String?
-  campusId    String?
-  campus      Campus?      @relation(fields: [campusId], references: [id])
-  semester    Int
-  section     String
-  teacherId   String
-  teacher     Teacher      @relation(fields: [teacherId], references: [id], map: "fk_classsession_teacher")
-  semesterId  String?
-  semesterRel Semester?    @relation("SemesterSessions", fields: [semesterId], references: [id], map: "fk_classsession_semester")
-  sectionId   String?
-  sectionRel  Section?     @relation("SectionSessions", fields: [sectionId], references: [id], map: "fk_classsession_section")
-  attendances Attendance[] @relation("ClassSessionAttendance")
-  riskEvents  RiskEvent[]
+  subjectId        String?
+  subjectRel       Subject?          @relation("ClassSessionSubject", fields: [subjectId], references: [id], map: "fk_classsession_subject")
+  subject          String?
+  campusId         String?
+  campus           Campus?           @relation(fields: [campusId], references: [id])
+  semester         Int
+  section          String
+  teacherId        String
+  teacher          Teacher           @relation(fields: [teacherId], references: [id], map: "fk_classsession_teacher")
+  semesterId       String?
+  semesterRel      Semester?         @relation("SemesterSessions", fields: [semesterId], references: [id], map: "fk_classsession_semester")
+  sectionId        String?
+  sectionRel       Section?          @relation("SectionSessions", fields: [sectionId], references: [id], map: "fk_classsession_section")
+  attendances      Attendance[]      @relation("ClassSessionAttendance")
+  riskEvents       RiskEvent[]
+  attendanceTokens AttendanceToken[]
 
-  @@unique([teacherId, subjectId, sectionId, date])
+  @@unique([teacherId, subjectId, sectionId, date, startTime])
   @@index([teacherId, weekday, semester], map: "idx_classsession_teacher_weekday_semester")
   @@index([subjectId], map: "idx_classsession_subject")
   @@index([campusId], map: "idx_classsession_campus")
@@ -328,20 +329,24 @@ model Attendance {
 }
 
 model AttendanceToken {
-  id          String         @id @default(cuid())
-  token       String         @unique
-  studentId   String? // Add this field
-  student     Student?       @relation(fields: [studentId], references: [id])
-  subjectId   String?
-  subject     Subject?       @relation(fields: [subjectId], references: [id], map: "fk_attendancetoken_subject")
-  professorId String
-  teacher     Teacher        @relation(fields: [professorId], references: [id])
-  issuedAt    DateTime       @default(now())
-  expiresAt   DateTime
-  used        Boolean        @default(false)
-  latitude    Float? // To store the teacher's latitude at time of creation
-  longitude   Float? // To store the teacher's longitude at time of creation
-  mode        AttendanceMode @default(OFFLINE)
+  id             String         @id @default(cuid())
+  token          String         @unique
+  studentId      String? // Add this field
+  student        Student?       @relation(fields: [studentId], references: [id])
+  subjectId      String?
+  subject        Subject?       @relation(fields: [subjectId], references: [id], map: "fk_attendancetoken_subject")
+  professorId    String
+  teacher        Teacher        @relation(fields: [professorId], references: [id])
+  classSessionId String?
+  classSession   ClassSession?  @relation(fields: [classSessionId], references: [id])
+  issuedAt       DateTime       @default(now())
+  expiresAt      DateTime
+  used           Boolean        @default(false)
+  latitude       Float? // To store the teacher's latitude at time of creation
+  longitude      Float? // To store the teacher's longitude at time of creation
+  mode           AttendanceMode @default(OFFLINE)
+
+  @@index([classSessionId], map: "idx_attendancetoken_classsession")
 }
 
 model Session {

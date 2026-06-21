@@ -151,7 +151,7 @@ export default function NotificationBell() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="absolute right-0 z-[9999] mt-3 w-[min(calc(100vw-2rem),24rem)] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#14141B]/95 shadow-2xl shadow-black/45 backdrop-blur-2xl 2xl:-right-8"
+            className="fixed left-3 right-3 top-24 z-[9999] max-h-[calc(100dvh-7rem)] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#14141B]/95 shadow-2xl shadow-black/45 backdrop-blur-2xl sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-3 sm:w-[min(calc(100vw-2rem),24rem)] sm:max-h-none 2xl:-right-8"
           >
             <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
               <div>
@@ -180,7 +180,7 @@ export default function NotificationBell() {
               )}
             </div>
 
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-[calc(100dvh-13rem)] overflow-y-auto sm:max-h-96">
               {isLoading && (
                 <div className="flex items-center justify-center gap-2 px-5 py-8 text-sm font-medium text-slate-400">
                   <Loader2 className="h-4 w-4 animate-spin text-violet-300" />

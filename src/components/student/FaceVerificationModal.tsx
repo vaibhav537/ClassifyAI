@@ -210,7 +210,7 @@ export default function FaceVerificationModal({
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-black/40 text-center text-sm text-slate-300">
-                  Allow camera access and click "Start Camera" to begin
+                  Allow camera access and click &quot;Start Camera&quot; to begin
                   verification.
                 </div>
               )}
