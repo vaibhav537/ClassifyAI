@@ -18,7 +18,8 @@ export async function POST() {
 
   const timestamp = Math.floor(Date.now() / 1000);
   const publicId = `edureels/${user.campusId}/${user.id}/${randomUUID()}`;
-  const overwrite = false;
+  // Sign the string value exactly as it is sent in the upload form.
+  const overwrite = "false";
   const signature = cloudinary.utils.api_sign_request(
     { public_id: publicId, timestamp, overwrite },
     secret,
