@@ -11,6 +11,7 @@ import {
   NotepadText,
   Upload,
   MessageCircle,
+  Clapperboard,
 } from "lucide-react";
 import React from "react";
 import { SupportCaseDetail } from "./types";
@@ -285,6 +286,7 @@ export const teacherNavLinks = [
     icon: Megaphone,
   },
   { label: "Resources", href: "/dashboard/teacher/resources", icon: Upload },
+  { label: "EduReels", href: "/edureels", icon: Clapperboard },
   { label: "Campus Chat", href: "/chat", icon: MessageCircle },
 ];
 

@@ -44,6 +44,7 @@ import {
   faBullhorn,
   faCalendarDays,
   faMessage,
+  faFilm,
 } from "@fortawesome/free-solid-svg-icons";
 import NotificationHandler from "@/components/ui/NotificationHandler";
 import SideButtons from "@/components/student/SideButtons";
@@ -562,6 +563,11 @@ export default function StudentDashboard() {
                     faIcon={faMessage}
                     title="View Messages"
                     link="/chat"
+                  />
+                  <SideButtons
+                    faIcon={faFilm}
+                    title="EduReels"
+                    link="/edureels"
                   />
                   <SideButtons
                     faIcon={faCalendarDays}

@@ -1,5 +1,6 @@
 import Sidebar from "@/components/teacher/Sidebar";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function TeacherLayout({
   children,
@@ -27,20 +28,25 @@ export default function TeacherLayout({
               </h1>
             </div>
 
-            <div className="hidden items-center gap-3 sm:flex">
-              <div className="rounded-2xl border border-emerald-300/20 bg-emerald-500/10 px-4 py-2 text-xs font-bold text-emerald-200">
-                Active Session
-              </div>
+            <div className="flex items-center gap-3">
+              <Link href="/edureels" className="rounded-xl border border-violet-300/25 bg-violet-500/10 px-3 py-2 text-xs font-bold text-violet-200 lg:hidden">
+                EduReels
+              </Link>
+              <div className="hidden items-center gap-3 sm:flex">
+                <div className="rounded-2xl border border-emerald-300/20 bg-emerald-500/10 px-4 py-2 text-xs font-bold text-emerald-200">
+                  Active Session
+                </div>
 
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045]">
-                <Image
-                  src="/only-logo.png"
-                  alt="Classify AI"
-                  width={34}
-                  height={34}
-                  className="h-8 w-8 object-contain"
-                  priority
-                />
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045]">
+                  <Image
+                    src="/only-logo.png"
+                    alt="Classify AI"
+                    width={34}
+                    height={34}
+                    className="h-8 w-8 object-contain"
+                    priority
+                  />
+                </div>
               </div>
             </div>
           </header>

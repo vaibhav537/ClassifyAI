@@ -13,6 +13,7 @@ import {
   faChartSimple,
   faBullhorn,
   faHandshakeAngle,
+  faFilm,
 } from "@fortawesome/free-solid-svg-icons";
 import { icon } from "@fortawesome/fontawesome-svg-core";
 
@@ -26,6 +27,7 @@ const links = [
     label: "Events",
   },
   { href: "/dashboard/assistant/premium", icon: faCrown, label: "Premium" },
+  { href: "/edureels?tab=review", icon: faFilm, label: "EduReels" },
   {
     href: "/dashboard/assistant/announcements",
     icon: faBullhorn,

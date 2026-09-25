@@ -22,6 +22,7 @@ It is built as a **desktop-first product with Next.js + Tauri**, backed by Postg
 - **Assignment lifecycle management** with submission tracking, grading, feedback, analytics, and AI-assisted workflows
 - **Real-time campus communication** with role-aware chat, notifications, and structured communication rules
 - **AI-assisted academics** including study planning, syllabus analysis, expected-question generation, and resource assistance
+- **EduReels** with class-first learning feeds, teacher/student videos, campus review, saves, and reports
 - **Desktop distribution** through Tauri with the current app version at **v2.4.0**
 
 ---
@@ -181,6 +182,7 @@ Configure the required environment variables for database, authentication, AI pr
 
 - [Technical Overview](./docs/technical-overview.md) — architecture, workflows, implementation notes, security considerations, and ongoing hardening
 - [Teacher Dashboard Feature Checklist](./docs/teacher-dashboard-features.md)
+- [EduReels](./docs/edureels.md) — video upload, approval rules, feed ranking, and deployment notes
 
 The deeper engineering notes have intentionally been moved out of this README so the project landing page stays concise and easy to evaluate.
 

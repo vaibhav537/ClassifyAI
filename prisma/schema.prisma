@@ -61,6 +61,10 @@ model User {
   supportCaseNotes          SupportCaseNote[]         @relation("SupportCaseNoteAuthor")
   supportCaseActivities     SupportCaseActivityLog[]  @relation("SupportCaseActivityActor")
   createdCircleOfCareGroups CircleOfCareGroup[]       @relation("CircleOfCareCreatedBy")
+  authoredEduReels          EduReel[]                 @relation("EduReelAuthor")
+  reviewedEduReels          EduReel[]                 @relation("EduReelReviewer")
+  savedEduReels             EduReelSave[]
+  reportedEduReels          EduReelReport[]
 }
 
 model Teacher {
@@ -121,6 +125,7 @@ model Semester {
   TimetableEntry  TimetableEntry[]
   Conversation    Conversation[]
   riskRuleScopes  RiskRuleScope[]
+  eduReels        EduReel[]
 
   @@unique([name, campusId]) // A semester name should be unique within a campus
 }
@@ -138,6 +143,7 @@ model Section {
   TimetableEntry  TimetableEntry[]
   Conversation    Conversation[]
   riskRuleScopes  RiskRuleScope[]
+  eduReels        EduReel[]
 
   @@unique([name, campusId])
 }
@@ -163,6 +169,7 @@ model Subject {
   riskRuleScopes   RiskRuleScope[]
   riskEvents       RiskEvent[]
   supportCases     SupportCase[]
+  eduReels         EduReel[]
 
   @@unique([code, campusId])
 }
@@ -211,6 +218,67 @@ model Campus {
   studentRiskProfiles StudentRiskProfile[]
   supportCases        SupportCase[]
   circleOfCareGroups  CircleOfCareGroup[]
+  eduReels            EduReel[]
+}
+
+model EduReel {
+  id              String        @id @default(cuid())
+  title           String
+  description     String?
+  learningOutcome String
+  videoPublicId   String        @unique
+  videoUrl        String
+  durationSeconds Float
+  status          EduReelStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+  publishedAt     DateTime?
+  reviewedAt      DateTime?
+  reviewReason    String?
+
+  authorId     String
+  author       User     @relation("EduReelAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  reviewedById String?
+  reviewedBy   User?    @relation("EduReelReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  campusId     String
+  campus       Campus   @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  subjectId    String
+  subject      Subject  @relation(fields: [subjectId], references: [id])
+  semesterId   String
+  semester     Semester @relation(fields: [semesterId], references: [id])
+  sectionId    String
+  section      Section  @relation(fields: [sectionId], references: [id])
+  saves        EduReelSave[]
+  reports      EduReelReport[]
+
+  @@index([campusId, status, publishedAt])
+  @@index([campusId, status, subjectId])
+  @@index([authorId, createdAt])
+}
+
+model EduReelSave {
+  id        String   @id @default(cuid())
+  reelId    String
+  reel      EduReel  @relation(fields: [reelId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([reelId, userId])
+  @@index([userId, createdAt])
+}
+
+model EduReelReport {
+  id        String              @id @default(cuid())
+  reelId    String
+  reel      EduReel             @relation(fields: [reelId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason    String
+  status    EduReelReportStatus @default(OPEN)
+  createdAt DateTime            @default(now())
+
+  @@unique([reelId, userId])
+  @@index([status, createdAt])
 }
 
 model ClassSession {
@@ -933,6 +1001,18 @@ enum Role {
   TEACHER
   ADMIN
   ASSISTANT
+}
+
+enum EduReelStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  HIDDEN
+}
+
+enum EduReelReportStatus {
+  OPEN
+  RESOLVED
 }
 
 enum Weekday {
